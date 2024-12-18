@@ -138,6 +138,10 @@ class FeatureStore:
         """Split docs into chunks, build knowledge graph and base based on them."""
         entityDB = Faiss.load_local(os.path.join(self.work_dir, 'db_kag_entity'))
         relationDB = Faiss.load_local(os.path.join(self.work_dir, 'db_kag_relation'))
+
+        entityDB_mix = Faiss.load_local(os.path.join(self.work_dir, 'db_kag_entity_mix'))
+        relationDB_mix = Faiss.load_local(os.path.join(self.work_dir, 'db_kag_relation_mix'))
+
         chunkDB = ChunkSQL(file_dir=os.path.join(self.work_dir, 'db_chunk'))
 
         for file in tqdm(files, 'build knowledge'):
@@ -155,7 +159,7 @@ class FeatureStore:
                 continue
 
             try:
-                await parse_chunk_to_knowledge(chunks=chunks, llm=self.llm, entityDB=entityDB, relationDB=relationDB, graph_store=self.graph_store)
+                await parse_chunk_to_knowledge(chunks=chunks, llm=self.llm, entityDB=entityDB, relationDB=relationDB, entityDB_mix=entityDB_mix, relationDB_mix=relationDB_mix, graph_store=self.graph_store)
                 chunkDB.add(chunks)
             except Exception as e:
                 logger.error(str(e))
@@ -164,6 +168,10 @@ class FeatureStore:
         # dump results
         entityDB.save(folder_path=os.path.join(self.work_dir, 'db_kag_entity'), embedder=self.embedder)
         relationDB.save(folder_path=os.path.join(self.work_dir, 'db_kag_relation'), embedder=self.embedder)
+
+        
+        entityDB_mix.save(folder_path=os.path.join(self.work_dir, 'db_kag_entity_mix'), embedder=self.embedder)
+        relationDB_mix.save(folder_path=os.path.join(self.work_dir, 'db_kag_relation_mix'), embedder=self.embedder)
         return None
 
     async def build_dense(self, files: Iterator[FileName]) -> None:

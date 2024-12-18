@@ -62,3 +62,4 @@ bm25.pkl
 out/go/api_pet.go
 out/go/*
 repodir.full/*
+llm.jsonl

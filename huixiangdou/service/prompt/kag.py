@@ -115,14 +115,14 @@ graph_prompts["entity_extraction"]["zh_cn"] = """你是一个NLP专家，擅长�
 ("entity"{tuple_delimiter}"盐煮笋"{tuple_delimiter}"food"{tuple_delimiter}"盐煮笋是鲁镇酒店提供的一种下酒菜，顾客可以花一文铜钱购买。"){record_delimiter}
 ("entity"{tuple_delimiter}"茴香豆"{tuple_delimiter}"food"{tuple_delimiter}"茴香豆是鲁镇酒店提供的另一种下酒菜，顾客可以花一文铜钱购买。"){record_delimiter}
 ("entity"{tuple_delimiter}"荤菜"{tuple_delimiter}"food"{tuple_delimiter}"荤菜是鲁镇酒店提供的较为昂贵的菜品，顾客需要花十几文铜钱购买。"){record_delimiter}
-("relationship"{tuple_delimiter}"鲁镇的酒店"{tuple_delimiter}"曲尺形的大柜台"{tuple_delimiter}"鲁镇的酒店内设有一个曲尺形的大柜台，用于提供服务。"{tuple_delimiter}"service, facility"{tuple_delimiter}8){record_delimiter}
-("relationship"{tuple_delimiter}"鲁镇的酒店"{tuple_delimiter}"热水温酒"{tuple_delimiter}"鲁镇的酒店提供热水温酒服务，顾客可以随时温酒。"{tuple_delimiter}"service, convenience"{tuple_delimiter}7){record_delimiter}
-("relationship"{tuple_delimiter}"做工的人"{tuple_delimiter}"二十多年前的事"{tuple_delimiter}"做工的人在二十多年前花四文铜钱买一碗酒，反映了当时的生活成本。"{tuple_delimiter}"historical context, cost of living"{tuple_delimiter}6){record_delimiter}
-("relationship"{tuple_delimiter}"做工的人"{tuple_delimiter}"现在"{tuple_delimiter}"现在做工的人需要花十文铜钱买一碗酒，反映了物价的上涨。"{tuple_delimiter}"economic change, cost of living"{tuple_delimiter}7){record_delimiter}
-("relationship"{tuple_delimiter}"做工的人"{tuple_delimiter}"短衣帮"{tuple_delimiter}"做工的人属于短衣帮，通常经济条件有限。"{tuple_delimiter}"social class, economic status"{tuple_delimiter}8){record_delimiter}
-("relationship"{tuple_delimiter}"做工的人"{tuple_delimiter}"穿长衫的"{tuple_delimiter}"做工的人与穿长衫的形成对比，反映了社会阶层的差异。"{tuple_delimiter}"social stratification, economic disparity"{tuple_delimiter}9){record_delimiter}
-("relationship"{tuple_delimiter}"穿长衫的"{tuple_delimiter}"鲁镇的酒店"{tuple_delimiter}"穿长衫的顾客通常会进入鲁镇酒店的房间慢慢喝酒吃菜，享受更高级的服务。"{tuple_delimiter}"service quality, economic status"{tuple_delimiter}8){record_delimiter}
-("content_keywords"{tuple_delimiter}"social stratification, economic disparity, service, cost of living, historical context"){completion_delimiter}
+("relationship"{tuple_delimiter}"鲁镇的酒店"{tuple_delimiter}"曲尺形的大柜台"{tuple_delimiter}"鲁镇的酒店内设有一个曲尺形的大柜台，用于提供服务。"{tuple_delimiter}"服务, 能力"{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"鲁镇的酒店"{tuple_delimiter}"热水温酒"{tuple_delimiter}"鲁镇的酒店提供热水温酒服务，顾客可以随时温酒。"{tuple_delimiter}"服务, 方便"{tuple_delimiter}7){record_delimiter}
+("relationship"{tuple_delimiter}"做工的人"{tuple_delimiter}"二十多年前的事"{tuple_delimiter}"做工的人在二十多年前花四文铜钱买一碗酒，反映了当时的生活成本。"{tuple_delimiter}"历史背景, 生活成本"{tuple_delimiter}6){record_delimiter}
+("relationship"{tuple_delimiter}"做工的人"{tuple_delimiter}"现在"{tuple_delimiter}"现在做工的人需要花十文铜钱买一碗酒，反映了物价的上涨。"{tuple_delimiter}"经济变化, 生活成本"{tuple_delimiter}7){record_delimiter}
+("relationship"{tuple_delimiter}"做工的人"{tuple_delimiter}"短衣帮"{tuple_delimiter}"做工的人属于短衣帮，通常经济条件有限。"{tuple_delimiter}"社会等级, 经济状态"{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"做工的人"{tuple_delimiter}"穿长衫的"{tuple_delimiter}"做工的人与穿长衫的形成对比，反映了社会阶层的差异。"{tuple_delimiter}"社会分层, 经济差距"{tuple_delimiter}9){record_delimiter}
+("relationship"{tuple_delimiter}"穿长衫的"{tuple_delimiter}"鲁镇的酒店"{tuple_delimiter}"穿长衫的顾客通常会进入鲁镇酒店的房间慢慢喝酒吃菜，享受更高级的服务。"{tuple_delimiter}"服务质量, 经济状况"{tuple_delimiter}8){record_delimiter}
+("content_keywords"{tuple_delimiter}"社会分层, 经济差距, 服务, 生活成本, 历史背景"){completion_delimiter}
 
 **真实数据**
 文本：
