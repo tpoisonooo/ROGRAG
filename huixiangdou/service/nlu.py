@@ -269,6 +269,8 @@ async def parse_chunk_to_knowledge(
     llm: LLM, 
     entityDB: Faiss, 
     relationDB: Faiss,
+    entityDB_mix: Faiss, 
+    relationDB_mix: Faiss,
     graph_store: TuGraphStore) -> None:
 
     graph = MemoryGraph()
@@ -391,12 +393,12 @@ async def parse_chunk_to_knowledge(
 
     if entityDB is not None:
         for dp in all_entities_data:
-            # entityDB.upsert(Chunk(content_or_path=dp["entity_name"] + dp["description"], metadata={"entity_name":dp["entity_name"], "entity_type":dp["entity_type"]}))
+            entityDB_mix.upsert(Chunk(content_or_path=dp["entity_name"] + dp["description"], metadata={"entity_name":dp["entity_name"], "entity_type":dp["entity_type"]}))
             entityDB.upsert(Chunk(content_or_path=dp["entity_name"], metadata={"entity_name":dp["entity_name"], "entity_type":dp["entity_type"], "description":dp["description"]}))
             
     if relationDB is not None:
         for dp in all_relationships_data:
-            # relationDB.upsert(Chunk(content_or_path=dp["keywords"]+dp["src_id"]+dp["tgt_id"]+dp["description"], metadata={"src_id":dp["src_id"], "tgt_id":dp["tgt_id"]}))
+            relationDB_mix.upsert(Chunk(content_or_path=dp["keywords"]+dp["src_id"]+dp["tgt_id"]+dp["description"], metadata={"src_id":dp["src_id"], "tgt_id":dp["tgt_id"]}))
             relationDB.upsert(Chunk(content_or_path=dp["keywords"], metadata={"src_id":dp["src_id"], "tgt_id":dp["tgt_id"], "description":dp["description"]}))
     
     graph_store.insert_graph(graph=graph)
