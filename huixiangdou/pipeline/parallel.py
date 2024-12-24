@@ -142,7 +142,7 @@ class ParallelPipeline:
         yield sess
 
         # parallel run text2vec, websearch and codesearch
-        tasks = [self.retriever_kag.explore(query=sess.query)]
+        tasks = [self.retriever_knowledge.explore(query=sess.query)]
         sess.retrieve_replies = await asyncio.gather(*tasks, return_exceptions=True)
         async for sess in reduce.process(sess):
             yield sess

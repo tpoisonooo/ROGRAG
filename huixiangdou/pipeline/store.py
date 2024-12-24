@@ -169,7 +169,6 @@ class FeatureStore:
         entityDB.save(folder_path=os.path.join(self.work_dir, 'db_kag_entity'), embedder=self.embedder)
         relationDB.save(folder_path=os.path.join(self.work_dir, 'db_kag_relation'), embedder=self.embedder)
 
-        
         entityDB_mix.save(folder_path=os.path.join(self.work_dir, 'db_kag_entity_mix'), embedder=self.embedder)
         relationDB_mix.save(folder_path=os.path.join(self.work_dir, 'db_kag_relation_mix'), embedder=self.embedder)
         return None
