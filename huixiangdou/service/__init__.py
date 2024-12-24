@@ -1,4 +1,4 @@
-# Copyright (c) OpenMMLab. All rights reserved.
+
 """LLM service module."""
 from .config import (feature_store_base_dir, redis_host, redis_passwd,
                      redis_port)

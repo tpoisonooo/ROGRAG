@@ -4,7 +4,6 @@ from loguru import logger
 import asyncio
 
 class RPM:
-
     def __init__(self, rpm: int = 1000):
         self.rpm = rpm
         self.record = {'rpm_slot': self.get_minute_slot(), 'counter': 0}

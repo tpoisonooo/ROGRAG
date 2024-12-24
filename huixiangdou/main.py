@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) OpenMMLab. All rights reserved.
 """HuixiangDou binary."""
 import argparse
 import os
@@ -164,7 +163,6 @@ def wechat_personal_run(assistant, fe_config: dict):
     app = web.Application()
     app.add_routes([web.post('/api', api)])
     web.run_app(app, host='0.0.0.0', port=bind_port)
-
 
 def run():
     """Automatically download config, start llm server and run examples."""

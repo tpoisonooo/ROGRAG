@@ -14,18 +14,12 @@ from ..service.retriever import RetrieveMethod
 from ..service.prompt import rag_prompts as PROMPTS
 
 class PreprocNode:
-    """PreprocNode is for coreference resolution and scoring based on group
-    chats.
-
-    See https://arxiv.org/abs/2405.02817
-    """
-
     def __init__(self, resource: RetrieveResource):
         self.resource = resource
         
     async def process(self, sess: Session) -> AsyncGenerator[Session, Session]:
 
-        assert isinstance(sess.history, list), "sess.history数据结构错误"
+        assert isinstance(sess.history, list), "sess.history 数据结构错误"
         
         if len(sess.history) > 0 :
             yield sess
@@ -102,7 +96,8 @@ class ParallelPipeline:
     def __init__(self, work_dir: str='workdir', config_path: str='config.ini'):
         self.resource = RetrieveResource(config_path)
         self.pool = SharedRetrieverPool(resource=self.resource)
-        self.retriever_kag = self.pool.get(work_dir=work_dir, method=RetrieveMethod.KNOWLEDGE)
+        self.retriever_reason = self.pool.get(work_dir=work_dir, method=RetrieveMethod.REASON)
+        self.retriever_knowledge = self.pool.get(work_dir=work_dir, method=RetrieveMethod.KNOWLEDGE)
         self.retriever_web = self.pool.get(work_dir=work_dir, method=RetrieveMethod.WEB)
         self.retriever_bm25 = self.pool.get(work_dir=work_dir, method=RetrieveMethod.BM25)
         self.retriever_inverted = self.pool.get(work_dir=work_dir, method=RetrieveMethod.INVERTED)
@@ -147,7 +142,7 @@ class ParallelPipeline:
         yield sess
 
         # parallel run text2vec, websearch and codesearch
-        tasks = [self.retriever_kag.explore(query=sess.query)]
+        tasks = [self.retriever_knowledge.explore(query=sess.query)]
         sess.retrieve_replies = await asyncio.gather(*tasks, return_exceptions=True)
         async for sess in reduce.process(sess):
             yield sess
@@ -155,29 +150,3 @@ class ParallelPipeline:
         #     pdb.set_trace()
         #     logger.error(str(e))
         return
-
-
-# def parse_args():
-#     """Parses command-line arguments."""
-#     parser = argparse.ArgumentParser(description='SerialPipeline.')
-#     parser.add_argument('work_dir', type=str, help='Working directory.')
-#     parser.add_argument(
-#         '--config_path',
-#         default='config.ini',
-#         help='SerialPipeline configuration path. Default value is config.ini')
-#     return parser.parse_args()
-# 
-# if __name__ == '__main__':
-#     args = parse_args()
-#     bot = ParallelPipeline(work_dir=args.work_dir, config_path=args.config_path)
-#     loop = asyncio.get_event_loop()
-#     queries = ['茴香豆是什么？', 'HuixiangDou 是什么？']
-
-#     for q in queries:
-#         async def wrap_async_as_coroutine():
-#             async for sess in bot.generate(query=q, history=[], enable_web_search=False):
-#                 print(sess.delta, end='', flush=True)
-#                 pass
-#             print('\n')
-#             print(sess.references)
-#         loop.run_until_complete(wrap_async_as_coroutine())
