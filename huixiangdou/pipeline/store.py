@@ -3,7 +3,6 @@
 import argparse
 import json
 import os
-import pdb
 import shutil
 import time
 from multiprocessing import Pool
@@ -158,13 +157,14 @@ class FeatureStore:
                 logger.info('skip')
                 continue
 
-            # try:
-            await parse_chunk_to_knowledge(chunks=chunks, llm=self.llm, entityDB=entityDB, relationDB=relationDB, entityDB_mix=entityDB_mix, relationDB_mix=relationDB_mix, graph_store=self.graph_store)
-            chunkDB.add(chunks)
-            # except Exception as e:
-            #     logger.error(str(e))
-            #     import pdb
-            #     pdb.set_trace()
+            try:
+                await parse_chunk_to_knowledge(chunks=chunks, llm=self.llm, entityDB=entityDB, relationDB=relationDB, entityDB_mix=entityDB_mix, relationDB_mix=relationDB_mix, graph_store=self.graph_store)
+                chunkDB.add(chunks)
+            except Exception as e:
+                logger.error(str(e))
+                import pdb
+                pdb.set_trace()
+                pass
         # dump results
         entityDB.save(folder_path=os.path.join(self.work_dir, 'db_kag_entity'), embedder=self.embedder)
         relationDB.save(folder_path=os.path.join(self.work_dir, 'db_kag_relation'), embedder=self.embedder)

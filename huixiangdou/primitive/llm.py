@@ -131,7 +131,7 @@ class LLM:
         wait=wait_exponential(multiplier=1, min=30, max=60),
         retry=retry_if_exception_type((RateLimitError, APIConnectionError, Timeout, APITimeoutError)),
     )
-    @limit_async_func_call(10)
+    @limit_async_func_call(16)
     async def chat(
         self,
         prompt:str,
@@ -180,7 +180,6 @@ class LLM:
             
             content = response.choices[0].message.content
         except Exception as e:
-            
             logger.error( str(e) +' input len {}'.format(len(str(messages))))
             raise e
         content_token_size = len(encode_string(content=content))

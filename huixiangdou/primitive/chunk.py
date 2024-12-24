@@ -1,7 +1,8 @@
-
+from dataclasses import dataclass, field
 import uuid
 import hashlib
 
+@dataclass
 class Chunk():
     """Class for storing a piece of text and associated metadata.
 
@@ -16,25 +17,23 @@ class Chunk():
                 metadata={"source": "https://example.com"}
             )
     """
-    def __init__(self, content_or_path:str, _hash:str=None, metadata:dict=None, modal:str='text'):
-        # fixed attribute sequence
-        self.content_or_path = content_or_path
-        self.metadata = metadata if metadata else dict()
-        self.modal = modal
+    # fixed attribute sequence
+    _hash: str = field(default_factory=lambda: str(uuid.uuid4())[0:6])
+    content_or_path: str = ''
+    metadata: dict = field(default_factory=dict)
+    modal: str = 'text'
 
-        if not _hash:
-            self._hash: str = str(uuid.uuid4())[0:6]
+    def __post_init__(self):
+        if self.modal not in ['text', 'image', 'audio', 'fasta']:
+            raise ValueError(
+                f'Invalid modal: {self.modal}. Allowed values are: `text`, `image`, `audio`'
+            )
+        md5 = hashlib.md5()
+        if type(self.content_or_path) is str:
+            md5.update(self.content_or_path.encode('utf8'))
         else:
-            if self.modal not in ['text', 'image', 'audio', 'fasta']:
-                raise ValueError(
-                    f'Invalid modal: {self.modal}. Allowed values are: `text`, `image`, `audio`'
-                )
-            md5 = hashlib.md5()
-            if type(self.content_or_path) is str:
-                md5.update(self.content_or_path.encode('utf8'))
-            else:
-                md5.update(self.content_or_path)
-            self._hash = md5.hexdigest()[0:6]
+            md5.update(self.content_or_path)
+        self._hash = md5.hexdigest()[0:6]
 
     def __str__(self) -> str:
         """Override __str__ to restrict it to content_or_path and metadata."""
@@ -53,3 +52,10 @@ class Chunk():
 
     def __repr__(self) -> str:
         return self.__str__()
+
+
+if __name__ == "__main__":
+    obj = Chunk(content_or_path="abc")
+    import pickle
+    pickled_obj = pickle.dumps([obj])
+    print(pickled_obj)
