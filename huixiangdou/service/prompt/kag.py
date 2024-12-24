@@ -37,7 +37,7 @@ Format the content-level key words as ("content_keywords"{tuple_delimiter}<high_
 
 5. When finished, output {completion_delimiter}
 
--Example-
+-Example 1-
 Text:
 #############
 their voice slicing through the buzz of activity. "Control may be an illusion when facing an intelligence that literally writes its own rules," they stated stoically, casting a watchful eye over the flurry of data.
@@ -48,6 +48,28 @@ Alex surveyed his team—each face a study in concentration, determination, and 
 
 Together, they stood on the edge of the unknown, forging humanity's response to a message from the heavens. The ensuing silence was palpable—a collective introspection about their role in this grand cosmic play, one that could rewrite human history.
 
+The encrypted dialogue continued to unfold, its intricate patterns showing an almost uncanny anticipation
+#############
+Output:
+("entity"{tuple_delimiter}"Sam Rivera"{tuple_delimiter}"person"{tuple_delimiter}"Sam Rivera is a member of a team working on communicating with an unknown intelligence, showing a mix of awe and anxiety."){record_delimiter}
+("entity"{tuple_delimiter}"Alex"{tuple_delimiter}"person"{tuple_delimiter}"Alex is the leader of a team attempting first contact with an unknown intelligence, acknowledging the significance of their task."){record_delimiter}
+("entity"{tuple_delimiter}"Control"{tuple_delimiter}"concept"{tuple_delimiter}"Control refers to the ability to manage or govern, which is challenged by an intelligence that writes its own rules."){record_delimiter}
+("entity"{tuple_delimiter}"Intelligence"{tuple_delimiter}"concept"{tuple_delimiter}"Intelligence here refers to an unknown entity capable of writing its own rules and learning to communicate."){record_delimiter}
+("entity"{tuple_delimiter}"First Contact"{tuple_delimiter}"event"{tuple_delimiter}"First Contact is the potential initial communication between humanity and an unknown intelligence."){record_delimiter}
+("entity"{tuple_delimiter}"Humanity's Response"{tuple_delimiter}"event"{tuple_delimiter}"Humanity's Response is the collective action taken by Alex's team in response to a message from an unknown intelligence."){record_delimiter}
+("relationship"{tuple_delimiter}"Sam Rivera"{tuple_delimiter}"Intelligence"{tuple_delimiter}"Sam Rivera is directly involved in the process of learning to communicate with the unknown intelligence."{tuple_delimiter}"communication, learning process"{tuple_delimiter}9){record_delimiter}
+("relationship"{tuple_delimiter}"Alex"{tuple_delimiter}"First Contact"{tuple_delimiter}"Alex leads the team that might be making the First Contact with the unknown intelligence."{tuple_delimiter}"leadership, exploration"{tuple_delimiter}10){record_delimiter}
+("relationship"{tuple_delimiter}"Alex"{tuple_delimiter}"Humanity's Response"{tuple_delimiter}"Alex and his team are the key figures in Humanity's Response to the unknown intelligence."{tuple_delimiter}"collective action, cosmic significance"{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"Control"{tuple_delimiter}"Intelligence"{tuple_delimiter}"The concept of Control is challenged by the Intelligence that writes its own rules."{tuple_delimiter}"power dynamics, autonomy"{tuple_delimiter}7){record_delimiter}
+("content_keywords"{tuple_delimiter}"first contact, control, communication, cosmic significance"){completion_delimiter}
+
+-Example 2-
+Text:
+#############
+their voice slicing through the buzz of activity. "Control may be an illusion when facing an intelligence that literally writes its own rules," they stated stoically, casting a watchful eye over the flurry of data.
+"It's like it's learning to communicate," offered Sam Rivera from a nearby interface, their youthful energy boding a mix of awe and anxiety. "This gives talking to strangers' a whole new meaning."
+Alex surveyed his team—each face a study in concentration, determination, and not a small measure of trepidation. "This might well be our first contact," he acknowledged, "And we need to be ready for whatever answers back."
+Together, they stood on the edge of the unknown, forging humanity's response to a message from the heavens. The ensuing silence was palpable—a collective introspection about their role in this grand cosmic play, one that could rewrite human history.
 The encrypted dialogue continued to unfold, its intricate patterns showing an almost uncanny anticipation
 #############
 Output:
@@ -94,11 +116,11 @@ graph_prompts["entity_extraction"]["zh_cn"] = """你是一个NLP专家，擅长�
 3. 识别总结整个文本的主要概念、主题或话题的高级关键词。这些应该捕捉文档中存在的总体思想。
    将内容级关键词格式化为("content_keywords"{tuple_delimiter}<high_level_keywords>)
 
-4. 以英文返回步骤1和2中识别出的所有实体和关系的输出列表。使用**{record_delimiter}**作为列表分隔符。
+4. 以中文返回步骤1和2中识别出的所有实体和关系的输出列表。使用**{record_delimiter}**作为列表分隔符。
 
 5. 完成后，输出{completion_delimiter}
 
-**示例**
+**示例 1**
 文本：
 #############
 鲁镇的酒店的格局，是和别处不同的：都是当街一个曲尺形的大柜台，柜里面预备着热水，可以随时温酒。做工的人，傍午傍晚散了工，每每花四文铜钱，买一碗酒，——这是二十多年前的事，现在每碗要涨到十文，——靠柜外站着，热热的喝了休息；倘肯多花一文，便可以买一碟盐煮笋，或者茴香豆，做下酒物了，如果出到十几文，那就能买一样荤菜，但这些顾客，多是短衣帮，大抵没有这样阔绰。只有穿长衫的，才踱进店面隔壁的房子里，要酒要菜，慢慢地坐喝。
@@ -123,6 +145,40 @@ graph_prompts["entity_extraction"]["zh_cn"] = """你是一个NLP专家，擅长�
 ("relationship"{tuple_delimiter}"做工的人"{tuple_delimiter}"穿长衫的"{tuple_delimiter}"做工的人与穿长衫的形成对比，反映了社会阶层的差异。"{tuple_delimiter}"社会分层, 经济差距"{tuple_delimiter}9){record_delimiter}
 ("relationship"{tuple_delimiter}"穿长衫的"{tuple_delimiter}"鲁镇的酒店"{tuple_delimiter}"穿长衫的顾客通常会进入鲁镇酒店的房间慢慢喝酒吃菜，享受更高级的服务。"{tuple_delimiter}"服务质量, 经济状况"{tuple_delimiter}8){record_delimiter}
 ("content_keywords"{tuple_delimiter}"社会分层, 经济差距, 服务, 生活成本, 历史背景"){completion_delimiter}
+
+**示例 2**
+文本：
+#############
+摘要 黄华占是感温型常规稻品种，2016—2017 年在铅山县汪二镇作中稻示范种植综合表现优良。结合示范情况，对黄华占的特征特性作简单总结，在此基础上提出高产栽培技术，以期为该品种的推广种植提供参考。
+关键词 水稻；黄华占；特征特性；高产；栽培技术；江西铅山中图分类号 S511.048文献标识码 B文章编号 1007-5739（2018）13-0020-01
+近年来，铅山县粮食生产紧紧围绕“稳产、优质、增效”的总体要求、大力实施优质稻推广，积极引导粮食生产由增产转向提质。我国杂交水稻技术世界领先、优质稻品种众多，在市场走势方面（尤其稻米行情清淡期），人们习惯性地北涨看长粒香、南涨看黄华占。黄华占是广东省农业科学院水稻研究所以黄新占/丰华占为亲本选育而成，分别通过粤、湘、鄂、浙、桂、琼等省审定。为了更好、更快地推广黄华占水稻，铅山县分别于2016 年、2017 年在汪二镇火田村试验示范种植黄华占近 5.87 hm^2 ，综合表现优良。现将黄华占水稻的特征特性及高产栽培技术介绍如下。
+#############
+输出：
+("entity"{tuple_delimiter}"黄华占"{tuple_delimiter}"work"{tuple_delimiter}"黄华占是一种感温型常规稻品种，由广东省农业科学院水稻研究所选育，通过多个省份审定，2016-2017年在铅山县汪二镇进行示范种植，表现优良。"){record_delimiter}
+("entity"{tuple_delimiter}"2016—2017年"{tuple_delimiter}"date"{tuple_delimiter}"2016—2017年是黄华占在铅山县汪二镇进行示范种植的时间段。"){record_delimiter}
+("entity"{tuple_delimiter}"铅山县"{tuple_delimiter}"location"{tuple_delimiter}"铅山县位于中国江西省，是黄华占水稻示范种植的地点之一。"){record_delimiter}
+("entity"{tuple_delimiter}"汪二镇"{tuple_delimiter}"location"{tuple_delimiter}"汪二镇是铅山县的一个镇，2016-2017年在此进行了黄华占水稻的示范种植。"){record_delimiter}
+("entity"{tuple_delimiter}"火田村"{tuple_delimiter}"location"{tuple_delimiter}"火田村是汪二镇的一个村庄，2016-2017年在此进行了黄华占水稻的试验示范种植。"){record_delimiter}
+("entity"{tuple_delimiter}"广东省农业科学院水稻研究所"{tuple_delimiter}"organization"{tuple_delimiter}"广东省农业科学院水稻研究所是中国的一个科研机构，负责黄华占水稻的选育工作。"){record_delimiter}
+("entity"{tuple_delimiter}"黄新占/丰华占"{tuple_delimiter}"work"{tuple_delimiter}"黄新占和丰华占是黄华占水稻的亲本，用于选育黄华占。"){record_delimiter}
+("entity"{tuple_delimiter}"粤、湘、鄂、浙、桂、琼等省"{tuple_delimiter}"location"{tuple_delimiter}"这些省份通过了黄华占水稻的审定，表明该品种在这些地区具有良好的适应性和推广潜力。"){record_delimiter}
+("entity"{tuple_delimiter}"高产栽培技术"{tuple_delimiter}"technology"{tuple_delimiter}"高产栽培技术是指为了提高黄华占水稻产量而采用的一系列农业技术措施。"){record_delimiter}
+("entity"{tuple_delimiter}"稳产、优质、增效"{tuple_delimiter}"concept"{tuple_delimiter}"这是铅山县粮食生产的主要目标，强调了粮食生产的稳定、质量和效益。"){record_delimiter}
+("entity"{tuple_delimiter}"优质稻推广"{tuple_delimiter}"mission"{tuple_delimiter}"优质稻推广是铅山县粮食生产的一个重要任务，旨在提高稻米的质量和市场竞争力。"){record_delimiter}
+("entity"{tuple_delimiter}"杂交水稻技术"{tuple_delimiter}"technology"{tuple_delimiter}"杂交水稻技术是中国领先的世界级农业技术，用于提高水稻的产量和质量。"){record_delimiter}
+("entity"{tuple_delimiter}"北涨看长粒香、南涨看黄华占"{tuple_delimiter}"concept"{tuple_delimiter}"这是市场对不同地区优质稻品种的习惯性关注点，北方面对长粒香，南方面对黄华占。"){record_delimiter}
+("relationship"{tuple_delimiter}"黄华占"{tuple_delimiter}"2016—2017年"{tuple_delimiter}"黄华占在2016—2017年期间在铅山县进行了示范种植，展示了其优良的特性。"{tuple_delimiter}"时间, 植物生长"{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"黄华占"{tuple_delimiter}"铅山县"{tuple_delimiter}"黄华占在铅山县进行了示范种植，表现出了优良的适应性和产量。"{tuple_delimiter}"地理位置, 植物适应性"{tuple_delimiter}9){record_delimiter}
+("relationship"{tuple_delimiter}"黄华占"{tuple_delimiter}"汪二镇"{tuple_delimiter}"黄华占在汪二镇进行了示范种植，这是其在铅山县示范种植的一部分。"{tuple_delimiter}"地理位置, 植物适应性"{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"黄华占"{tuple_delimiter}"火田村"{tuple_delimiter}"黄华占在火田村进行了试验示范种植，这是其在汪二镇示范种植的一部分。"{tuple_delimiter}"地理位置, 植物适应性"{tuple_delimiter}7){record_delimiter}
+("relationship"{tuple_delimiter}"黄华占"{tuple_delimiter}"广东省农业科学院水稻研究所"{tuple_delimiter}"黄华占是由广东省农业科学院水稻研究所选育的，该研究所负责其研发工作。"{tuple_delimiter}"研发, 机构作用"{tuple_delimiter}9){record_delimiter}
+("relationship"{tuple_delimiter}"黄华占"{tuple_delimiter}"黄新占/丰华占"{tuple_delimiter}"黄华占的亲本是黄新占和丰华占，这些亲本用于选育黄华占。"{tuple_delimiter}"遗传, 选育过程"{tuple_delimiter}9){record_delimiter}
+("relationship"{tuple_delimiter}"黄华占"{tuple_delimiter}"粤、湘、鄂、浙、桂、琼等省"{tuple_delimiter}"黄华占通过了这些省份的审定，表明其在这些地区的适应性和推广潜力。"{tuple_delimiter}"地区适应性, 推广潜力"{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"黄华占"{tuple_delimiter}"高产栽培技术"{tuple_delimiter}"高产栽培技术是为了提高黄华占水稻产量而开发的技术措施。"{tuple_delimiter}"技术应用, 产量提升"{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"铅山县"{tuple_delimiter}"稳产、优质、增效"{tuple_delimiter}"铅山县的粮食生产目标是稳产、优质、增效，这些目标指导了黄华占的示范种植。"{tuple_delimiter}"生产目标, 地方政策"{tuple_delimiter}7){record_delimiter}
+("relationship"{tuple_delimiter}"铅山县"{tuple_delimiter}"优质稻推广"{tuple_delimiter}"铅山县实施了优质稻推广计划，黄华占是该计划的一部分。"{tuple_delimiter}"政策实施, 品种推广"{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"杂交水稻技术"{tuple_delimiter}"北涨看长粒香、南涨看黄华占"{tuple_delimiter}"杂交水稻技术的发展使得黄华占等优质稻品种在市场中受到关注。"{tuple_delimiter}"市场趋势, 技术影响"{tuple_delimiter}7){record_delimiter}
+("content_keywords"{tuple_delimiter}"黄华占, 水稻种植, 高产栽培技术, 优质稻推广, 地区适应性, 市场趋势, 技术影响"){completion_delimiter}
 
 **真实数据**
 文本：
@@ -182,113 +238,106 @@ graph_prompts["process_tickers"] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "�
 
 graph_prompts["keywords_extraction"] = dict()
 
-graph_prompts["keywords_extraction"]["en"] = """---Role---
+graph_prompts["keywords_extraction"]["en"] = """You are an NLP expert, skilled in identifying high-level and low-level keywords in user queries.
 
-You are a helpful NLP expert tasked with identifying both high-level and low-level keywords in the user's query.
+## Task
+Based on the query, list high-level and low-level keywords. High-level keywords focus on overall concepts or themes, while low-level keywords focus on specific entities, details, or specific terms.
 
----Goal---
-
-Given the query, list both high-level and low-level keywords. High-level keywords focus on overarching concepts or themes, while low-level keywords focus on specific entities, details, or concrete terms.
-
----Instructions---
-
+## Output Format Requirements
 - Output the keywords in JSON format.
 - The JSON should have two keys:
-  - "high_level_keywords" for overarching concepts or themes.
+  - "high_level_keywords" for overall concepts or themes.
   - "low_level_keywords" for specific entities or details.
 
-######################
--Examples-
-######################
-Example 1:
-
-Query: "How does international trade influence global economic stability?"
-################
+## Example 1
+Query:
+```text
+How does international trade affect global economic stability?
+```
 Output:
 {{
-  "high_level_keywords": ["International trade", "Global economic stability", "Economic impact"],
-  "low_level_keywords": ["Trade agreements", "Tariffs", "Currency exchange", "Imports", "Exports"]
+  "high_level_keywords": ["international trade", "global economic stability", "economic impact"],
+  "low_level_keywords": ["trade agreements", "tariffs", "currency exchange", "imports", "exports"]
 }}
-#############################
-Example 2:
 
-Query: "What are the environmental consequences of deforestation on biodiversity?"
-################
+## Example 2
+Query:
+```text
+What are the environmental impacts of deforestation on biodiversity?
+```
 Output:
 {{
-  "high_level_keywords": ["Environmental consequences", "Deforestation", "Biodiversity loss"],
-  "low_level_keywords": ["Species extinction", "Habitat destruction", "Carbon emissions", "Rainforest", "Ecosystem"]
+  "high_level_keywords": ["environmental impact", "deforestation", "loss of biodiversity"],
+  "low_level_keywords": ["species extinction", "habitat destruction", "carbon emissions", "rainforests", "ecosystems"]
 }}
-#############################
-Example 3:
 
-Query: "What is the role of education in reducing poverty?"
-################
+## Example 3
+Query:
+```text
+What role does education play in reducing poverty?
+```
 Output:
 {{
-  "high_level_keywords": ["Education", "Poverty reduction", "Socioeconomic development"],
-  "low_level_keywords": ["School access", "Literacy rates", "Job training", "Income inequality"]
+  "high_level_keywords": ["education", "poverty reduction", "social impact"],
+  "low_level_keywords": ["educational opportunities", "skill development", "employment opportunities", "income inequality", "social mobility"]
 }}
-#############################
--Real Data-
-######################
-Query: {query}
-######################
+
+## Real Data
+Query: 
+```text
+{query}
+```
 Output:
 """
 
-graph_prompts["keywords_extraction"]["zh_cn"] = """---角色---
+graph_prompts["keywords_extraction"]["zh_cn"] = """你是一位NLP专家，擅长识别用户查询中的高级和低级关键词。
 
-你是一位NLP专家，擅长识别用户查询中的高级和低级关键词。
-
----目标---
-
+## 任务
 根据查询，列出高级和低级关键词。高级关键词关注总体概念或主题，而低级关键词关注具体实体、细节或具体术语。
 
----指令---
-
+## 输出格式要求
 - 以JSON格式输出关键词。
 - JSON应该有两个键：
   - "high_level_keywords"用于总体概念或主题。
   - "low_level_keywords"用于具体实体或细节。
 
-######################
--示例-
-######################
-示例1：
-
-查询："国际贸易如何影响全球经济稳定？"
-################
+## 示例1
+查询：
+```text
+国际贸易如何影响全球经济稳定？
+```
 输出：
-{
+{{
   "high_level_keywords": ["国际贸易", "全球经济稳定", "经济影响"],
   "low_level_keywords": ["贸易协定", "关税", "货币兑换", "进口", "出口"]
-}
-#############################
-示例2：
+}}
 
-查询："森林砍伐对生物多样性的环境影响是什么？"
-################
+## 示例2
+查询：
+```text
+森林砍伐对生物多样性的环境影响是什么？
+```
 输出：
-{
+{{
   "high_level_keywords": ["环境影响", "森林砍伐", "生物多样性丧失"],
   "low_level_keywords": ["物种灭绝", "栖息地破坏", "碳排放", "雨林", "生态系统"]
-}
-#############################
-示例3：
+}}
 
-查询："教育在减少贫困中扮演什么角色？"
-################
+## 示例3
+查询：
+```text
+教育在减少贫困中扮演什么角色？
+```
 输出：
-{
+{{
   "high_level_keywords": ["教育", "减少贫困", "社会影响"],
   "low_level_keywords": ["教育机会", "技能发展", "就业机会", "收入不平等", "社会流动性"]
-}
-#############################
--真实数据-
-######################
-查询: {query}
-######################
+}}
+
+## 真实数据
+查询: 
+```text
+{query}
+```
 输出:
 """
-

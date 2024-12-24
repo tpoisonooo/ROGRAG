@@ -1,5 +1,6 @@
 """LLM server proxy."""
 import json
+import pdb
 import os
 from .limitter import RPM, TPM
 from .utils import always_get_an_event_loop
@@ -130,7 +131,7 @@ class LLM:
         wait=wait_exponential(multiplier=1, min=30, max=60),
         retry=retry_if_exception_type((RateLimitError, APIConnectionError, Timeout, APITimeoutError)),
     )
-    @limit_async_func_call(12)
+    @limit_async_func_call(1)
     async def chat(
         self,
         prompt:str,
@@ -138,7 +139,7 @@ class LLM:
         system_prompt=None,
         history=[],
         allow_truncate=False,
-        timeout=240
+        timeout=360
     ) -> str:
         # choose backend
         # if user not specify model, use first one 
@@ -170,7 +171,8 @@ class LLM:
         try:
             model = self.choose_model(backend=instance, token_size=input_token_size)
             openai_async_client = AsyncOpenAI(base_url=instance.base_url, api_key=instance.api_key, timeout=timeout)
-            response = await openai_async_client.chat.completions.create(model=model, messages=messages, temperature=0.7, top_p=0.7, presence_penalty=0.05)
+            # response = await openai_async_client.chat.completions.create(model=model, messages=messages, max_tokens=8192, temperature=0.7, top_p=0.7, extra_body={'repetition_penalty': 1.05})
+            response = await openai_async_client.chat.completions.create(model=model, messages=messages, max_tokens=8192, temperature=0.7, top_p=0.7)
 
             if response.choices is None:
                 pass
@@ -178,11 +180,12 @@ class LLM:
             
             content = response.choices[0].message.content
         except Exception as e:
-            logger.error(e)
+            logger.error(e, 'req len {}'.format(len(str(messages))))
+            
             raise e
         content_token_size = len(encode_string(content=content))
         
-        if True:
+        if False:
             dump_json = {
                 "messages": messages,
                 "reply": content
