@@ -2,12 +2,10 @@ from .base import Retriever
 from .bm25 import BM25Retriever
 from loguru import logger
 import time
-from .logic import ReasonRetriever
 from .knowledge import KnowledgeRetriever
 from .web import WebRetriever
 from .bm25 import BM25Retriever
 from .inverted import InvertedRetriever
-from .dense import DenseRetriever
 from .base import RetrieveResource
 from enum import Enum
 
@@ -15,7 +13,6 @@ class RetrieveMethod(str, Enum):
     """Enumerator of the Distance strategies for calculating distances
     between vectors."""
     KNOWLEDGE = "KNOWLEDGE"
-    REASON = "REASON"
     BM25 = "BM25"
     WEB = "WEB"
     INVERTED = "INVERTED"
@@ -32,8 +29,7 @@ class SharedRetrieverPool:
             RetrieveMethod.KNOWLEDGE: KnowledgeRetriever,
             RetrieveMethod.WEB: WebRetriever,
             RetrieveMethod.BM25: BM25Retriever,
-            RetrieveMethod.INVERTED: InvertedRetriever,
-            RetrieveMethod.REASON: ReasonRetriever
+            RetrieveMethod.INVERTED: InvertedRetriever
         }
 
     def get(self,
