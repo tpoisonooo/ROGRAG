@@ -28,6 +28,6 @@ with open('badcase.jsonl', 'w') as fout:
                 fout.write('\n')
             
 rate = true_cnt / (false_cnt + true_cnt)
-logger.info(rate)
+logger.info((rate, true_cnt, false_cnt + true_cnt))
 pdb.set_trace()
 pass

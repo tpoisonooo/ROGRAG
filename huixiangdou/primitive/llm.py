@@ -172,7 +172,7 @@ class LLM:
             model = self.choose_model(backend=instance, token_size=input_token_size)
             openai_async_client = AsyncOpenAI(base_url=instance.base_url, api_key=instance.api_key, timeout=timeout)
             # response = await openai_async_client.chat.completions.create(model=model, messages=messages, max_tokens=8192, temperature=0.7, top_p=0.7, extra_body={'repetition_penalty': 1.05})
-            response = await openai_async_client.chat.completions.create(model=model, messages=messages, max_tokens=8192, temperature=0.7, top_p=0.7)
+            response = await openai_async_client.chat.completions.create(model=model, messages=messages, temperature=0.7, top_p=0.7)
 
             if response.choices is None:
                 pass
