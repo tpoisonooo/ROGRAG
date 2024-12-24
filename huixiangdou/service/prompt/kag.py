@@ -182,113 +182,106 @@ graph_prompts["process_tickers"] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "�
 
 graph_prompts["keywords_extraction"] = dict()
 
-graph_prompts["keywords_extraction"]["en"] = """---Role---
+graph_prompts["keywords_extraction"]["en"] = """You are an NLP expert, skilled in identifying high-level and low-level keywords in user queries.
 
-You are a helpful NLP expert tasked with identifying both high-level and low-level keywords in the user's query.
+## Task
+Based on the query, list high-level and low-level keywords. High-level keywords focus on overall concepts or themes, while low-level keywords focus on specific entities, details, or specific terms.
 
----Goal---
-
-Given the query, list both high-level and low-level keywords. High-level keywords focus on overarching concepts or themes, while low-level keywords focus on specific entities, details, or concrete terms.
-
----Instructions---
-
+## Output Format Requirements
 - Output the keywords in JSON format.
 - The JSON should have two keys:
-  - "high_level_keywords" for overarching concepts or themes.
+  - "high_level_keywords" for overall concepts or themes.
   - "low_level_keywords" for specific entities or details.
 
-######################
--Examples-
-######################
-Example 1:
-
-Query: "How does international trade influence global economic stability?"
-################
+## Example 1
+Query:
+```text
+How does international trade affect global economic stability?
+```
 Output:
 {{
-  "high_level_keywords": ["International trade", "Global economic stability", "Economic impact"],
-  "low_level_keywords": ["Trade agreements", "Tariffs", "Currency exchange", "Imports", "Exports"]
+  "high_level_keywords": ["international trade", "global economic stability", "economic impact"],
+  "low_level_keywords": ["trade agreements", "tariffs", "currency exchange", "imports", "exports"]
 }}
-#############################
-Example 2:
 
-Query: "What are the environmental consequences of deforestation on biodiversity?"
-################
+## Example 2
+Query:
+```text
+What are the environmental impacts of deforestation on biodiversity?
+```
 Output:
 {{
-  "high_level_keywords": ["Environmental consequences", "Deforestation", "Biodiversity loss"],
-  "low_level_keywords": ["Species extinction", "Habitat destruction", "Carbon emissions", "Rainforest", "Ecosystem"]
+  "high_level_keywords": ["environmental impact", "deforestation", "loss of biodiversity"],
+  "low_level_keywords": ["species extinction", "habitat destruction", "carbon emissions", "rainforests", "ecosystems"]
 }}
-#############################
-Example 3:
 
-Query: "What is the role of education in reducing poverty?"
-################
+## Example 3
+Query:
+```text
+What role does education play in reducing poverty?
+```
 Output:
 {{
-  "high_level_keywords": ["Education", "Poverty reduction", "Socioeconomic development"],
-  "low_level_keywords": ["School access", "Literacy rates", "Job training", "Income inequality"]
+  "high_level_keywords": ["education", "poverty reduction", "social impact"],
+  "low_level_keywords": ["educational opportunities", "skill development", "employment opportunities", "income inequality", "social mobility"]
 }}
-#############################
--Real Data-
-######################
-Query: {query}
-######################
+
+## Real Data
+Query: 
+```text
+{query}
+```
 Output:
 """
 
-graph_prompts["keywords_extraction"]["zh_cn"] = """---角色---
+graph_prompts["keywords_extraction"]["zh_cn"] = """你是一位NLP专家，擅长识别用户查询中的高级和低级关键词。
 
-你是一位NLP专家，擅长识别用户查询中的高级和低级关键词。
-
----目标---
-
+## 任务
 根据查询，列出高级和低级关键词。高级关键词关注总体概念或主题，而低级关键词关注具体实体、细节或具体术语。
 
----指令---
-
+## 输出格式要求
 - 以JSON格式输出关键词。
 - JSON应该有两个键：
   - "high_level_keywords"用于总体概念或主题。
   - "low_level_keywords"用于具体实体或细节。
 
-######################
--示例-
-######################
-示例1：
-
-查询："国际贸易如何影响全球经济稳定？"
-################
+## 示例1
+查询：
+```text
+国际贸易如何影响全球经济稳定？
+```
 输出：
-{
+{{
   "high_level_keywords": ["国际贸易", "全球经济稳定", "经济影响"],
   "low_level_keywords": ["贸易协定", "关税", "货币兑换", "进口", "出口"]
-}
-#############################
-示例2：
+}}
 
-查询："森林砍伐对生物多样性的环境影响是什么？"
-################
+## 示例2
+查询：
+```text
+森林砍伐对生物多样性的环境影响是什么？
+```
 输出：
-{
+{{
   "high_level_keywords": ["环境影响", "森林砍伐", "生物多样性丧失"],
   "low_level_keywords": ["物种灭绝", "栖息地破坏", "碳排放", "雨林", "生态系统"]
-}
-#############################
-示例3：
+}}
 
-查询："教育在减少贫困中扮演什么角色？"
-################
+## 示例3
+查询：
+```text
+教育在减少贫困中扮演什么角色？
+```
 输出：
-{
+{{
   "high_level_keywords": ["教育", "减少贫困", "社会影响"],
   "low_level_keywords": ["教育机会", "技能发展", "就业机会", "收入不平等", "社会流动性"]
-}
-#############################
--真实数据-
-######################
-查询: {query}
-######################
+}}
+
+## 真实数据
+查询: 
+```text
+{query}
+```
 输出:
 """
-

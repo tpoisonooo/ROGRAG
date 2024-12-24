@@ -221,7 +221,7 @@ class KnowledgeRetriever(Retriever):
 
         node_datas = [
             {**n.props, "entity_name": k.metadata["entity_name"], "rank": d}
-            for k, n, d in zip(results, node_datas, node_degrees)
+            for k, n, d in zip(chunks, node_datas, node_degrees)
             if n is not None
         ]
 
@@ -450,7 +450,7 @@ class KnowledgeRetriever(Retriever):
         high_level_context = RetrieveReply()
 
         if ll_keywords:
-            results = entities_vdb.similarity_search(embedder=self.embedder, query=query, threshold=self.DENSE_THRESHOLD)
+            results = self.entityDB.similarity_search(embedder=self.embedder, query=query, threshold=self.DENSE_THRESHOLD)
             if results:
                 chunks = [r[0] for r in results[0:self.LOWLEVEL_DENSE_TOPK]]
                 low_level_context = await self._build_local_query_context(
@@ -462,7 +462,7 @@ class KnowledgeRetriever(Retriever):
                 )
 
         if hl_keywords:
-            results = relationships_vdb.similarity_search(embedder=self.embedder, query=query_param, threshold=self.DENSE_THRESHOLD)
+            results = self.relationDB.similarity_search(embedder=self.embedder, query=query, threshold=self.DENSE_THRESHOLD)
             if results:
                 chunks = [r[0] for r in results[0:self.HIGHLEVEL_DENSE_TOPK]]
                 high_level_context = await self._build_global_query_context(
