@@ -9,7 +9,7 @@ from collections import defaultdict
 from enum import Enum
 from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
 
-# copy from db-gpt
+# Modified from db-gpt
 class Direction(Enum):
     """Direction class."""
     OUT = 0

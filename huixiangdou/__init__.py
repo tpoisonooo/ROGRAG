@@ -1,4 +1,4 @@
-# Copyright (c) OpenMMLab. All rights reserved.
+
 """import module."""
 # only import frontend when needed, not here
 from .service import ErrorCode  # noqa E401

@@ -1,4 +1,4 @@
-# Copyright (c) OpenMMLab. All rights reserved.
+
 from dataclasses import dataclass, field
 from enum import Enum
 import math
@@ -45,13 +45,6 @@ class Query():
     language: str = 'en'
     enable_code_search: bool = True
     enable_web_search: bool = True 
-    
-    # # Number of tokens for the original chunks.
-    # max_token_for_text_unit: int = 4000
-    # # Number of tokens for the relationship descriptions
-    # max_token_for_global_context: int = 4000
-    # # Number of tokens for the entity descriptions
-    # max_token_for_local_context: int = 4000
 
     # Number of tokens for the original chunks.
     max_token_for_text_unit: int = 8000
