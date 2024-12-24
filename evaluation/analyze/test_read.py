@@ -3,7 +3,7 @@ import pdb
 from loguru import logger
 
 # path = '/home/data/khj/workspace/seedllm/HuixiangDou/2_zero_shot_kag_seedllm_Qwen2.5-7B-Instruct.jsonl'
-path = '/home/data/khj/workspace/seedllm/HuixiangDou/1202_kag_seedllm_Qwen2.5-7B-Instruct.jsonl'
+path = '/data/khj/workspace/HuixiangDou/1202_kag_seedllm_Qwen2.5-7B-Instruct.jsonl'
 true_cnt = 0
 false_cnt = 0
 

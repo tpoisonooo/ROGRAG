@@ -9,7 +9,7 @@ work_dir = 'workdir'
 config_path = 'config.ini'
 
 # 指定你的base目录
-base_dir = '/home/khj/knowledge2question/data/zero-shot'
+base_dir = '/data/khj/workspace/SeedBench/data/zero-shot'
 assistant = ParallelPipeline(work_dir=work_dir, config_path=config_path)
 
 # 遍历base目录

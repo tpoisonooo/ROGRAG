@@ -18,23 +18,23 @@ class Chunk():
     """
     def __init__(self, content_or_path:str, _hash:str=None, metadata:dict=None, modal:str='text'):
         # fixed attribute sequence
-        if not _hash:
-            self._hash: str = str(uuid.uuid4())[0:6]
         self.content_or_path = content_or_path
         self.metadata = metadata if metadata else dict()
         self.modal = modal
 
-    def __post_init__(self):
-        if self.modal not in ['text', 'image', 'audio', 'fasta']:
-            raise ValueError(
-                f'Invalid modal: {self.modal}. Allowed values are: `text`, `image`, `audio`'
-            )
-        md5 = hashlib.md5()
-        if type(self.content_or_path) is str:
-            md5.update(self.content_or_path.encode('utf8'))
+        if not _hash:
+            self._hash: str = str(uuid.uuid4())[0:6]
         else:
-            md5.update(self.content_or_path)
-        self._hash = md5.hexdigest()[0:6]
+            if self.modal not in ['text', 'image', 'audio', 'fasta']:
+                raise ValueError(
+                    f'Invalid modal: {self.modal}. Allowed values are: `text`, `image`, `audio`'
+                )
+            md5 = hashlib.md5()
+            if type(self.content_or_path) is str:
+                md5.update(self.content_or_path.encode('utf8'))
+            else:
+                md5.update(self.content_or_path)
+            self._hash = md5.hexdigest()[0:6]
 
     def __str__(self) -> str:
         """Override __str__ to restrict it to content_or_path and metadata."""

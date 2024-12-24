@@ -24,7 +24,7 @@ if os.path.exists(output_file):
 # get looper
 loop = always_get_an_event_loop()
 
-files = ['/home/khj/knowledge2question/data/one-shot/1-1.json']
+files = ['/data/khj/workspace/SeedBench/data/zero-shot/1-1.json']
 for file in files:
     # 检查文件扩展名是否为.json
     if file.endswith('.json'):
