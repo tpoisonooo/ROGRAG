@@ -100,7 +100,11 @@ class PPLCheck:
         real_question = sess.query.generation_question if sess.query.generation_question else sess.query.text
         prompt = PROMPTS['perplexsity_check'][sess.language].format(input_query=real_question, input_evidence=str(sess.fused_reply), input_response=sess.response)
         ppl = await self.resource.llm.chat(prompt=prompt, history=sess.history)
-        logger.warning(f'ppl check {real_question} {sess.fused_reply} {sess.response} {ppl}')
+
+        with open('ppl.txt', 'a') as f:
+            f.write(f'ppl check\n real_question:{real_question} \n evidence:{sess.fused_reply} \n response:{sess.response} \n ppl:{ppl}')
+            f.write('\n' + '@' * 32 + '\n') 
+            f.write('\n')
         if 'yes' in ppl.lower():
             return True
         return False
