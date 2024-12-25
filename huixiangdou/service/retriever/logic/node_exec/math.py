@@ -11,18 +11,8 @@ import json
 def default_json(obj):
     if isinstance(obj, Vertex):
         return obj.props.get("description", "")
-        # return {
-        #     "name": obj.name,
-        #     "relation": obj.props.get("description", "")
-        # }
     elif isinstance(obj, Edge):
         return obj.props.get("description", "")
-        # return {
-        #     "source": obj._sid,
-        #     "target": obj._tid,
-        #     "name": obj._name,
-        #     "relation": obj.props.get("description", "")
-        # }
     return obj
 
 class MathExecutor(OpExecutor):

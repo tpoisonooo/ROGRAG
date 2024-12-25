@@ -58,15 +58,6 @@ class GraphExecutor(OpExecutor):
             keep_edges.append(edges[index])
         return keep_edges
 
-    # def upsert_evidence(self, logic_node: LogicNode, op_sess: OpSession, e: Edge):
-    #     # pdb.set_trace()
-    #     chunk_ids = e.props.get('source_id').split(GRAPH_FIELD_SEP)
-    #     for chunk_id in chunk_ids:
-    #         if chunk_id not in op_sess.evidence_chunks:
-    #             op_sess.evidence_chunks[chunk_id] = self.chunkDB.get(_hash=chunk_id)
-        
-    #     op_sess.evidence_strs.append({'sub_query':logic_node.sub_query, 'desc': e.props.get('description')})
-    
     async def run(self, logic_node: LogicNode, op_sess: OpSession):
         params = op_sess.param
         # s/o entity query + p relation query
@@ -145,7 +136,6 @@ class GraphExecutor(OpExecutor):
             await upsert(alias=o_alias, refs=[o_edge])
             return None
         
-   
         node_name = None
         if s_entity:
             node_name = s_entity

@@ -1,6 +1,5 @@
 from loguru import logger
 import re
-# SPOBase, SPOEntity, SPORelation, TypeInfo
 
 import itertools
 import json
@@ -10,6 +9,7 @@ from typing import List, Union
 from abc import ABC
 from ..base import LogicNode
 
+# Heavily modified from KAG
 class Identifier:
     def __init__(self, alias_name):
         self.alias_name = alias_name
@@ -43,7 +43,6 @@ def parse_entity(raw_entity):
         return []
     entity_parts = re.findall(r'(?:`(.+?)`|([^|]+))', raw_entity)
     return [part.replace('``', '|') if part else escaping_part for escaping_part, part in entity_parts]
-
 
 class SPOBase:
     def __init__(self):
@@ -157,7 +156,6 @@ class SPORelation(SPOBase):
         Returns:
             SPORelation: A relation object with alias name and associated type set.
         """
-
         rel_type_set = []
 
         # Split the input string into alias and entity_type_set parts
@@ -345,32 +343,6 @@ def binary_expr_parse(input_str):
         "op": op
     }
 
-
-# filter(left_expr=alias, right_expr=other_alias or const_data, op=equal|lt|gt|le|ge|in|contains|and|or|not)
-class FilterNode(LogicNode):
-    def __init__(self, operator, args):
-        super().__init__(operator, args)
-        self.left_expr = args.get('left_expr', None)
-        self.right_expr = args.get('right_expr', None)
-        self.op = args.get('op', None)
-        self.OP = 'equal|lt|gt|le|ge|in|contains|and|or|not'.split('|')
-
-    def to_dsl(self):
-        raise NotImplementedError("Subclasses should implement this method.")
-
-    def to_std(self, args):
-        for key, value in args.items():
-            self.args[key] = value
-        self.left_expr = args.get('left_expr', self.left_expr)
-        self.right_expr = args.get('right_expr', self.right_expr)
-        self.op = args.get('op', self.op)
-
-    @staticmethod
-    def parse_node(args_str:str):
-        args = binary_expr_parse(args_str)
-        return FilterNode("filter", args)
-
-
 # count(alias)->count_alias
 class CountNode(LogicNode):
     def __init__(self, operator, args):
@@ -413,7 +385,6 @@ class SumNode(LogicNode):
         args = {'alias_name': alias_name, 'set': params}
         return SumNode("sum", args)
 
-
 # compare(param=[alias], op=equal or not_equal or bigger or small)
 class CompareNode(LogicNode):
     def __init__(self, operator, args):
@@ -447,24 +418,6 @@ class CompareNode(LogicNode):
             params_dict[key] = value
         return CompareNode("compare", params_dict)
 
-
-# class DeduceNode(LogicNode):
-#     def __init__(self, operator, args):
-#         super().__init__(operator, args)
-#         self.deduce_ops = args.get("deduce_ops", [])
-
-#     def __str__(self):
-#         return f"deduce(op={','.join(self.deduce_ops)})"
-
-#     @staticmethod
-#     def parse_node(input_str):
-#         ops = input_str.replace("op=", "")
-#         input_ops = ops.split(",")
-#         return DeduceNode("deduce", {
-#             "deduce_ops": input_ops
-#         })
-
-
 # get(alias_name)
 class GetNode(LogicNode):
     def __init__(self, operator, args):
@@ -484,38 +437,3 @@ class GetNode(LogicNode):
             "alias_name": Identifier(input_args[0]),
             "alias_name_set": [Identifier(e) for e in input_args]
         })
-
-# search_s()
-class SearchNode(LogicNode):
-    def __init__(self, operator, args):
-        super().__init__(operator, args)
-        self.s = SPOEntity(None, None, args['type'], None, args['alias'], False)
-        self.s.value_list = args['conditions']
-
-    @staticmethod
-    def parse_node(input_str):
-        pattern = re.compile(r'[,\s]*s=(\w+):([^,\s]+),(.*)')
-        matches = pattern.match(input_str)
-        args = dict()
-        args["alias"] = matches.group(1)
-        args["type"] = matches.group(2)
-        if len(matches.groups()) > 2:
-            search_condition = dict()
-            s_condition = matches.group(3)
-
-            condition_pattern = re.compile(r'(?:[,\s]*(\w+)\.(\w+)=([^,，]+))')
-            condition_list = condition_pattern.findall(s_condition)
-            for condition in condition_list:
-                s_property = condition[1]
-                s_value = condition[2]
-                s_value = SearchNode.check_value_is_reference(s_value)
-                search_condition[s_property] = s_value
-            args['conditions'] = search_condition
-
-        return SearchNode('search_s', args)
-
-    @staticmethod
-    def check_value_is_reference(value_str):
-        if '.' in value_str:
-            return value_str.split('.')
-        return value_str

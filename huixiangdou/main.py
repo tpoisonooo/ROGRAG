@@ -11,7 +11,7 @@ from loguru import logger
 from termcolor import colored
 
 from .service import ErrorCode
-from .pipeline import ParallelPipeline
+from .pipeline import ParallelPipeline, SerialPipeline
 from .primitive import always_get_an_event_loop, Query
 
 def parse_args():
@@ -172,7 +172,7 @@ def run():
     with open(args.config_path, encoding='utf8') as f:
         fe_config = pytoml.load(f)['frontend']
     logger.info('Config loaded.')
-    assistant = ParallelPipeline(work_dir=args.work_dir, config_path=args.config_path)
+    assistant = SerialPipeline(work_dir=args.work_dir, config_path=args.config_path)
 
     loop = always_get_an_event_loop()
 

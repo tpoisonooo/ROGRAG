@@ -40,6 +40,10 @@ class Session:
         # logger for every request
         self.logger = logger.bind(module=request_id)
         self._log_handler = self.create_logger(request_id)
+        self.node = ""
+
+    def visible_str(self, txt):
+        return txt.replace('\n', '\\n').replace('\t', '\\t')
 
     def format(self, max_len:int=-1):
         refs = list(set([c.metadata["source"] for c in self.fused_reply.sources] if self.fused_reply is not None else []))
@@ -48,11 +52,14 @@ class Session:
         table.set_cols_valign(['t', 't', 't', 't'])
         table.header(['Query', 'State', 'Response', 'References'])
         if max_len > 0:
-            table.add_row([self.query.text, str(self.code), self.response[0:max_len] + '..', ','.join(refs)])
+            table.add_row([self.visible_str(self.query.text), str(self.code), self.visible_str(self.response[0:max_len] + '..'), ','.join(refs)])
         else:
-            table.add_row([self.query.text, str(self.code), self.response, ','.join(refs)])
+            table.add_row([self.visible_str(self.query.text), str(self.code), self.visible_str(self.response), ','.join(refs)])
         return table.draw()
 
     def __del__(self):
         self.logger = None
-        logger.remove(self._log_handler)
+        try:
+            logger.remove(self._log_handler)
+        except:
+            pass

@@ -3,7 +3,7 @@ from ...graph_store import GraphStore
 from loguru import logger
 from typing import List, Union, Any, Tuple
 from ..base import Retriever, RetrieveResource, RetrieveReply, OpSession, LogicNode
-from .node_param import SearchNode, GetNode, CompareNode, SumNode, CountNode, GetSPONode
+from .node_param import GetNode, CompareNode, SumNode, CountNode, GetSPONode
 from .node_exec import MathExecutor, GetExecutor, GraphExecutor
 from ...prompt import reason_prompts as PROMPTS 
 from ...nlu import split_string_by_multi_markers, truncate_list_by_token_size
@@ -17,6 +17,7 @@ import asyncio
 import pdb
 import time
 
+# Heavily modified from KAG
 class LFPlanResult:
     def __init__(self, query: str, lf_nodes: List[LogicNode]):
         self.query: str = query
@@ -41,7 +42,6 @@ class ReasonRetriever(Retriever):
         self.get_executor = GetExecutor(resource)
         self.executors = [self.math_executor, self.graph_executor, self.get_executor]
 
-
     def parse_logic_form(self, input_str: str, parsed_entity_set={}, sub_query=None, query=None) -> LogicNode:
         match = re.match(r'(\w+)[\(\（](.*)[\)\）](->)?(.*)?', input_str.strip())
         if not match:
@@ -59,25 +59,14 @@ class ReasonRetriever(Retriever):
                 node.s = s
         elif low_operator in ["get_spo", "retrieval"]:
             node: GetSPONode = GetSPONode.parse_node(args_str)
-        elif low_operator in ["filter"]:
-            node: FilterNode = FilterNode.parse_node(args_str)
-        elif low_operator in ["deduce"]:
-            node: DeduceNode = DeduceNode.parse_node(args_str)
-        elif low_operator in ["verify"]:
-            node: VerifyNode = VerifyNode.parse_node(args_str)
         elif low_operator in ["count"]:
             node: CountNode = CountNode.parse_node(args_str, output_name)
         elif low_operator in ["sum"]:
-            # TODO fix KAG
             node: SumNode = SumNode.parse_node(input_str)
         elif low_operator in ["sort"]:
             node: SortNode = SortNode.parse_node(args_str)
         elif low_operator in ["compare"]:
             node: SortNode = CompareNode.parse_node(args_str)
-        elif low_operator in ["extractor"]:
-            node: ExtractorNode = ExtractorNode.parse_node(args_str)
-        elif low_operator in ['search_s']:
-            node: SearchNode = SearchNode.parse_node(args_str)
         else:
             raise NotImplementedError(f"not impl {input_str}")
 
@@ -85,9 +74,6 @@ class ReasonRetriever(Retriever):
             "sub_query": sub_query,
             "root_query": query
         })
-        
-        # logger.info(node.__dict__)
-        # time.sleep(1)
         return node
 
     def split_sub_query(self, logic_nodes: List[LogicNode]) -> List[LFPlanResult]:

@@ -35,7 +35,7 @@ class KnowledgeRetriever(Retriever):
             logger.warning('!!!warning, workdir not exist.!!!')
             return
 
-    def combine_contexts(self, high_level_context: RetrieveReply, low_level_context: RetrieveReply) -> RetrieveReply:
+    def combine_contexts(self, high_level_context: RetrieveReply, low_level_context: RetrieveReply, query:Query) -> RetrieveReply:
         # Function to extract entities, relationships, and sources from context strings
         
         def process_combine_contexts(hl: List[Any], ll: List[Any], hash_func:callable) -> List[List[str]]:
@@ -54,11 +54,16 @@ class KnowledgeRetriever(Retriever):
                     continue
                 keys.add(key)
                 rets.append(item)
+            
             return rets
         
         nodes = process_combine_contexts(hl=high_level_context.nodes, ll=low_level_context.nodes, hash_func=lambda x:x[0])
         relations = process_combine_contexts(hl=high_level_context.relations, ll=low_level_context.relations, hash_func=lambda x:x[0]+x[1])
         sources = process_combine_contexts(hl=high_level_context.sources, ll=low_level_context.sources, hash_func=lambda x:x._hash)
+        
+        nodes = truncate_list_by_token_size(nodes, key=str, max_token_size=query.max_token_for_local_context)
+        relations = truncate_list_by_token_size(relations, key=str, max_token_size=query.max_token_for_global_context)
+        sources = truncate_list_by_token_size(sources, key=str, max_token_size=query.max_token_for_text_unit)
         r = RetrieveReply(nodes=nodes, relations=relations, sources=sources)
         return r
     
@@ -475,11 +480,11 @@ class KnowledgeRetriever(Retriever):
                     text_chunks_db=self.chunkDB,
                     chunks=chunks
                 )
-        for r in high_level_context.sources:
-            logger.warning(r.metadata)
-        for r in low_level_context.sources:
-            logger.warning(r.metadata)
-        r =  self.combine_contexts(high_level_context, low_level_context)
+        # for r in high_level_context.sources:
+        #     logger.warning(r.metadata)
+        # for r in low_level_context.sources:
+        #     logger.warning(r.metadata)
+        r =  self.combine_contexts(high_level_context, low_level_context, query)
         return r
 
     async def similarity_score(self, query: Union[Query, str]) -> float:
