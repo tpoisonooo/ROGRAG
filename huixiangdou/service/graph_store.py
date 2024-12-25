@@ -692,7 +692,7 @@ if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1 and sys.argv[1] == 'drop':
         store = TuGraphStore(config_path='config.ini')
-        user_input = input("Input Y/n to drop the database")
+        user_input = input("Input Y/n to drop the database? (Y/n)\n")
         if user_input == 'Y':
             logger.info('Remove the database.')
             store.drop()

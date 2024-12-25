@@ -20,8 +20,11 @@ class KnowledgeRetriever(Retriever):
         self.embedder = resource.embedder
         self.llm = resource.llm
         self.work_dir = work_dir
-        self.entityDB = Faiss.load_local(os.path.join(work_dir, 'db_kag_entity'))
-        self.relationDB = Faiss.load_local(os.path.join(work_dir, 'db_kag_relation'))
+        self.entityDB = Faiss.load_local(os.path.join(work_dir, 'db_kag_entity_mix'))
+        self.relationDB = Faiss.load_local(os.path.join(work_dir, 'db_kag_relation_mix'))
+        
+        # self.entityDB_mix = Faiss.load_local(os.path.join(work_dir, 'db_kag_entity_mix'))
+        # self.relationDB_mix = Faiss.load_local(os.path.join(work_dir, 'db_kag_relation_mix'))
         self.DENSE_THRESHOLD = 0.2
         self.HIGHLEVEL_DENSE_TOPK = 5
         self.LOWLEVEL_DENSE_TOPK = 6
