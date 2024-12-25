@@ -37,11 +37,7 @@ Format the content-level key words as ("content_keywords"{tuple_delimiter}<high_
 
 5. When finished, output {completion_delimiter}
 
-<<<<<<< HEAD
 -Example 1-
-=======
--Example-
->>>>>>> c4e611c8e2b82f878c685c9d8edc51c4ca4af078
 Text:
 #############
 their voice slicing through the buzz of activity. "Control may be an illusion when facing an intelligence that literally writes its own rules," they stated stoically, casting a watchful eye over the flurry of data.
@@ -67,7 +63,6 @@ Output:
 ("relationship"{tuple_delimiter}"Control"{tuple_delimiter}"Intelligence"{tuple_delimiter}"The concept of Control is challenged by the Intelligence that writes its own rules."{tuple_delimiter}"power dynamics, autonomy"{tuple_delimiter}7){record_delimiter}
 ("content_keywords"{tuple_delimiter}"first contact, control, communication, cosmic significance"){completion_delimiter}
 
-<<<<<<< HEAD
 -Example 2-
 Text:
 #############
@@ -90,8 +85,6 @@ Output:
 ("relationship"{tuple_delimiter}"Control"{tuple_delimiter}"Intelligence"{tuple_delimiter}"The concept of Control is challenged by the Intelligence that writes its own rules."{tuple_delimiter}"power dynamics, autonomy"{tuple_delimiter}7){record_delimiter}
 ("content_keywords"{tuple_delimiter}"first contact, control, communication, cosmic significance"){completion_delimiter}
 
-=======
->>>>>>> c4e611c8e2b82f878c685c9d8edc51c4ca4af078
 -Real Data-
 Text: 
 #############
