@@ -46,6 +46,9 @@ functionName is operator name;the function format is functionName(args_name1=arg
 - 你不会把某个 function 嵌套进另一个 function 的参数
 - 你不会只输出自然语言，如果没有合适的 function 来解决问题，直接回复 “没有合适的 function”
 
+## 注意事项
+- 你只需要从NLP角度把问题拆解成子步骤，**不需要回答问题本身**
+
 ## 示例
 [
 {{
@@ -109,7 +112,7 @@ reason_prompts["naive_qa"]["zh_cn"] = """
 - 你会解释计算过程
 - 你不会不用简洁简短的文字输出，你不会输出无关用户指令的文字
 - 你不会重复表达和同义反复
-- 如果你不知道答案，或者提供的知识中没有足够的信息来提供答案，就直接说出来。你不会编造任何东西
+- 如果你不知道答案，或者提供的知识中没有足够的信息来提供答案，回复“无法确定”。你不会编造任何东西
 
 ## 参考文档
 {references}

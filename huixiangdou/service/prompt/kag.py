@@ -4,7 +4,7 @@ GRAPH_FIELD_SEP = "<SEP>"
 graph_prompts = {}
 graph_prompts["DEFAULT_TUPLE_DELIMITER"] = "<|>"
 graph_prompts["DEFAULT_RECORD_DELIMITER"] = "##"
-graph_prompts["DEFAULT_ENTITY_TYPES"] = ["concept", "date", "location", "keyword", "organization", "person", "event", "work", "nature", "aritificial", "science", "technology", "mission"]
+graph_prompts["DEFAULT_ENTITY_TYPES"] = ["concept", "date", "location", "keyword", "organization", "person", "event", "work", "nature", "artificial", "science", "technology", "mission", "gene"]
 graph_prompts["DEFAULT_COMPLETION_DELIMITER"] = "<|COMPLETE|>"
 
 # =========================================== entity_extraction =========================================
@@ -41,13 +41,9 @@ Format the content-level key words as ("content_keywords"{tuple_delimiter}<high_
 Text:
 #############
 their voice slicing through the buzz of activity. "Control may be an illusion when facing an intelligence that literally writes its own rules," they stated stoically, casting a watchful eye over the flurry of data.
-
 "It's like it's learning to communicate," offered Sam Rivera from a nearby interface, their youthful energy boding a mix of awe and anxiety. "This gives talking to strangers' a whole new meaning."
-
 Alex surveyed his team—each face a study in concentration, determination, and not a small measure of trepidation. "This might well be our first contact," he acknowledged, "And we need to be ready for whatever answers back."
-
 Together, they stood on the edge of the unknown, forging humanity's response to a message from the heavens. The ensuing silence was palpable—a collective introspection about their role in this grand cosmic play, one that could rewrite human history.
-
 The encrypted dialogue continued to unfold, its intricate patterns showing an almost uncanny anticipation
 #############
 Output:

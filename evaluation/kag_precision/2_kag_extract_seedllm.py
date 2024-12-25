@@ -1,5 +1,5 @@
 from huixiangdou.primitive import LLM, always_get_an_event_loop, Query
-from huixiangdou.pipeline import ParallelPipeline
+from huixiangdou.pipeline import ParallelPipeline, SerialPipeline
 from loguru import logger
 import os
 import json
@@ -7,6 +7,29 @@ import pdb
 
 work_dir = 'workdir'
 config_path = 'config.ini'
+
+def parse_args():
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description='Knowledge retrieval testcase.')
+    parser.add_argument('--workdir',
+                        type=str,
+                        default='workdir',
+                        help='Working directory.')
+    parser.add_argument(
+        '--config_path',
+        default='config.ini',
+        help='Configuration path. Default value is config.ini')
+    parser.add_argument(
+        '--dataset',
+        default=None,
+        help='Small dataset for dev.')
+    parser.add_argument(
+        '--pipeline',
+        default=None,
+        help='Small dataset for dev.')
+    args = parser.parse_args()
+    return args
 
 # 指定你的base目录
 base_dir = '/data/khj/workspace/SeedBench/data/zero-shot'

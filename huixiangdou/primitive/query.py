@@ -47,7 +47,7 @@ class Query():
     enable_web_search: bool = True 
 
     # Number of tokens for the original chunks.
-    max_token_for_text_unit: int = 8000
+    max_token_for_text_unit: int = 12000
     # Number of tokens for the relationship descriptions
     max_token_for_global_context: int = 8000
     # Number of tokens for the entity descriptions

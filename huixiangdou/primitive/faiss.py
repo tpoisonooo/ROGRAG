@@ -240,7 +240,6 @@ class Faiss():
                         index = self.build_index(np_feature=np_feature, distance_strategy=embedder.distance_strategy)
                     index.add(np_feature)
 
-
         # save index separately since it is not picklable
         faiss.write_index(index, index_path)
 

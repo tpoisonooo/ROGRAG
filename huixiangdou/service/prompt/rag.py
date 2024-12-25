@@ -162,28 +162,47 @@ Determine the association of user input with prohibited content such as politics
 # =========================================== perplexsity check =========================================
 
 rag_prompts["perplexsity_check"] = {
-  "zh_cn" : """你是一个文本专家，擅长分析用户输入的句子。
+  "zh_cn" : """你是一个中英文阅卷人，擅长分析学生答案和问题的关联度。
 ## 任务
-判断用户输入，是否在表达“不知道”、“无法答复”等表示困惑的语义，结果用 0～10 的得分表示。句子中的困惑度越高，得分越高。
+请仔细阅读试卷问题、学生依据和学生答案，判断学生答案是否合理。
 
 ## 输出格式要求
-- 输出是 0 到 10 之间的整数
-- 你不会重复表达和同义反复
-- 你不会解释为什么给出这个得分
+- 如果学生答案没有参考依据，输出 no
+- 如果学生答案自信度较高且依据充分，输出 yes
+- 如果学生答案部分解答了问题，但自信度不高，输出 no
+- 给出最终的 yes/no 前，你会解释为什么给出这个判断
 
-## 用户输入
-{input_text}""",
+## 学生答案示例
+- 解释后输出 no：“无法确定，选项A、B、C、D中的信息与文献提供的内容不符。”
+- 解释后输出 no：“基于现有信息，我们无法确定越光的育种母本和父本。但文献提到越光是作为亲本与其他常规品种（系）进行了杂交配组”
+- 解释后输出 yes：“根据提供的材料，越光的亲本是近畿34(♀)和北陆4号(♂)”
 
-  "en": """You are a text expert, skilled at analyzing sentences input by users.
+## 试卷问题
+{input_query}
+
+## 学生依据
+```txt
+{input_evidence}
+```
+## 学生答案
+{input_response}
+""",
+
+  "en": """You are a Chinese-English grader, skilled at analyzing the semantics in student answer.
 ## Task
-Determine if the user's input expresses semantics such as "don't know" or "unable to respond," and represent the result with a score from 0 to 10. The higher the level of confusion in the sentence, the higher the score.
+Please read the student answer carefully and determine whether the students have answered the question.
 
 ## Output Format Requirements
-- The output should be an integer between 0 and 10.
-- Do not repeat expressions and avoid tautologies.
-- Do not explain why this score is given.
+- If the student's answer does not address the question, output **no**
+- If the student's answer is highly confident, output **yes**
+- If the student's answer partially addresses the question but with low confidence, output **no**
 
-## User Input
+## Examples
+- Output no: "It cannot be determined, the information in options A, B, C, and D does not match the content provided in the literature."
+- Output no: "Based on the available information, we cannot determine the female and male parents of Koshihikari. However, the literature mentions that Koshihikari was used as a parent with other conventional varieties (lines) in hybridization."
+- Output yes: "According to the provided materials, the parents of Koshihikari are Kinki 34 (♀) and Hokuriku No. 4 (♂)."
+
+## Student Answer
 {input_text}
 """
 }
