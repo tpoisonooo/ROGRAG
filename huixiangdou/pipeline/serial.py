@@ -7,7 +7,7 @@ from typing import List, Union, AsyncGenerator
 
 from loguru import logger
 
-from ..primitive import Query, Pair
+from ..primitive import Query, Pair, encode_string
 from .session import Session
 from ..service import SharedRetrieverPool, Retriever, RetrieveResource, ErrorCode
 from ..service.retriever import RetrieveMethod
@@ -89,6 +89,12 @@ class ReduceGenerate:
         yield sess
         
         sess.response = await self.resource.llm.chat(prompt=prompt, history=sess.history)
+        sess.debug = dict()
+        sess.debug[sess.node] = {
+            "prompt": prompt,
+            "token_len": encode_string(prompt),
+            "response": sess.response
+        }
         yield sess
 
 class PPLCheck:
@@ -97,20 +103,18 @@ class PPLCheck:
 
     async def process(self, sess: Session) -> AsyncGenerator[Session, bool]:
         prompt = None
-        real_question = sess.query.generation_question if sess.query.generation_question else sess.query.text
-        prompt = PROMPTS['perplexsity_check'][sess.language].format(input_query=real_question, input_evidence=str(sess.fused_reply), input_response=sess.response)
+        prompt = PROMPTS['perplexsity_check'][sess.language].format(input_query=sess.query.text, input_evidence=str(sess.fused_reply), input_response=sess.response)
         ppl = await self.resource.llm.chat(prompt=prompt, history=sess.history)
 
         with open('ppl.txt', 'a') as f:
-            f.write(f'ppl check\n real_question:{real_question} \n evidence:{sess.fused_reply} \n response:{sess.response} \n ppl:{ppl}')
-            f.write('\n' + '@' * 32 + '\n') 
+            f.write(f'ppl check\n query.text:{sess.query.text} \n evidence:{sess.fused_reply} \n response:{sess.response} \n ppl:{ppl}')
+            f.write('\n' + '@' * 32 + '\n')
             f.write('\n')
         if 'yes' in ppl.lower():
             return True
         return False
 
 class SerialPipeline:
-
     def __init__(self, work_dir: str='workdir', config_path: str='config.ini'):
         self.resource = RetrieveResource(config_path)
         self.pool = SharedRetrieverPool(resource=self.resource)
@@ -162,11 +166,11 @@ class SerialPipeline:
         run_graphrag = False
         try:
             sess.retrieve_replies = [await self.retriever_reason.explore(query=sess.query)]
+            sess.node = 'retriever_reason'
             async for sess in reduce.process(sess):
                 if sess.response:
                     success = await ppl.process(sess)
                     if success:
-                        sess.node = 'retriever_reason'
                         yield sess
                         break
                     run_graphrag = True

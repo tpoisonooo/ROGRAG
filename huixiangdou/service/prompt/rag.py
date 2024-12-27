@@ -171,6 +171,10 @@ rag_prompts["perplexsity_check"] = {
 - 如果学生答案自信度较高且依据充分，输出 yes
 - 如果学生答案部分解答了问题，但自信度不高，输出 no
 - 给出最终的 yes/no 前，你会解释为什么给出这个判断
+- 在你的解释中，需要引用学生依据。除非有明确上下文，你不会猜测问题的合理答案
+
+## 注意事项
+- 在检验学生答案过程中，你会注意到表达单位的差异，例如1公斤是2斤
 
 ## 学生答案示例
 - 解释后输出 no：“无法确定，选项A、B、C、D中的信息与文献提供的内容不符。”
@@ -196,6 +200,10 @@ Please read the student answer carefully and determine whether the students have
 - If the student's answer does not address the question, output **no**
 - If the student's answer is highly confident, output **yes**
 - If the student's answer partially addresses the question but with low confidence, output **no**
+- In your explanations, you need to cite student references. Unless there is a clear context, you will not guess reasonable answers to questions.
+
+## Precautions
+- During the examination of student answers, you will pay attention to differences in units of expression
 
 ## Examples
 - Output no: "It cannot be determined, the information in options A, B, C, and D does not match the content provided in the literature."
