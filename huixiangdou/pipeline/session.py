@@ -41,6 +41,7 @@ class Session:
         self.logger = logger.bind(module=request_id)
         self._log_handler = self.create_logger(request_id)
         self.node = ""
+        self.debug = {}
 
     def visible_str(self, txt):
         return txt.replace('\n', '\\n').replace('\t', '\\t')
