@@ -38,7 +38,7 @@ def parse_args():
     parser.add_argument(
         '--datadir',
         type=str,
-        default='/data/khj/workspace/SeedBench/data/one-shot',
+        default='/data/khj/workspace/SeedBench/data/zero-shot',
         help='SeedBench datadir for test.')
     parser.add_argument(
         '--outdir',
@@ -107,6 +107,14 @@ if __name__ == '__main__':
                             response = sess.response
                             node = sess.node
                             logger.info(sess.stage, response)
+
+                        debugfile = os.path.join(args.outdir, 'debug.jsonl')
+                        sess.debug['gt'] = answer
+                        sess.debug['input'] = generation_question
+                        with open(debugfile, 'a') as f:
+                            jsonstr = json.dumps(sess.debug, ensure_ascii=False)
+                            f.write(jsonstr)
+                            f.write('\n')
                         return response, node
 
                     q = Query(text=question, generation_question=generation_question)
