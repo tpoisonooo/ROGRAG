@@ -89,10 +89,9 @@ class ReduceGenerate:
         yield sess
         
         sess.response = await self.resource.llm.chat(prompt=prompt, history=sess.history)
-        sess.debug = dict()
         sess.debug[sess.node] = {
             "prompt": prompt,
-            "token_len": encode_string(prompt),
+            "token_len": len(encode_string(prompt)),
             "response": sess.response
         }
         yield sess
@@ -106,10 +105,11 @@ class PPLCheck:
         prompt = PROMPTS['perplexsity_check'][sess.language].format(input_query=sess.query.text, input_evidence=str(sess.fused_reply), input_response=sess.response)
         ppl = await self.resource.llm.chat(prompt=prompt, history=sess.history)
 
-        with open('ppl.txt', 'a') as f:
-            f.write(f'ppl check\n query.text:{sess.query.text} \n evidence:{sess.fused_reply} \n response:{sess.response} \n ppl:{ppl}')
-            f.write('\n' + '@' * 32 + '\n')
-            f.write('\n')
+        # with open('ppl.txt', 'a') as f:
+        #     f.write(f'ppl check\n query.text:{sess.query.text} \n evidence:{sess.fused_reply} \n response:{sess.response} \n ppl:{ppl}')
+        #     f.write('\n' + '@' * 32 + '\n')
+        #     f.write('\n')
+        sess.debug['ppl'] = ppl
         if 'yes' in ppl.lower():
             return True
         return False
@@ -163,7 +163,7 @@ class SerialPipeline:
         sess.stage = "1_search"
         yield sess
         
-        run_graphrag = False
+        run_graphrag = True
         try:
             sess.retrieve_replies = [await self.retriever_reason.explore(query=sess.query)]
             sess.node = 'retriever_reason'
