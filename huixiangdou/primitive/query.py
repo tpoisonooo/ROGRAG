@@ -1,9 +1,9 @@
-
 from dataclasses import dataclass, field
 from enum import Enum
 import math
 from pydantic import BaseModel
 from typing import List
+
 
 # Copy from langchain
 class DistanceStrategy(str, Enum):
@@ -33,6 +33,7 @@ class DistanceStrategy(str, Enum):
         """Normalize the distance to a score on a scale [0, 1]."""
         return similarity
 
+
 @dataclass
 class Query():
     text: str = None
@@ -41,10 +42,10 @@ class Query():
 
     # Real question for generation stage, default value is None
     generation_question: str = None
-    
+
     language: str = 'en'
     enable_code_search: bool = True
-    enable_web_search: bool = True 
+    enable_web_search: bool = True
 
     # Number of tokens for the original chunks.
     max_token_for_text_unit: int = 12000
@@ -52,7 +53,6 @@ class Query():
     max_token_for_global_context: int = 8000
     # Number of tokens for the entity descriptions
     max_token_for_local_context: int = 8000
-
 
     def __str__(self) -> str:
         """Override __str__ to restrict it to text, image and audio."""
@@ -77,16 +77,19 @@ class Query():
     def __repr__(self) -> str:
         return self.__str__()
 
+
 class Reference(BaseModel):
     chunk: str
     source_or_url: str
     show_type: str
     download_token: str
-    
+
+
 class Pair(BaseModel):
     user: str
     assistant: str
     references: List[Reference]
+
 
 class Token(BaseModel):
     token: str

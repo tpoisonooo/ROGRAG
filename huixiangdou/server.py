@@ -27,15 +27,18 @@ from oss2.credentials import EnvironmentVariableCredentialsProvider
 assistant = None
 app = FastAPI(docs_url='/')
 
+
 class Talk(BaseModel):
     text: str
     image: str = ''
 
+
 class Talk_seed(BaseModel):
-    language: str 
-    enable_web_search: bool 
-    user: str 
-    history: list[Pair] 
+    language: str
+    enable_web_search: bool
+    user: str
+    history: list[Pair]
+
 
 def format_refs(refs: List[str]):
     refs_filter = list(set(refs))
@@ -47,19 +50,21 @@ def format_refs(refs: List[str]):
         text += '* {}\r\n'.format(file_or_url)
     text += '\r\n'
     return text
-          
+
+
 @app.post("/v2/chat")
 async def huixiangdou_stream(talk_seed: Talk_seed):
     global assistant
     query = Query(text=talk_seed.user)
 
     pipeline = {}
+
     async def event_stream():
         async for sess in assistant.generate(
-            query = query, 
-            history = talk_seed.history,
-            language = talk_seed.language,
-            enable_web_search = talk_seed.enable_web_search,                          
+                query=query,
+                history=talk_seed.history,
+                language=talk_seed.language,
+                enable_web_search=talk_seed.enable_web_search,
         ):
             status = {
                 "code": int(sess.code),
@@ -78,10 +83,15 @@ async def huixiangdou_stream(talk_seed: Talk_seed):
                     show_type = 'local'
 
                 reference = {
-                    "chunk": sess.context_chunk[i],
-                    "source_or_url": ref,
-                    "show_type": show_type,
-                    "download_token": os.path.join("seedllm", ref) if show_type == 'fasta' else '',
+                    "chunk":
+                    sess.context_chunk[i],
+                    "source_or_url":
+                    ref,
+                    "show_type":
+                    show_type,
+                    "download_token":
+                    os.path.join("seedllm", ref)
+                    if show_type == 'fasta' else '',
                 }
                 references.append(reference)
 
@@ -100,10 +110,10 @@ async def huixiangdou_stream(talk_seed: Talk_seed):
     async def event_stream_async():
         sentence = ''
         async for sess in assistant.generate(
-            query = query, 
-            history = talk_seed.history,
-            language = talk_seed.language,
-            enable_web_search = talk_seed.enable_web_search,                          
+                query=query,
+                history=talk_seed.history,
+                language=talk_seed.language,
+                enable_web_search=talk_seed.enable_web_search,
         ):
             if sentence == '' and len(sess.references) > 0:
                 sentence = format_refs(sess.references)
@@ -113,10 +123,12 @@ async def huixiangdou_stream(talk_seed: Talk_seed):
                 yield sentence
 
     if type(assistant) is SerialPipeline:
-        return StreamingResponse(event_stream(), media_type="text/event-stream")
+        return StreamingResponse(event_stream(),
+                                 media_type="text/event-stream")
     else:
-        return StreamingResponse(event_stream(), media_type="text/event-stream")
-    
+        return StreamingResponse(event_stream(),
+                                 media_type="text/event-stream")
+
 
 @app.post("/v2/exemplify")
 async def huixiangdou_stream(talk_seed: Talk_seed):
@@ -124,27 +136,26 @@ async def huixiangdou_stream(talk_seed: Talk_seed):
     global assistant
     query = Query(talk_seed.user)
 
-     # 用户词典文件路径  
+    # 用户词典文件路径
     jieba_variety_path = 'huixiangdou/api/data/variety/jieba_variety.txt'
-    jieba_variety_pinyin_path ='huixiangdou/api/data/variety/jieba_variety_pinyin.txt'
-    jieba_gene_path = 'huixiangdou/api/data/gene/jieba_gene.txt' 
+    jieba_variety_pinyin_path = 'huixiangdou/api/data/variety/jieba_variety_pinyin.txt'
+    jieba_gene_path = 'huixiangdou/api/data/gene/jieba_gene.txt'
     config_path = 'config.ini'
     variety_path = 'huixiangdou/api/data/variety/Rice_Variety_merged.csv'
     variety_pinyin_path = 'huixiangdou/api/data/variety/Rice_Variety_merged_pinyin.csv'
     gene_path = 'huixiangdou/api/data/gene/rice_reference_genome_annotation_20240903.csv'
     variety_template_path = 'huixiangdou/api/data/variety/variety_question_template.csv'
-    gene_template_path = 'huixiangdou/api/data/gene/gene_question_template.csv' 
-    
-    jieba.load_userdict(jieba_gene_path)  
-    jieba.load_userdict(jieba_variety_path) 
+    gene_template_path = 'huixiangdou/api/data/gene/gene_question_template.csv'
+
+    jieba.load_userdict(jieba_gene_path)
+    jieba.load_userdict(jieba_variety_path)
     jieba.load_userdict(jieba_variety_pinyin_path)
 
     question_handler = newquestionNode(config_path = config_path, variety_path = variety_path, variety_pinyin_path = variety_pinyin_path, \
                                        gene_path = gene_path, variety_template_path = variety_template_path, gene_template_path = gene_template_path)
-    response = question_handler.process(query)  
+    response = question_handler.process(query)
     # return json.dumps(response, ensure_ascii=False)
     return response
-
 
 
 @app.post("/v2/download")
@@ -152,12 +163,14 @@ async def huixiangdou_stream(token: Token):
 
     # 从环境变量中获取访问凭证。运行本代码示例之前，请确保已设置环境变量OSS_ACCESS_KEY_ID和OSS_ACCESS_KEY_SECRET。
     os.environ['OSS_ACCESS_KEY_ID'] = 'LTAI5tHsCF8Z8sf2nYVEaRtK'  #AccessKey ID
-    os.environ['OSS_ACCESS_KEY_SECRET'] = 'Spkho47sJ4gNDnOz1LQCSvuOPlJEQq'  #AccessKey Secret
+    os.environ[
+        'OSS_ACCESS_KEY_SECRET'] = 'Spkho47sJ4gNDnOz1LQCSvuOPlJEQq'  #AccessKey Secret
     auth = oss2.ProviderAuth(EnvironmentVariableCredentialsProvider())
 
     # yourEndpoint填写Bucket所在地域对应的Endpoint。以华东1（杭州）为例，Endpoint填写为https://oss-cn-hangzhou.aliyuncs.com。
     # 填写Bucket名称，例如examplebucket。
-    bucket = oss2.Bucket(auth, 'https://oss-cn-shanghai.aliyuncs.com', 'openmmlab-deploee')
+    bucket = oss2.Bucket(auth, 'https://oss-cn-shanghai.aliyuncs.com',
+                         'openmmlab-deploee')
     # 填写Object完整路径，例如exampledir/exampleobject.txt。Object完整路径中不能包含Bucket名称。
 
     object_name = token.token
@@ -180,61 +193,71 @@ async def huixiangdou_stream(token: Token):
     # 生成下载文件的签名URL，有效时间为60秒。
     # 生成签名URL时，OSS默认会对Object完整路径中的正斜线（/）进行转义，从而导致生成的签名URL无法直接使用。
     # 设置slash_safe为True，OSS不会对Object完整路径中的正斜线（/）进行转义，此时生成的签名URL可以直接使用。
-    url = bucket.sign_url('GET', object_name, 60, slash_safe=True, headers=headers, params=params)
-
+    url = bucket.sign_url('GET',
+                          object_name,
+                          60,
+                          slash_safe=True,
+                          headers=headers,
+                          params=params)
 
     try:
-    # 发起 GET 请求
-        response = requests.get(url, headers=headers, params=params, timeout=60)
-    
-    # 检查 HTTP 响应状态码
+        # 发起 GET 请求
+        response = requests.get(url,
+                                headers=headers,
+                                params=params,
+                                timeout=60)
+
+        # 检查 HTTP 响应状态码
         if response.status_code == 200:
             status['code'] = 0
             status['error'] = 'None'
 
         else:
             status['code'] = response.status_code
-            status['error'] = f"URL is not valid. HTTP status code:, {response.status_code}"       
+            status[
+                'error'] = f"URL is not valid. HTTP status code:, {response.status_code}"
 
     except requests.exceptions.RequestException as e:
-    # 捕获请求过程中的异常
+        # 捕获请求过程中的异常
         status['code'] = 1
         status['error'] = f"Error occurred while accessing the URL:, {e}"
 
-    downloadURL = {
-        'status': status,
-        'data': {
-            'url': url
-        }
-    }
+    downloadURL = {'status': status, 'data': {'url': url}}
     return downloadURL
-    
-    
+
 
 def parse_args():
     """Parse args."""
-    parser = argparse.ArgumentParser(description='SerialPipeline or Parallel Pipeline.')
+    parser = argparse.ArgumentParser(
+        description='SerialPipeline or Parallel Pipeline.')
     parser.add_argument('--work_dir',
                         type=str,
                         default='workdir',
                         help='Working directory.')
+    parser.add_argument('--config_path',
+                        default='config.ini',
+                        type=str,
+                        help='Configuration path. Default value is config.ini')
     parser.add_argument(
-        '--config_path',
-        default='config.ini',
+        '--pipeline',
         type=str,
-        help='Configuration path. Default value is config.ini')
-    parser.add_argument('--pipeline', type=str, choices=['chat_with_repo', 'chat_in_group'], default='chat_with_repo', 
-                        help='Select pipeline type for difference scenario, default value is `chat_with_repo`')
+        choices=['chat_with_repo', 'chat_in_group'],
+        default='chat_with_repo',
+        help=
+        'Select pipeline type for difference scenario, default value is `chat_with_repo`'
+    )
     parser.add_argument('--standalone',
                         action='store_true',
                         default=True,
                         help='Auto deploy required Hybrid LLM Service.')
-    parser.add_argument('--no-standalone',
-                        action='store_false',
-                        dest='standalone',  # 指定与上面参数相同的目标
-                        help='Do not auto deploy required Hybrid LLM Service.')
+    parser.add_argument(
+        '--no-standalone',
+        action='store_false',
+        dest='standalone',  # 指定与上面参数相同的目标
+        help='Do not auto deploy required Hybrid LLM Service.')
     args = parser.parse_args()
     return args
+
 
 if __name__ == '__main__':
     args = parse_args()
@@ -244,7 +267,9 @@ if __name__ == '__main__':
         start_llm_server(config_path=args.config_path)
     # setup chat service
     if 'chat_with_repo' in args.pipeline:
-        assistant = ParallelPipeline(work_dir=args.work_dir, config_path=args.config_path)
+        assistant = ParallelPipeline(work_dir=args.work_dir,
+                                     config_path=args.config_path)
     elif 'chat_in_group' in args.pipeline:
-        assistant = SerialPipeline(work_dir=args.work_dir, config_path=args.config_path)
+        assistant = SerialPipeline(work_dir=args.work_dir,
+                                   config_path=args.config_path)
     uvicorn.run(app, host='0.0.0.0', port=23333, log_level='info')

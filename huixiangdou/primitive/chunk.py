@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 import uuid
 import hashlib
 
+
 @dataclass
 class Chunk():
     """Class for storing a piece of text and associated metadata.

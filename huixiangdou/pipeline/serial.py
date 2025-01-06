@@ -13,26 +13,29 @@ from ..service import SharedRetrieverPool, Retriever, RetrieveResource, ErrorCod
 from ..service.retriever import RetrieveMethod
 from ..service.prompt import rag_prompts as PROMPTS
 
+
 class PreprocNode:
+
     def __init__(self, resource: RetrieveResource):
         self.resource = resource
-        
+
     async def process(self, sess: Session) -> AsyncGenerator[Session, Session]:
 
         assert isinstance(sess.history, list), "sess.history 数据结构错误"
-        
-        if len(sess.history) > 0 :
+
+        if len(sess.history) > 0:
             yield sess
             return
-        
+
         # check input
         if sess.query.text is None or len(sess.query.text) < 2:
             sess.code = ErrorCode.QUESTION_TOO_SHORT
             yield sess
             return
-        
+
         #intention && topic analysis
-        prompt = PROMPTS['extract_topic_intention'][sess.language].format(input_text=sess.query.text)
+        prompt = PROMPTS['extract_topic_intention'][sess.language].format(
+            input_text=sess.query.text)
         json_str = await self.resource.llm.chat(prompt=prompt)
         sess.logger.info(f'{__file__} {json_str}')
         try:
@@ -41,7 +44,7 @@ class PreprocNode:
 
             if json_str.endswith('```'):
                 json_str = json_str[0:-3]
-            
+
             json_obj = json.loads(json_str)
             intention = json_obj['intention']
             if intention is not None:
@@ -53,7 +56,7 @@ class PreprocNode:
                 topic = topic.lower()
             else:
                 topic = 'undefine'
-            
+
             for block_intention in ['问候', 'greeting', 'undefine']:
                 if block_intention in intention:
                     sess.code = ErrorCode.NOT_A_QUESTION
@@ -68,7 +71,9 @@ class PreprocNode:
         except Exception as e:
             sess.logger.error(str(e))
 
+
 class ReduceGenerate:
+
     def __init__(self, resource: RetrieveResource):
         self.resource = resource
 
@@ -82,13 +87,17 @@ class ReduceGenerate:
         else:
             sess.stage = "2_rerank"
             yield sess
-            sess.fused_reply = Retriever.fuse(replies=sess.retrieve_replies, query=sess.query, resource=self.resource)
-            prompt = sess.fused_reply.format(query=real_question, language=sess.language)
+            sess.fused_reply = Retriever.fuse(replies=sess.retrieve_replies,
+                                              query=sess.query,
+                                              resource=self.resource)
+            prompt = sess.fused_reply.format(query=real_question,
+                                             language=sess.language)
 
         sess.stage = "3_generate"
         yield sess
-        
-        sess.response = await self.resource.llm.chat(prompt=prompt, history=sess.history)
+
+        sess.response = await self.resource.llm.chat(prompt=prompt,
+                                                     history=sess.history)
         sess.debug[sess.node] = {
             "prompt": prompt,
             "token_len": len(encode_string(prompt)),
@@ -96,13 +105,18 @@ class ReduceGenerate:
         }
         yield sess
 
+
 class PPLCheck:
+
     def __init__(self, resource: RetrieveResource):
         self.resource = resource
 
     async def process(self, sess: Session) -> AsyncGenerator[Session, bool]:
         prompt = None
-        prompt = PROMPTS['perplexsity_check'][sess.language].format(input_query=sess.query.text, input_evidence=str(sess.fused_reply), input_response=sess.response)
+        prompt = PROMPTS['perplexsity_check'][sess.language].format(
+            input_query=sess.query.text,
+            input_evidence=str(sess.fused_reply),
+            input_response=sess.response)
         ppl = await self.resource.llm.chat(prompt=prompt, history=sess.history)
 
         # with open('ppl.txt', 'a') as f:
@@ -114,24 +128,33 @@ class PPLCheck:
             return True
         return False
 
+
 class SerialPipeline:
-    def __init__(self, work_dir: str='workdir', config_path: str='config.ini'):
+
+    def __init__(self,
+                 work_dir: str = 'workdir',
+                 config_path: str = 'config.ini'):
         self.resource = RetrieveResource(config_path)
         self.pool = SharedRetrieverPool(resource=self.resource)
-        self.retriever_reason = self.pool.get(work_dir=work_dir, method=RetrieveMethod.REASON)
-        self.retriever_knowledge = self.pool.get(work_dir=work_dir, method=RetrieveMethod.KNOWLEDGE)
-        self.retriever_web = self.pool.get(work_dir=work_dir, method=RetrieveMethod.WEB)
-        self.retriever_bm25 = self.pool.get(work_dir=work_dir, method=RetrieveMethod.BM25)
-        self.retriever_inverted = self.pool.get(work_dir=work_dir, method=RetrieveMethod.INVERTED)
-        
+        self.retriever_reason = self.pool.get(work_dir=work_dir,
+                                              method=RetrieveMethod.REASON)
+        self.retriever_knowledge = self.pool.get(
+            work_dir=work_dir, method=RetrieveMethod.KNOWLEDGE)
+        self.retriever_web = self.pool.get(work_dir=work_dir,
+                                           method=RetrieveMethod.WEB)
+        self.retriever_bm25 = self.pool.get(work_dir=work_dir,
+                                            method=RetrieveMethod.BM25)
+        self.retriever_inverted = self.pool.get(work_dir=work_dir,
+                                                method=RetrieveMethod.INVERTED)
+
         self.config_path = config_path
         self.work_dir = work_dir
 
     async def generate(self,
-                 query: Union[Query, str],
-                 history: List[Pair]=[],
-                 request_id: str='default',
-                 language: str='zh_cn'):
+                       query: Union[Query, str],
+                       history: List[Pair] = [],
+                       request_id: str = 'default',
+                       language: str = 'zh_cn'):
         if type(query) is str:
             query = Query(text=query)
 
@@ -162,10 +185,12 @@ class SerialPipeline:
         # for expert question, retrieval and response
         sess.stage = "1_search"
         yield sess
-        
+
         run_graphrag = False
         try:
-            sess.retrieve_replies = [await self.retriever_reason.explore(query=sess.query)]
+            sess.retrieve_replies = [
+                await self.retriever_reason.explore(query=sess.query)
+            ]
             sess.node = 'retriever_reason'
             async for sess in reduce.process(sess):
                 if sess.response:
@@ -178,9 +203,11 @@ class SerialPipeline:
         except Exception as e:
             logger.error(str(e) + f"{__file__}")
             run_graphrag = True
-        
+
         if run_graphrag:
-            sess.retrieve_replies = [await self.retriever_knowledge.explore(query=sess.query)]
+            sess.retrieve_replies = [
+                await self.retriever_knowledge.explore(query=sess.query)
+            ]
             sess.node = 'retriever_knowledge'
             async for sess in reduce.process(sess):
                 yield sess

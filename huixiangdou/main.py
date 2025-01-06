@@ -14,6 +14,7 @@ from .service import ErrorCode
 from .pipeline import ParallelPipeline, SerialPipeline
 from .primitive import always_get_an_event_loop, Query
 
+
 def parse_args():
     """Parse args."""
     parser = argparse.ArgumentParser(description='SerialPipeline.')
@@ -73,14 +74,18 @@ async def show(assistant, _: dict):
         logger.info('\n' + sess.format())
 
     while False:
-        user_input = input("🔆 Input your question here, type `bye` for exit:\n")
+        user_input = input(
+            "🔆 Input your question here, type `bye` for exit:\n")
         if 'bye' in user_input:
             break
 
-        for sess in assistant.generate(query=user_input, history=[], groupname=''):
+        for sess in assistant.generate(query=user_input,
+                                       history=[],
+                                       groupname=''):
             pass
-        
+
         print('\n' + sess.format())
+
 
 def lark_group_recv_and_send(assistant, fe_config: dict):
     from .frontend import (is_revert_command, revert_from_lark_group,
@@ -147,12 +152,16 @@ def wechat_personal_run(assistant, fe_config: dict):
         for sess in assistant.generate(query=query, history=[], groupname=''):
             pass
 
-        return web.json_response({'code': int(sess.code), 'reply': sess.format()})
+        return web.json_response({
+            'code': int(sess.code),
+            'reply': sess.format()
+        })
 
     bind_port = fe_config['wechat_personal']['bind_port']
     app = web.Application()
     app.add_routes([web.post('/api', api)])
     web.run_app(app, host='0.0.0.0', port=bind_port)
+
 
 def run():
     """Automatically download config, start llm server and run examples."""
@@ -162,29 +171,31 @@ def run():
     with open(args.config_path, encoding='utf8') as f:
         fe_config = pytoml.load(f)['frontend']
     logger.info('Config loaded.')
-    assistant = SerialPipeline(work_dir=args.work_dir, config_path=args.config_path)
+    assistant = SerialPipeline(work_dir=args.work_dir,
+                               config_path=args.config_path)
 
     loop = always_get_an_event_loop()
 
     fe_type = fe_config['type']
     if fe_type == 'none':
         loop.run_until_complete(show(assistant, fe_config))
-        
+
     elif fe_type == 'lark_group':
         lark_group_recv_and_send(assistant, fe_config)
-        
+
     elif fe_type == 'wechat_personal':
         wechat_personal_run(assistant, fe_config)
-        
+
     elif fe_type == 'wechat_wkteam':
         from .frontend import WkteamManager
         manager = WkteamManager(args.config_path)
         manager.loop(assistant)
-        
+
     else:
         logger.info(
             f'unsupported fe_config.type {fe_type}, please read `config.ini` description.'  # noqa E501
         )
+
 
 if __name__ == '__main__':
     run()

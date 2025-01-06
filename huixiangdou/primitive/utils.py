@@ -1,6 +1,7 @@
 import asyncio
 from loguru import logger
 
+
 def always_get_an_event_loop() -> asyncio.AbstractEventLoop:
     try:
         loop = asyncio.get_running_loop()

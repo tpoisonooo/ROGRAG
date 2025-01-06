@@ -9,7 +9,6 @@ import jieba.analyse
 from loguru import logger
 from typing import List, Union
 from .chunk import Chunk
-
 """
 All of these algorithms have been taken from the paper:
 Trotmam et al, Improvements to BM25 and Language Models Examined
@@ -17,7 +16,9 @@ Trotmam et al, Improvements to BM25 and Language Models Examined
 Here we implement all the BM25 variations mentioned. 
 """
 
+
 class BM25Okapi:
+
     def __init__(self, k1=1.5, b=0.75, epsilon=0.25):
         # BM25Okapi parameters
         self.k1 = k1
@@ -52,7 +53,7 @@ class BM25Okapi:
 
             for word, freq in frequencies.items():
                 try:
-                    nd[word]+=1
+                    nd[word] += 1
                 except KeyError:
                     nd[word] = 1
 
@@ -65,7 +66,7 @@ class BM25Okapi:
         tokenized_corpus = self.tokenizer(corpus)
         return tokenized_corpus
 
-    def save(self, chunks:List[Chunk], filedir:str):
+    def save(self, chunks: List[Chunk], filedir: str):
         # generate idf with corpus
         self.chunks = chunks
 
@@ -84,7 +85,7 @@ class BM25Okapi:
 
         nd = self._init(filtered_corpus)
         self._calc_idf(nd)
-        
+
         # dump to `filepath`
         data = {
             'corpus_size': self.corpus_size,
@@ -99,7 +100,7 @@ class BM25Okapi:
         # logger.info(data)
 
         os.makedirs(filedir, exist_ok=True)
-        
+
         filepath = os.path.join(filedir, 'bm25.pkl')
         with open(filepath, 'wb') as f:
             pkl.dump(data, f)
@@ -128,7 +129,8 @@ class BM25Okapi:
         # idf can be negative if word is contained in more than half of documents
         negative_idfs = []
         for word, freq in nd.items():
-            idf = math.log(self.corpus_size - freq + 0.5) - math.log(freq + 0.5)
+            idf = math.log(self.corpus_size - freq + 0.5) - math.log(freq +
+                                                                     0.5)
             self.idf[word] = idf
             idf_sum += idf
             if idf < 0:
@@ -153,8 +155,10 @@ class BM25Okapi:
         doc_len = np.array(self.doc_len)
         for q in query:
             q_freq = np.array([(doc.get(q) or 0) for doc in self.doc_freqs])
-            score += (self.idf.get(q) or 0) * (q_freq * (self.k1 + 1) /
-                                               (q_freq + self.k1 * (1 - self.b + self.b * doc_len / self.avgdl)))
+            score += (self.idf.get(q)
+                      or 0) * (q_freq * (self.k1 + 1) /
+                               (q_freq + self.k1 *
+                                (1 - self.b + self.b * doc_len / self.avgdl)))
         return score
 
     def get_batch_scores(self, query, doc_ids):
@@ -165,12 +169,15 @@ class BM25Okapi:
         score = np.zeros(len(doc_ids))
         doc_len = np.array(self.doc_len)[doc_ids]
         for q in query:
-            q_freq = np.array([(self.doc_freqs[di].get(q) or 0) for di in doc_ids])
-            score += (self.idf.get(q) or 0) * (q_freq * (self.k1 + 1) /
-                                               (q_freq + self.k1 * (1 - self.b + self.b * doc_len / self.avgdl)))
+            q_freq = np.array([(self.doc_freqs[di].get(q) or 0)
+                               for di in doc_ids])
+            score += (self.idf.get(q)
+                      or 0) * (q_freq * (self.k1 + 1) /
+                               (q_freq + self.k1 *
+                                (1 - self.b + self.b * doc_len / self.avgdl)))
         return score.tolist()
 
-    def get_top_n(self, query: Union[List,str], n=5):
+    def get_top_n(self, query: Union[List, str], n=5):
         if type(query) is str:
             if self.tokenizer is not None:
                 queries = self.tokenizer(query)

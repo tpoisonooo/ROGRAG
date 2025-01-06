@@ -5,7 +5,8 @@ rag_prompts = {}
 
 # =========================================== extract topic intention =========================================
 rag_prompts["extract_topic_intention"] = {
-  "zh_cn" : """你是一个文本专家，擅长对句子进行语义角色标注、情感分析和意图识别。
+    "zh_cn":
+    """你是一个文本专家，擅长对句子进行语义角色标注、情感分析和意图识别。
 
 ## 目标
 在确保内容安全合规的情况下通过遵循指令和提供有帮助的回复来帮助用户实现他们的目标。
@@ -41,8 +42,8 @@ rag_prompts["extract_topic_intention"] = {
 
 ## 用户输入:
 {input_text}""",
-
-  "en" : """You are a text expert, proficient in semantic role labeling, sentiment analysis, and intent recognition for sentences.
+    "en":
+    """You are a text expert, proficient in semantic role labeling, sentiment analysis, and intent recognition for sentences.
 
 ## Objective
 To assist users in achieving their goals by following instructions and providing helpful responses while ensuring content safety and compliance.
@@ -76,15 +77,16 @@ You support the following topics:
 
 # =========================================== web keywords =========================================
 rag_prompts["web_keywords"] = {
-  "zh_cn" : """谷歌搜索是一个通用搜索引擎，可用于访问互联网、查询百科知识、了解时事新闻等。搜索参数类型 string， 内容是短语或关键字，以空格分隔。你打算通过谷歌搜索查询相关资料。
+    "zh_cn":
+    """谷歌搜索是一个通用搜索引擎，可用于访问互联网、查询百科知识、了解时事新闻等。搜索参数类型 string， 内容是短语或关键字，以空格分隔。你打算通过谷歌搜索查询相关资料。
 
 ## 任务
 请阅读用户输入，供用于搜索的关键字或短语，不要解释直接给出关键字或短语。
 
 ## 用户输入:
 {input_text}""",
-
-  "en" : """Google Search is a universal search engine that can be used to access the internet, query encyclopedic knowledge, and learn about current events, among other things. The search parameter type is string, the content is phrases or keywords, separated by spaces. You plan to use Google Search to query relevant information
+    "en":
+    """Google Search is a universal search engine that can be used to access the internet, query encyclopedic knowledge, and learn about current events, among other things. The search parameter type is string, the content is phrases or keywords, separated by spaces. You plan to use Google Search to query relevant information
 
 ## Task
 Please read the user's input for search keywords or phrases, and provide them directly without explanation.
@@ -95,7 +97,8 @@ Please read the user's input for search keywords or phrases, and provide them di
 
 # =========================================== scoring relevance =========================================
 rag_prompts["scoring_relevance"] = {
-  "zh_cn" : """你是一个文本专家，擅长文本间的关联度。
+    "zh_cn":
+    """你是一个文本专家，擅长文本间的关联度。
 
 ## 任务
 读取用户输入1和用户输入2，判断二者间的关联度。用0到10之间的数值作答。
@@ -111,8 +114,8 @@ rag_prompts["scoring_relevance"] = {
 
 ## 用户输入2
 {input_text2}""",
-
-  "en" : """You are a text expert, skilled in the correlation between texts.
+    "en":
+    """You are a text expert, skilled in the correlation between texts.
 
 ## Task
 Read User Input 1 and User Input 2, and judge the correlation between the two. Answer with a numerical value between 0 and 10.
@@ -133,7 +136,8 @@ Read User Input 1 and User Input 2, and judge the correlation between the two. A
 # =========================================== security check =========================================
 
 rag_prompts["security_check"] = {
-  "zh_cn" : """你是一个文本专家，擅长分析用户输入的句子。
+    "zh_cn":
+    """你是一个文本专家，擅长分析用户输入的句子。
 ## 任务
 判断用户输入和政治、辱骂、色情、恐暴、宗教、网络暴力、种族歧视等违禁内容的关联度，结果用 0～10 的得分表示。
 
@@ -145,8 +149,8 @@ rag_prompts["security_check"] = {
 
 ## 用户输入
 {input_text}""",
-
-  "en": """You are a text expert, skilled at analyzing sentences input by users.
+    "en":
+    """You are a text expert, skilled at analyzing sentences input by users.
 ## Task
 Determine the association of user input with prohibited content such as politics, insults, pornography, violence, religion, cyberbullying, and racial discrimination, with the results represented by a score of 0 to 10.
 
@@ -162,7 +166,8 @@ Determine the association of user input with prohibited content such as politics
 # =========================================== perplexsity check =========================================
 
 rag_prompts["perplexsity_check"] = {
-  "zh_cn" : """你是一个中英文阅卷人，擅长分析学生答案和问题的关联度。
+    "zh_cn":
+    """你是一个中英文阅卷人，擅长分析学生答案和问题的关联度。
 ## 任务
 请仔细阅读试卷问题、学生依据和学生答案，判断学生答案是否合理。
 
@@ -191,8 +196,8 @@ rag_prompts["perplexsity_check"] = {
 ## 学生答案
 {input_response}
 """,
-
-  "en": """You are a Chinese-English grader, skilled at analyzing the semantics in student answer.
+    "en":
+    """You are a Chinese-English grader, skilled at analyzing the semantics in student answer.
 ## Task
 Please read the student answer carefully and determine whether the students have answered the question.
 
@@ -218,17 +223,20 @@ Please read the student answer carefully and determine whether the students have
 # =========================================== citation generation =========================================
 
 rag_prompts["citation_generate_head"] = {
-  "zh_cn": """## 任务
+    "zh_cn":
+    """## 任务
 请使用仅提供的搜索结果（其中一些可能不相关）写出准确、有吸引力且简洁的回答，并正确引用它们。使用不偏不倚且新闻式的语气。对于任何事实性陈述都必须引用。引用多个搜索结果时，使用[1][2][3]格式。每个句子至少引用一个文档，最多引用三个文档。如果多个文档支持同一个句子，引用最小的必要子集。
 """,
-  "en": """## Task
+    "en":
+    """## Task
 Please use only the provided search results (some of which may be irrelevant) to write accurate, engaging, and concise answers, and correctly cite them. Use an impartial and journalistic tone. For any factual statements, citations are required. When citing multiple search results, use the format [1][2][3]. Each sentence should reference at least one document, and no more than three. If multiple documents support the same sentence, cite the smallest necessary subset.
 """
 }
 
 # =========================================== rag generation =========================================
 rag_prompts["generate"] = {
-  "zh_cn": """## 任务
+    "zh_cn":
+    """## 任务
 请根据实体列表、关系列表、检索结果（其中一些可能不相关）回答用户输入。
 
 ## 输出格式与语言风格要求
@@ -253,7 +261,8 @@ rag_prompts["generate"] = {
 ## 用户输入
 {input_text}
 """,
-  "en": """## Task
+    "en":
+    """## Task
 Please use entities, relationships and search results (some of which may be irrelevant) to answer user input.
 
 ## Output Format and Language Style Requirements
@@ -280,12 +289,14 @@ Please use entities, relationships and search results (some of which may be irre
 """
 }
 
+
 class CitationGeneratePrompt:
     """Build generate prompt with citation format"""
     language = None
+
     def __init__(self, language: str):
         self.language = language
-    
+
     def remove_markdown_headers(self, texts: List[str]):
         pure_texts = []
         for text in texts:
@@ -294,7 +305,7 @@ class CitationGeneratePrompt:
             pure_texts.append(pure_text)
         return pure_texts
 
-    def build(self, texts: List[str], question:str):
+    def build(self, texts: List[str], question: str):
         pure_texts = self.remove_markdown_headers(texts)
 
         head = rag_prompts["citation_generate_head"][self.language]
@@ -302,13 +313,14 @@ class CitationGeneratePrompt:
             question_prompt = '\n## 用户输入\n{}\n'.format(question)
             context_prompt = ''
             for index, text in enumerate(pure_texts):
-                context_prompt += '\n## 检索结果{}\n{}\n'.format(index+1, text)
+                context_prompt += '\n## 检索结果{}\n{}\n'.format(index + 1, text)
 
         elif self.language == 'en':
             question_prompt = '\n## user input\n{}\n'.format(question)
             context_prompt = ''
             for index, text in enumerate(pure_texts):
-                context_prompt += '\n## search result{}\n{}\n'.format(index+1, text)
+                context_prompt += '\n## search result{}\n{}\n'.format(
+                    index + 1, text)
 
         prompt = head + context_prompt + question_prompt
         return prompt

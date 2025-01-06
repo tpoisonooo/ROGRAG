@@ -1,4 +1,3 @@
-
 import json
 import os
 import pdb
@@ -11,14 +10,12 @@ from .chunk import Chunk
 from .embedder import Embedder
 from .limitter import RPM
 
+
 class Reranker:
     _type: str
     topn: int
 
-    def __init__(
-            self,
-            model_config: dict,
-            topn: int = 10):
+    def __init__(self, model_config: dict, topn: int = 10):
 
         model_name_or_path = model_config['reranker_model_path']
         self._type = self.model_type(model_path=model_name_or_path)
@@ -43,24 +40,21 @@ class Reranker:
             if len(api_token) < 1:
                 api_token = os.getenv('SILICONCLOUD_TOKEN')
                 if api_token is None or len(api_token) < 1:
-                    raise ValueError('siliconclud remote reranker api token is None')
+                    raise ValueError(
+                        'siliconclud remote reranker api token is None')
             if 'Bearer' not in api_token:
                 api_token = 'Bearer ' + api_token
             api_rpm = max(1, int(model_config['api_rpm']))
-            self.client = {
-                'api_token': api_token,
-                'api_rpm': RPM(api_rpm)
-            }
+            self.client = {'api_token': api_token, 'api_rpm': RPM(api_rpm)}
 
         else:
             raise ValueError('Unknown type {}'.format(self._type))
-
 
     @classmethod
     def model_type(self, model_path):
         """Check reranker model is LLM reranker or not."""
         if model_path.startswith('https'):
-            return 'siliconcloud'        
+            return 'siliconcloud'
 
         config_path = os.path.join(model_path, 'config.json')
         if not os.path.exists(config_path):
@@ -138,11 +132,12 @@ class Reranker:
                 ]
                 scores = scores[0].cpu().numpy()
         elif 'bce' in self._type:
-            scores_list = self.bce_client.compute_score(pairs, show_progress_bar=False)
+            scores_list = self.bce_client.compute_score(
+                pairs, show_progress_bar=False)
             scores = np.array(scores_list)
         else:
             self.client['api_rpm'].wait(silent=True)
-            
+
             url = "https://api.siliconflow.cn/v1/rerank"
             payload = {
                 "model": "netease-youdao/bce-reranker-base_v1",

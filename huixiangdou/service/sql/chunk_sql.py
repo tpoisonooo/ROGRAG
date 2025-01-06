@@ -7,7 +7,9 @@ import json
 import pdb
 from loguru import logger
 
+
 class ChunkSQL:
+
     def __init__(self, file_dir: str):
         os.makedirs(file_dir, exist_ok=True)
         self.file_dir = file_dir
@@ -29,26 +31,34 @@ class ChunkSQL:
             chunks = [chunk]
         else:
             chunks = chunk
-        
+
         for c in chunks:
-            self.cursor.execute('''
+            self.cursor.execute(
+                '''
                 INSERT OR IGNORE INTO chunks (_hash, content, metadata, modal)
                 VALUES (?, ?, ?, ?)
-            ''', (c._hash, c.content_or_path, json.dumps(c.metadata, ensure_ascii=False), c.modal))
+            ''', (c._hash, c.content_or_path,
+                  json.dumps(c.metadata, ensure_ascii=False), c.modal))
         self.conn.commit()
 
     def get(self, _hash: str) -> Optional[Chunk]:
         """Retrieve a chunk by its ID."""
-        self.cursor.execute('SELECT _hash, content, metadata, modal FROM chunks WHERE _hash = ?', (_hash,))
+        self.cursor.execute(
+            'SELECT _hash, content, metadata, modal FROM chunks WHERE _hash = ?',
+            (_hash, ))
         r = self.cursor.fetchone()
         if r:
-            c = Chunk(_hash=r[0], content_or_path=r[1], metadata=json.loads(r[2]), modal=r[3])
+            c = Chunk(_hash=r[0],
+                      content_or_path=r[1],
+                      metadata=json.loads(r[2]),
+                      modal=r[3])
             return c
         return None
-    
+
     def exist(self, chunk: Chunk) -> bool:
         # hash `chunk.content_or_path` for faster `SELECT`
-        self.cursor.execute('SELECT count(*) FROM chunks WHERE _hash = ?', (chunk._hash,))
+        self.cursor.execute('SELECT count(*) FROM chunks WHERE _hash = ?',
+                            (chunk._hash, ))
         r = self.cursor.fetchone()
         try:
             count = int(r[0])
@@ -61,7 +71,7 @@ class ChunkSQL:
 
     def delete(self, _hash: str):
         """Delete a chunk by its ID."""
-        self.cursor.execute('DELETE FROM chunks WHERE _hash = ?', (_hash,))
+        self.cursor.execute('DELETE FROM chunks WHERE _hash = ?', (_hash, ))
         self.conn.commit()
 
     def __del__(self):
@@ -70,6 +80,7 @@ class ChunkSQL:
             self.conn.close()
         except Exception as e:
             logger.error(e)
+
 
 # Example usage:
 # chunk_manager = ChunkSQLManager('path_to_your_database_directory')

@@ -1,15 +1,19 @@
-
 # copy from LightRAG
 GRAPH_FIELD_SEP = "<SEP>"
 graph_prompts = {}
 graph_prompts["DEFAULT_TUPLE_DELIMITER"] = "<|>"
 graph_prompts["DEFAULT_RECORD_DELIMITER"] = "##"
-graph_prompts["DEFAULT_ENTITY_TYPES"] = ["concept", "date", "location", "keyword", "organization", "person", "event", "work", "nature", "artificial", "science", "technology", "mission", "gene"]
+graph_prompts["DEFAULT_ENTITY_TYPES"] = [
+    "concept", "date", "location", "keyword", "organization", "person",
+    "event", "work", "nature", "artificial", "science", "technology",
+    "mission", "gene"
+]
 graph_prompts["DEFAULT_COMPLETION_DELIMITER"] = "<|COMPLETE|>"
 
 # =========================================== entity_extraction =========================================
 graph_prompts["entity_extraction"] = {}
-graph_prompts["entity_extraction"]["en"] = """You are an NLP expert, skilled at analyzing text to extract named entities and their relationships.
+graph_prompts["entity_extraction"][
+    "en"] = """You are an NLP expert, skilled at analyzing text to extract named entities and their relationships.
 
 -Goal-
 Given a text document that is potentially relevant to this activity and a list of entity types, identify all entities of those types from the text and all relationships among the identified entities.
@@ -146,7 +150,8 @@ graph_prompts["entity_extraction"]["zh_cn"] = """你是一个NLP专家，擅长�
 # =========================================== entity_extraction =========================================
 graph_prompts["summarize_entity"] = dict()
 
-graph_prompts["summarize_entity"]["en"] = """You are a helpful NLP expert for generating a comprehensive summary of the data provided below.
+graph_prompts["summarize_entity"][
+    "en"] = """You are a helpful NLP expert for generating a comprehensive summary of the data provided below.
 Given one or two entities, and a list of descriptions, all related to the same entity or group of entities.
 Please concatenate all of these into a single, comprehensive summary. Make sure to include information collected from all the descriptions.
 If the provided descriptions are contradictory, please resolve the contradictions and provide a single, coherent summary.
@@ -175,25 +180,26 @@ graph_prompts["summarize_entity"]["zh_cn"] = """您是一位文本专家，负�
 输出：
 """
 
-graph_prompts[
-    "entiti_continue_extraction"
-] = {
-  "en": """MANY entities were missed in the last extraction.  Add them below using the same format:""",
-  "zh_cn": """很多实体在上一次的提取中可能被遗漏了。请在下面使用相同的格式添加它们："""
+graph_prompts["entiti_continue_extraction"] = {
+    "en":
+    """MANY entities were missed in the last extraction.  Add them below using the same format:""",
+    "zh_cn": """很多实体在上一次的提取中可能被遗漏了。请在下面使用相同的格式添加它们："""
 }
 
-graph_prompts[
-    "entiti_if_loop_extraction"
-] = {
-  "en": """It appears some entities may have still been missed.  Answer YES | NO if there are still entities that need to be added.""",
-  "zh_cn": """看起来可能还是有一些实体被遗漏了。如果有还需要添加的实体，请回答 YES | NO。"""
-} 
+graph_prompts["entiti_if_loop_extraction"] = {
+    "en":
+    """It appears some entities may have still been missed.  Answer YES | NO if there are still entities that need to be added.""",
+    "zh_cn": """看起来可能还是有一些实体被遗漏了。如果有还需要添加的实体，请回答 YES | NO。"""
+}
 
-graph_prompts["process_tickers"] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+graph_prompts["process_tickers"] = [
+    "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"
+]
 
 graph_prompts["keywords_extraction"] = dict()
 
-graph_prompts["keywords_extraction"]["en"] = """You are an NLP expert, skilled in identifying high-level and low-level keywords in user queries.
+graph_prompts["keywords_extraction"][
+    "en"] = """You are an NLP expert, skilled in identifying high-level and low-level keywords in user queries.
 
 ## Task
 Based on the query, list high-level and low-level keywords. High-level keywords focus on overall concepts or themes, while low-level keywords focus on specific entities, details, or specific terms.
@@ -245,7 +251,8 @@ Query:
 Output:
 """
 
-graph_prompts["keywords_extraction"]["zh_cn"] = """你是一位NLP专家，擅长识别用户查询中的高级和低级关键词。
+graph_prompts["keywords_extraction"][
+    "zh_cn"] = """你是一位NLP专家，擅长识别用户查询中的高级和低级关键词。
 
 ## 任务
 根据查询，列出高级和低级关键词。高级关键词关注总体概念或主题，而低级关键词关注具体实体、细节或具体术语。

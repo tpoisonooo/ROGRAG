@@ -1,4 +1,3 @@
-
 """extract feature and search with user query."""
 import argparse
 import json
@@ -14,12 +13,12 @@ from tqdm import tqdm
 from .fasta import Fasta
 import asyncio
 
-from ..primitive import (ChineseRecursiveTextSplitter, Chunk, Faiss,
-                         FileName, FileOperation,
-                         RecursiveCharacterTextSplitter, nested_split_markdown,
-                         split_python_code,
-                         BM25Okapi, always_get_an_event_loop)
+from ..primitive import (ChineseRecursiveTextSplitter, Chunk, Faiss, FileName,
+                         FileOperation, RecursiveCharacterTextSplitter,
+                         nested_split_markdown, split_python_code, BM25Okapi,
+                         always_get_an_event_loop)
 from ..service import histogram, ChunkSQL, RetrieveResource, SharedRetrieverPool, parse_chunk_to_knowledge
+
 
 def read_and_save(file: FileName):
     if os.path.exists(file.copypath):
@@ -41,13 +40,15 @@ def read_and_save(file: FileName):
     with open(file.copypath, 'w') as f:
         f.write(content)
 
+
 class FeatureStore:
     """Build knowledge graph for multiple retrievers."""
+
     def __init__(self,
-                 resource: RetrieveResource, 
+                 resource: RetrieveResource,
                  language: str = 'zh',
                  chunk_size=900,
-                 work_dir:str='workdir') -> None:
+                 work_dir: str = 'workdir') -> None:
         """Init with model device type and config."""
         self.language = language
         logger.debug('loading text2vec model..')
@@ -58,7 +59,8 @@ class FeatureStore:
         self.work_dir = work_dir
         self.file_opr = FileOperation()
 
-        logger.info('init dense retrieval database with chunk_size {}'.format(chunk_size))
+        logger.info('init dense retrieval database with chunk_size {}'.format(
+            chunk_size))
 
         if language == 'zh':
             self.text_splitter = ChineseRecursiveTextSplitter(
@@ -69,8 +71,9 @@ class FeatureStore:
         else:
             self.text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=chunk_size, chunk_overlap=32)
-    
-    def parse_markdown(self, file: FileName, metadata: Dict) -> Tuple[List[Chunk], int]:
+
+    def parse_markdown(self, file: FileName,
+                       metadata: Dict) -> Tuple[List[Chunk], int]:
         length = 0
         text = file.basename + '\n'
 
@@ -86,21 +89,23 @@ class FeatureStore:
         for c in chunks:
             length += len(c.content_or_path)
         return chunks, length
-        
+
     async def build_bm25(self, files: Iterator[FileName]) -> None:
         """Use BM25 for building code feature"""
         # split by function, class and annotation, remove blank
         # build bm25 pickle
         fileopr = FileOperation()
         chunks = []
-        
+
         for file in files:
             content, error = fileopr.read(file.origin)
             if error is not None:
                 continue
-            file_chunks = split_python_code(filepath=file.origin, text=content, metadata={'source': file.origin})
+            file_chunks = split_python_code(filepath=file.origin,
+                                            text=content,
+                                            metadata={'source': file.origin})
             chunks += file_chunks
-        
+
         sparse_dir = os.path.join(self.work_dir, 'db_code')
         bm25 = BM25Okapi()
         bm25.save(chunks, sparse_dir)
@@ -116,12 +121,15 @@ class FeatureStore:
             with open(file.copypath, encoding='utf8') as f:
                 text += f.read()
 
-            chunks = nested_split_markdown(file.origin, text=text, chunksize=self.chunk_size, metadata=metadata)
+            chunks = nested_split_markdown(file.origin,
+                                           text=text,
+                                           chunksize=self.chunk_size,
+                                           metadata=metadata)
             for c in chunks:
                 size += len(c.content_or_path)
             file.reason = str(size)
             return chunks
-        
+
         # now read pdf/word/excel/ppt text
         text, error = self.file_opr.read(file.copypath)
         text = file.basename + '\n' + text
@@ -129,17 +137,22 @@ class FeatureStore:
             file.state = False
             file.reason = str(error)
             raise RuntimeError(f'{file} read error {error}')
-        
+
         file.reason = str(len(text))
-        return self.text_splitter.create_chunks(texts=[text], metadatas=[metadata])
+        return self.text_splitter.create_chunks(texts=[text],
+                                                metadatas=[metadata])
 
     async def build_knowledge(self, files: Iterator[FileName]) -> None:
         """Split docs into chunks, build knowledge graph and base based on them."""
-        entityDB = Faiss.load_local(os.path.join(self.work_dir, 'db_kag_entity'))
-        relationDB = Faiss.load_local(os.path.join(self.work_dir, 'db_kag_relation'))
+        entityDB = Faiss.load_local(
+            os.path.join(self.work_dir, 'db_kag_entity'))
+        relationDB = Faiss.load_local(
+            os.path.join(self.work_dir, 'db_kag_relation'))
 
-        entityDB_mix = Faiss.load_local(os.path.join(self.work_dir, 'db_kag_entity_mix'))
-        relationDB_mix = Faiss.load_local(os.path.join(self.work_dir, 'db_kag_relation_mix'))
+        entityDB_mix = Faiss.load_local(
+            os.path.join(self.work_dir, 'db_kag_entity_mix'))
+        relationDB_mix = Faiss.load_local(
+            os.path.join(self.work_dir, 'db_kag_relation_mix'))
 
         chunkDB = ChunkSQL(file_dir=os.path.join(self.work_dir, 'db_chunk'))
 
@@ -158,7 +171,13 @@ class FeatureStore:
                 continue
 
             try:
-                await parse_chunk_to_knowledge(chunks=chunks, llm=self.llm, entityDB=entityDB, relationDB=relationDB, entityDB_mix=entityDB_mix, relationDB_mix=relationDB_mix, graph_store=self.graph_store)
+                await parse_chunk_to_knowledge(chunks=chunks,
+                                               llm=self.llm,
+                                               entityDB=entityDB,
+                                               relationDB=relationDB,
+                                               entityDB_mix=entityDB_mix,
+                                               relationDB_mix=relationDB_mix,
+                                               graph_store=self.graph_store)
                 chunkDB.add(chunks)
             except Exception as e:
                 logger.error(str(e))
@@ -166,11 +185,18 @@ class FeatureStore:
                 pdb.set_trace()
                 pass
         # dump results
-        entityDB.save(folder_path=os.path.join(self.work_dir, 'db_kag_entity'), embedder=self.embedder)
-        relationDB.save(folder_path=os.path.join(self.work_dir, 'db_kag_relation'), embedder=self.embedder)
+        entityDB.save(folder_path=os.path.join(self.work_dir, 'db_kag_entity'),
+                      embedder=self.embedder)
+        relationDB.save(folder_path=os.path.join(self.work_dir,
+                                                 'db_kag_relation'),
+                        embedder=self.embedder)
 
-        entityDB_mix.save(folder_path=os.path.join(self.work_dir, 'db_kag_entity_mix'), embedder=self.embedder)
-        relationDB_mix.save(folder_path=os.path.join(self.work_dir, 'db_kag_relation_mix'), embedder=self.embedder)
+        entityDB_mix.save(folder_path=os.path.join(self.work_dir,
+                                                   'db_kag_entity_mix'),
+                          embedder=self.embedder)
+        relationDB_mix.save(folder_path=os.path.join(self.work_dir,
+                                                     'db_kag_relation_mix'),
+                            embedder=self.embedder)
         return None
 
     async def build_dense(self, files: Iterator[FileName]) -> None:
@@ -210,10 +236,10 @@ class FeatureStore:
             text_lens.append(len(content))
             token_lens.append(self.embedder.token_length(content))
 
-        logger.info('text_chunks {}, image_chunks {}'.format(text_chunk_count, image_chunk_count))
+        logger.info('text_chunks {}, image_chunks {}'.format(
+            text_chunk_count, image_chunk_count))
         logger.info('text histogram, {}'.format(histogram(text_lens)))
-        logger.info('token histogram, {}'.format(
-            histogram(token_lens)))
+        logger.info('token histogram, {}'.format(histogram(token_lens)))
 
     def preprocess(self, repo_dir: str, files: List[FileName]):
         """Preprocesses files in a given directory. Copies each file to
@@ -261,7 +287,8 @@ class FeatureStore:
                 md5 = self.file_opr.md5(file.origin)
                 file.copypath = os.path.join(
                     preproc_dir,
-                    file.origin.replace(repo_dir + "/", '').replace('/', '_')[-84:])
+                    file.origin.replace(repo_dir + "/", '').replace('/',
+                                                                    '_')[-84:])
                 try:
                     shutil.copy(file.origin, file.copypath)
                     file.state = True
@@ -298,22 +325,24 @@ class FeatureStore:
         documents = filter(lambda x: x._type != 'code', files)
 
         await self.build_knowledge(files=documents)
-        return 
+        return
         tasks = []
         if 'bm25' in args.method:
             tasks.append(self.build_bm25(files=code))
-        
+
         if 'knowledge' in args.method:
             tasks.append(self.build_knowledge(files=documents))
-        
+
         if 'inverted' in args.method:
             fasta = Fasta(work_dir=self.work_dir, embedder=self.embedder)
-            tasks.append(fasta.init(ner_path=args.fasta_ner, file_dir=args.fasta_file))
-        
+            tasks.append(
+                fasta.init(ner_path=args.fasta_ner, file_dir=args.fasta_file))
+
         if 'dense' in args.method:
             tasks.append(self.build_dense(files=documents))
 
         await asyncio.gather(*tasks, return_exceptions=True)
+
 
 def parse_args():
     """Parse command-line arguments."""
@@ -323,9 +352,12 @@ def parse_args():
                         type=str,
                         default='workdir',
                         help='Working directory.')
-    parser.add_argument('--method', nargs='+', choices=['knowledge', 'dense', 'inverted', 'bm25'],
-                        default=['knowledge', 'inverted', 'bm25'],
-                        help='Supported retrieve method, use knowledge and sparse by default.')
+    parser.add_argument(
+        '--method',
+        nargs='+',
+        choices=['knowledge', 'dense', 'inverted', 'bm25'],
+        default=['knowledge', 'inverted', 'bm25'],
+        help='Supported retrieve method, use knowledge and sparse by default.')
     parser.add_argument(
         '--repo_dir',
         type=str,
@@ -338,7 +370,8 @@ def parse_args():
     parser.add_argument(
         '--fasta_ner',
         default=None,
-        help='The path of NER file, which is a dumped json list. HuixiangDou would build relationship between entities and chunks for retrieve.'
+        help=
+        'The path of NER file, which is a dumped json list. HuixiangDou would build relationship between entities and chunks for retrieve.'
     )
     parser.add_argument(
         '--fasta_file',
@@ -347,7 +380,9 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-async def write_back_config_threshold(resource: RetrieveResource, work_dir: str, config_path: str):
+
+async def write_back_config_threshold(resource: RetrieveResource,
+                                      work_dir: str, config_path: str):
     """Update reject threshold based on positive and negative examples."""
     from sklearn.metrics import precision_recall_curve
     import numpy as np
@@ -358,7 +393,7 @@ async def write_back_config_threshold(resource: RetrieveResource, work_dir: str,
         bad_questions = json.load(f)
     if len(good_questions) == 0 or len(bad_questions) == 0:
         raise Exception('good and bad question examples cat not be empty.')
-    
+
     questions = good_questions + bad_questions
     predictions = []
 
@@ -371,9 +406,8 @@ async def write_back_config_threshold(resource: RetrieveResource, work_dir: str,
         predictions.append(max(0, score))
 
     labels = [1 for _ in range(len(good_questions))
-                ] + [0 for _ in range(len(bad_questions))]
-    precision, recall, thresholds = precision_recall_curve(
-        labels, predictions)
+              ] + [0 for _ in range(len(bad_questions))]
+    precision, recall, thresholds = precision_recall_curve(labels, predictions)
 
     # get the best index for sum(precision, recall)
     sum_precision_recall = precision[:-1] + recall[:-1]
@@ -389,6 +423,7 @@ async def write_back_config_threshold(resource: RetrieveResource, work_dir: str,
         f'The optimal threshold is: {optimal_threshold}, saved it to {config_path}'  # noqa E501
     )
 
+
 if __name__ == '__main__':
     args = parse_args()
     # build embedding/reranker models
@@ -400,19 +435,21 @@ if __name__ == '__main__':
     store.preprocess(repo_dir=args.repo_dir, files=files)
 
     loop = always_get_an_event_loop()
-    
-    before_cost = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time()
-    
-    loop.run_until_complete(store.init(files=files,args=args))
+
+    before_cost = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(
+    )
+
+    loop.run_until_complete(store.init(files=files, args=args))
     store.file_opr.summarize(files)
-    
-    after_cost = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time()
-    
+
+    after_cost = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(
+    )
+
     if False:
         with open('cost', 'a') as f:
-            input_token_cost = after_cost[0]-before_cost[0]
-            output_token_cost = after_cost[1]-before_cost[1]
-            time_cost = int(after_cost[2]-before_cost[2])
+            input_token_cost = after_cost[0] - before_cost[0]
+            output_token_cost = after_cost[1] - before_cost[1]
+            time_cost = int(after_cost[2] - before_cost[2])
             f.write(f'{input_token_cost} {output_token_cost} {time_cost}')
             f.write('\n')
 

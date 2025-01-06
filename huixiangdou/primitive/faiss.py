@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import time
@@ -25,8 +24,15 @@ except ImportError:
         'Please install it with `pip install faiss-gpu` (for CUDA supported GPU) '
         'or `pip install faiss-cpu` (depending on Python version).')
 
+
 class Faiss():
-    def __init__(self, index: Any=None, chunks: List[Chunk]=[], strategy:DistanceStrategy=DistanceStrategy.EUCLIDEAN_DISTANCE, k: int = 30):
+
+    def __init__(
+            self,
+            index: Any = None,
+            chunks: List[Chunk] = [],
+            strategy: DistanceStrategy = DistanceStrategy.EUCLIDEAN_DISTANCE,
+            k: int = 30):
         """Initialize with necessary components."""
         self.chunks = []
         self.hash2index = dict()
@@ -37,13 +43,13 @@ class Faiss():
         self.strategy = strategy
         self.index = index
         self.offset = len(self.chunks)
-    
-    def upsert(self, c:Chunk):
+
+    def upsert(self, c: Chunk):
         if c._hash in self.hash2index:
             return
         self.hash2index[c._hash] = len(self.chunks)
         self.chunks.append(c)
-    
+
     def search(self, embedding: np.ndarray) -> List[Tuple[Chunk, float]]:
         """Return chunks most similar to query.
 
@@ -66,18 +72,23 @@ class Faiss():
             score = scores[0][j]
 
             if self.strategy == DistanceStrategy.EUCLIDEAN_DISTANCE:
-                rel_score = DistanceStrategy.euclidean_relevance_score_fn(score)
+                rel_score = DistanceStrategy.euclidean_relevance_score_fn(
+                    score)
             elif self.strategy == DistanceStrategy.MAX_INNER_PRODUCT:
-                rel_score = DistanceStrategy.max_inner_product_relevance_score_fn(score)
+                rel_score = DistanceStrategy.max_inner_product_relevance_score_fn(
+                    score)
             else:
                 raise ValueError('self.strategy unset')
             pairs.append((chunk, rel_score))
-        
+
         if len(pairs) >= 2:
             assert pairs[0][1] >= pairs[1][1]
         return pairs
 
-    def similarity_search(self, embedder: Embedder, query: Query, threshold: float = -1) -> List:
+    def similarity_search(self,
+                          embedder: Embedder,
+                          query: Query,
+                          threshold: float = -1) -> List:
         """Return chunks most similar to query.
 
         Args:
@@ -109,36 +120,38 @@ class Faiss():
                 highest_score = pair[1]
 
         if len(ret) < 1:
-            logger.info('highest score {}, threshold {}'.format(highest_score, threshold))
+            logger.info('highest score {}, threshold {}'.format(
+                highest_score, threshold))
         return ret
-    
+
     @classmethod
-    def split_by_batchsize(self, chunks: List[Chunk] = [], batchsize:int = 4):
+    def split_by_batchsize(self, chunks: List[Chunk] = [], batchsize: int = 4):
         texts = [c for c in chunks if c.modal == 'text']
         fastas = [c for c in chunks if c.modal == 'fasta']
         images = [c for c in chunks if c.modal == 'image']
 
         block_text = []
         for i in range(0, len(texts), batchsize):
-            block_text.append(texts[i:i+batchsize])
+            block_text.append(texts[i:i + batchsize])
 
         block_image = []
         for i in range(0, len(images), batchsize):
-            block_image.append(images[i:i+batchsize])
+            block_image.append(images[i:i + batchsize])
 
         block_fasta = []
         for i in range(0, len(fastas), batchsize):
-            block_fasta.append(fastas[i:i+batchsize])
+            block_fasta.append(fastas[i:i + batchsize])
 
         return block_text, block_image, block_fasta
 
     @classmethod
-    def build_index(self, np_feature: np.ndarray, distance_strategy: DistanceStrategy):
+    def build_index(self, np_feature: np.ndarray,
+                    distance_strategy: DistanceStrategy):
         dimension = np_feature.shape[-1]
         ef_construction = 64
         efSearch = 128
         M = 32
-        # max neighours for each node 
+        # max neighours for each node
         # see https://github.com/facebookresearch/faiss/wiki/Indexing-1M-vectors
         if distance_strategy == DistanceStrategy.EUCLIDEAN_DISTANCE:
             # index = faiss.IndexFlatL2(dimension)
@@ -153,9 +166,12 @@ class Faiss():
 
         return index
 
-
     @classmethod
-    def save_local(self, folder_path: str, chunks: List[Chunk], embedder: Embedder, offset:int=0) -> None:
+    def save_local(self,
+                   folder_path: str,
+                   chunks: List[Chunk],
+                   embedder: Embedder,
+                   offset: int = 0) -> None:
         """Save FAISS index and store to disk.
 
         Args:
@@ -165,14 +181,15 @@ class Faiss():
         """
 
         if len(chunks) < offset:
-            raise ValueError(f'init offset {offset} while dump size {len(chunks)}')
+            raise ValueError(
+                f'init offset {offset} while dump size {len(chunks)}')
         save_chunks = chunks[offset:]
         if len(save_chunks) < 1:
             return
-    
+
         path = Path(folder_path)
         path.mkdir(exist_ok=True, parents=True)
-        
+
         index_path = os.path.join(path, 'embedding.faiss')
         index = None
         if os.path.exists(index_path):
@@ -183,7 +200,9 @@ class Faiss():
         try:
             batchsize_str = os.getenv('HUIXIANGDOU_BATCHSIZE')
             if batchsize_str is None:
-                logger.info('`export HUIXIANGDOU_BATCHSIZE=64` for faster feature building.')
+                logger.info(
+                    '`export HUIXIANGDOU_BATCHSIZE=64` for faster feature building.'
+                )
             else:
                 batchsize = int(batchsize_str)
         except Exception as e:
@@ -195,13 +214,17 @@ class Faiss():
                 np_feature = None
                 try:
                     if chunk.modal == 'text':
-                        np_feature = embedder.embed_query(text=chunk.content_or_path)
+                        np_feature = embedder.embed_query(
+                            text=chunk.content_or_path)
                     elif chunk.modal == 'image':
-                        np_feature = embedder.embed_query(path=chunk.content_or_path)
+                        np_feature = embedder.embed_query(
+                            path=chunk.content_or_path)
                     elif chunk.modal == 'fasta':
-                        np_feature = embedder.embed_query(text=chunk.content_or_path)
+                        np_feature = embedder.embed_query(
+                            text=chunk.content_or_path)
                     else:
-                        raise ValueError(f'Unimplement chunk type: {chunk.modal}')
+                        raise ValueError(
+                            f'Unimplement chunk type: {chunk.modal}')
                 except Exception as e:
                     logger.error('{}'.format(e))
 
@@ -210,49 +233,59 @@ class Faiss():
                     continue
 
                 if index is None:
-                    index = self.build_index(np_feature=np_feature, distance_strategy=embedder.distance_strategy)
+                    index = self.build_index(
+                        np_feature=np_feature,
+                        distance_strategy=embedder.distance_strategy)
                 index.add(np_feature)
         else:
             # batching
-            block_text, block_image, block_fasta = self.split_by_batchsize(chunks=save_chunks, batchsize=batchsize)
+            block_text, block_image, block_fasta = self.split_by_batchsize(
+                chunks=save_chunks, batchsize=batchsize)
             for subchunks in tqdm(block_text, 'batching_build_text'):
                 np_features = embedder.embed_query_batch_text(chunks=subchunks)
 
                 if index is None:
-                    index = self.build_index(np_feature=np_features, distance_strategy=embedder.distance_strategy)
+                    index = self.build_index(
+                        np_feature=np_features,
+                        distance_strategy=embedder.distance_strategy)
                 index.add(np_features)
 
             for subchunks in tqdm(block_fasta, 'batching_build_fasta'):
                 np_features = embedder.embed_query_batch_text(chunks=subchunks)
 
                 if index is None:
-                    index = self.build_index(np_feature=np_features, distance_strategy=embedder.distance_strategy)
+                    index = self.build_index(
+                        np_feature=np_features,
+                        distance_strategy=embedder.distance_strategy)
                 index.add(np_features)
 
             for subchunks in tqdm(block_image, 'batching_build_image'):
                 for chunk in subchunks:
-                    np_feature = embedder.embed_query(path=chunk.content_or_path)
+                    np_feature = embedder.embed_query(
+                        path=chunk.content_or_path)
                     if np_feature is None:
                         logger.error('np_feature is None')
                         continue
 
                     if index is None:
-                        index = self.build_index(np_feature=np_feature, distance_strategy=embedder.distance_strategy)
+                        index = self.build_index(
+                            np_feature=np_feature,
+                            distance_strategy=embedder.distance_strategy)
                     index.add(np_feature)
 
         # save index separately since it is not picklable
         faiss.write_index(index, index_path)
 
         # save chunks
-        data = {
-            'chunks': chunks,
-            'strategy': str(embedder.distance_strategy)
-        }
+        data = {'chunks': chunks, 'strategy': str(embedder.distance_strategy)}
         with open(path / 'chunks_and_strategy.pkl', 'wb') as f:
             pickle.dump(data, f)
 
     def save(self, folder_path: str, embedder: Embedder) -> None:
-        self.save_local(folder_path=folder_path, chunks=self.chunks, embedder=embedder, offset=self.offset)
+        self.save_local(folder_path=folder_path,
+                        chunks=self.chunks,
+                        embedder=embedder,
+                        offset=self.offset)
 
     @classmethod
     def load_local(cls, folder_path: str) -> FAISS:
@@ -264,15 +297,15 @@ class Faiss():
         """
         if not os.path.exists(folder_path):
             return cls()
-        
+
         path = Path(folder_path)
         # load index separately since it is not picklable
-        
+
         t1 = time.time()
         index = faiss.read_index(str(path / f'embedding.faiss'))
         strategy = DistanceStrategy.UNKNOWN
         t2 = time.time()
-        
+
         # load docstore
         with open(path / f'chunks_and_strategy.pkl', 'rb') as f:
             data = pickle.load(f)
@@ -284,8 +317,11 @@ class Faiss():
             elif 'MAX_INNER_PRODUCT' in strategy_str:
                 strategy = DistanceStrategy.MAX_INNER_PRODUCT
             else:
-                raise ValueError('Unknown strategy type {}'.format(strategy_str))
+                raise ValueError(
+                    'Unknown strategy type {}'.format(strategy_str))
 
         t3 = time.time()
-        logger.info(f'Load faiss, ntotal {index.ntotal}, read index timecost {int(t2-t1)}, read pkl timecost {int(t3-t2)}')
+        logger.info(
+            f'Load faiss, ntotal {index.ntotal}, read index timecost {int(t2-t1)}, read pkl timecost {int(t3-t2)}'
+        )
         return cls(index, chunks, strategy)

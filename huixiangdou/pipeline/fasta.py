@@ -3,8 +3,9 @@ from ..service.sql import Entity2ChunkSQL
 from typing import List
 import os
 
+
 class Fasta:
-    
+
     def __init__(self, work_dir: str, embedder: Embedder):
         self.work_dir = work_dir
         self.embedder = embedder
@@ -16,13 +17,13 @@ class Fasta:
         entities = []
         with open(ner_file) as f:
             entities = json.load(f)
-        
+
         time0 = time.time()
         map_entity2chunks = dict()
         indexer = Entity2ChunkSQL(file_dir=self.index_dir)
         indexer.clean()
         indexer.set_entity(entities=entities)
-        
+
         print('build inverted indexer')
         # build inverted index
         for chunk_id, chunk in enumerate(chunks):
@@ -36,11 +37,11 @@ class Fasta:
                     map_entity2chunks[entity_id].append(chunk_id)
 
         for entity_id, chunk_indexes in map_entity2chunks.items():
-            indexer.insert_relation(eid = entity_id, chunk_ids=chunk_indexes)
+            indexer.insert_relation(eid=entity_id, chunk_ids=chunk_indexes)
         del indexer
         time1 = time.time()
-        logger.info('Timecost for string match {}'.format(time1-time0))
-        
+        logger.info('Timecost for string match {}'.format(time1 - time0))
+
     async def init(self, ner_path: str, file_dir: str):
         fasta_chunks = []
         for item in os.listdir(file_dir):
@@ -52,14 +53,19 @@ class Fasta:
                 for line in content.split(','):
                     chunk_text = line.strip()[1:-1]
                     chunk = Chunk(
-                        content_or_path = chunk_text,
-                        metadata = {"source": chunk_text, "read": chunk_text},
-                        modal = 'fasta',
+                        content_or_path=chunk_text,
+                        metadata={
+                            "source": chunk_text,
+                            "read": chunk_text
+                        },
+                        modal='fasta',
                     )
                     fasta_chunks.append(chunk)
-        
+
         fasta_feature_dir = os.path.join(self.work_dir, "db_dense_fasta")
         os.makedirs(fasta_feature_dir, exist_ok=True)
-        Faiss.save_local(folder_path=fasta_feature_dir, chunks=fasta_chunks, embedder=self.embedder)
-        
+        Faiss.save_local(folder_path=fasta_feature_dir,
+                         chunks=fasta_chunks,
+                         embedder=self.embedder)
+
         await self.build_inverted_index(chunks=chunks, ner_file=ner_path)

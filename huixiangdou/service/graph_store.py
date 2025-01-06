@@ -6,9 +6,9 @@ from abc import ABC
 from typing import Any, Generator, Iterator, List, Optional, Tuple
 from ..primitive import Direction, Edge, MemoryGraph, Graph, Vertex
 from loguru import logger
-
 """TuGraph Connector."""
 from typing import Dict, Generator, cast
+
 
 def escape_quotes(value: str) -> str:
     """Escape single and double quotes in a string for queries."""
@@ -16,6 +16,7 @@ def escape_quotes(value: str) -> str:
         value = value.replace("'", "").replace('"', "").replace("\\", "")
         return value
     return ""
+
 
 class TuGraphConnector:
     """TuGraph connector."""
@@ -37,7 +38,8 @@ class TuGraphConnector:
         try:
             with self._driver.session(database="default") as session:
                 graph_list = session.run("CALL dbms.graph.listGraphs()").data()
-                exists = any(item["graph_name"] == graph_name for item in graph_list)
+                exists = any(item["graph_name"] == graph_name
+                             for item in graph_list)
                 if not exists:
                     session.run(
                         f"CALL dbms.graph.createGraph('{graph_name}', '', 2048)"
@@ -49,14 +51,14 @@ class TuGraphConnector:
         """Delete a graph."""
         with self._driver.session(database="default") as session:
             graph_list = session.run("CALL dbms.graph.listGraphs()").data()
-            exists = any(item["graph_name"] == graph_name for item in graph_list)
+            exists = any(item["graph_name"] == graph_name
+                         for item in graph_list)
             if exists:
                 session.run(f"Call dbms.graph.deleteGraph('{graph_name}')")
 
     @classmethod
-    def from_uri_db(
-        cls, host: str, port: int, user: str, pwd: str, db_name: str
-    ) -> "TuGraphConnector":
+    def from_uri_db(cls, host: str, port: int, user: str, pwd: str,
+                    db_name: str) -> "TuGraphConnector":
         """Create a new TuGraphConnector from host, port, user, pwd, db_name."""
         try:
             from neo4j import GraphDatabase
@@ -69,8 +71,7 @@ class TuGraphConnector:
         except ImportError as err:
             raise ImportError(
                 "neo4j package is not installed, please install it with "
-                "`pip install neo4j`"
-            ) from err
+                "`pip install neo4j`") from err
 
     def get_table_names(self) -> Dict[str, List[str]]:
         """Get all table names from the TuGraph by Neo4j driver."""
@@ -119,7 +120,9 @@ class TuGraphConnector:
             result = session.run(query)
             yield from result
 
-    def get_columns(self, table_name: str, table_type: str = "vertex") -> List[Dict]:
+    def get_columns(self,
+                    table_name: str,
+                    table_type: str = "vertex") -> List[Dict]:
         """Get fields about specified graph.
 
         Args:
@@ -135,25 +138,32 @@ class TuGraphConnector:
             data = []
             result = None
             if table_type == "vertex":
-                result = session.run(f"CALL db.getVertexSchema('{table_name}')").data()
+                result = session.run(
+                    f"CALL db.getVertexSchema('{table_name}')").data()
             else:
-                result = session.run(f"CALL db.getEdgeSchema('{table_name}')").data()
+                result = session.run(
+                    f"CALL db.getEdgeSchema('{table_name}')").data()
             schema_info = json.loads(result[0]["schema"])
             for prop in schema_info.get("properties", []):
                 prop_dict = {
-                    "name": prop["name"],
-                    "type": prop["type"],
-                    "default_expression": "",
-                    "is_in_primary_key": bool(
-                        "primary" in schema_info
-                        and prop["name"] == schema_info["primary"]
-                    ),
-                    "comment": prop["name"],
+                    "name":
+                    prop["name"],
+                    "type":
+                    prop["type"],
+                    "default_expression":
+                    "",
+                    "is_in_primary_key":
+                    bool("primary" in schema_info
+                         and prop["name"] == schema_info["primary"]),
+                    "comment":
+                    prop["name"],
                 }
                 data.append(prop_dict)
             return data
 
-    def get_indexes(self, table_name: str, table_type: str = "vertex") -> List[Dict]:
+    def get_indexes(self,
+                    table_name: str,
+                    table_type: str = "vertex") -> List[Dict]:
         """Get table indexes about specified table.
 
         Args:
@@ -169,7 +179,10 @@ class TuGraphConnector:
             ).data()
             transformed_data = []
             for item in result:
-                new_dict = {"name": item["field"], "column_names": [item["field"]]}
+                new_dict = {
+                    "name": item["field"],
+                    "column_names": [item["field"]]
+                }
                 transformed_data.append(new_dict)
             return transformed_data
 
@@ -177,15 +190,18 @@ class TuGraphConnector:
     def is_graph_type(cls) -> bool:
         """Return whether the connector is a graph database connector."""
         return True
-    
+
+
 class GraphStore(ABC):
+
     def __init__(self):
         pass
+
 
 class TuGraphStore(GraphStore):
     """TuGraph graph store."""
 
-    def __init__(self, config_path:str) -> None:
+    def __init__(self, config_path: str) -> None:
         """Initialize the TuGraphStore with connection details."""
         with open(config_path) as f:
             config = pytoml.load(f)['tugraph']
@@ -198,13 +214,11 @@ class TuGraphStore(GraphStore):
         self._vertex_type = "entity"
         self._edge_type = "relation"
 
-        self.conn = TuGraphConnector.from_uri_db(
-            host=self.host,
-            port=self.port,
-            user=self.username,
-            pwd=self.password,
-            db_name=self.name
-        )
+        self.conn = TuGraphConnector.from_uri_db(host=self.host,
+                                                 port=self.port,
+                                                 user=self.username,
+                                                 pwd=self.password,
+                                                 db_name=self.name)
         self._create_graph(self.name)
 
     def get_vertex_type(self) -> str:
@@ -241,8 +255,7 @@ class TuGraphStore(GraphStore):
                 # f"['_document_id','string',true],"
                 f"['source_id','string',true],"
                 f"['community_id','string',true],"
-                f"['description','string',true])"
-            )
+                f"['description','string',true])")
             logger.info(create_vertex_gql)
             self.conn.run(create_vertex_gql)
             self._add_vertex_index("community_id")
@@ -277,11 +290,14 @@ class TuGraphStore(GraphStore):
         def process_node(node: graph.Node):
             node_id = node._properties.get("id")
             node_name = node._properties.get("name")
-            
-            node_properties = get_filtered_properties(node._properties, _white_list)
-            nodes_list.append(
-                {"id": node_id, "name": node_name,  "properties": node_properties}
-            )
+
+            node_properties = get_filtered_properties(node._properties,
+                                                      _white_list)
+            nodes_list.append({
+                "id": node_id,
+                "name": node_name,
+                "properties": node_properties
+            })
 
         def process_relationship(rel: graph.Relationship):
             name = rel._properties.get("name", "")
@@ -290,21 +306,19 @@ class TuGraphStore(GraphStore):
             tgt_id = rel_nodes[1]._properties.get("id")
             for node in rel_nodes:
                 process_node(node)
-            edge_properties = get_filtered_properties(rel._properties, _white_list)
+            edge_properties = get_filtered_properties(rel._properties,
+                                                      _white_list)
             if not any(
-                existing_edge.get("name") == name
-                and existing_edge.get("src_id") == src_id
-                and existing_edge.get("tgt_id") == tgt_id
-                for existing_edge in rels_list
-            ):
-                rels_list.append(
-                    {
-                        "src_id": src_id,
-                        "tgt_id": tgt_id,
-                        "name": name,
-                        "properties": edge_properties,
-                    }
-                )
+                    existing_edge.get("name") == name
+                    and existing_edge.get("src_id") == src_id
+                    and existing_edge.get("tgt_id") == tgt_id
+                    for existing_edge in rels_list):
+                rels_list.append({
+                    "src_id": src_id,
+                    "tgt_id": tgt_id,
+                    "name": name,
+                    "properties": edge_properties,
+                })
 
         def process_path(path: graph.Path):
             for rel in path.relationships:
@@ -312,15 +326,15 @@ class TuGraphStore(GraphStore):
 
         def process_other(value):
             if not any(
-                existing_node.get("id") == "json_node" for existing_node in nodes_list
-            ):
-                nodes_list.append(
-                    {
-                        "id": "json_node",
-                        "name": "json_node",
-                        "properties": {"description": value},
-                    }
-                )
+                    existing_node.get("id") == "json_node"
+                    for existing_node in nodes_list):
+                nodes_list.append({
+                    "id": "json_node",
+                    "name": "json_node",
+                    "properties": {
+                        "description": value
+                    },
+                })
 
         for record in data:
             for key in record.keys():
@@ -338,8 +352,8 @@ class TuGraphStore(GraphStore):
             for node in nodes_list
         ]
         rels = [
-            Edge(edge["src_id"], edge["tgt_id"], edge["name"], **edge["properties"])
-            for edge in rels_list
+            Edge(edge["src_id"], edge["tgt_id"], edge["name"],
+                 **edge["properties"]) for edge in rels_list
         ]
         return {"nodes": nodes, "edges": rels}
 
@@ -351,8 +365,7 @@ class TuGraphStore(GraphStore):
         """Get triplets."""
         query = (
             f"MATCH (n1:{self._vertex_type})-[r]->(n2:{self._vertex_type}) "
-            f'WHERE n1.id = "{subj}" RETURN r.id as rel, n2.id as obj;'
-        )
+            f'WHERE n1.id = "{subj}" RETURN r.id as rel, n2.id as obj;')
         data = self.conn.run(query)
         return [(record["rel"], record["obj"]) for record in data]
 
@@ -396,12 +409,8 @@ class TuGraphStore(GraphStore):
 
         def parser(node_list):
             formatted_nodes = [
-                "{"
-                + ", ".join(
-                    f'{k}: "{escape_string(v)}"' if isinstance(v, str) else f"{k}: {v}"
-                    for k, v in node.items()
-                )
-                + "}"
+                "{" + ", ".join(f'{k}: "{escape_string(v)}"' if isinstance(
+                    v, str) else f"{k}: {v}" for k, v in node.items()) + "}"
                 for node in node_list
             ]
             return f"""{', '.join(formatted_nodes)}"""
@@ -429,17 +438,21 @@ class TuGraphStore(GraphStore):
                         continue
 
         for node in nodes:
-            node_list.append(
-                {
-                    "id": escape_quotes(node.vid),
-                    "name": escape_quotes(node.name),
-                    "description": escape_quotes(node.get_prop("description")),
-                    # "_document_id": "0",
-                    "source_id": node.get_prop("source_id"),
-                    "entity_type": escape_quotes(node.get_prop("entity_type")) or "",
-                    "_community_id": "0"
-                }
-            )
+            node_list.append({
+                "id":
+                escape_quotes(node.vid),
+                "name":
+                escape_quotes(node.name),
+                "description":
+                escape_quotes(node.get_prop("description")),
+                # "_document_id": "0",
+                "source_id":
+                node.get_prop("source_id"),
+                "entity_type":
+                escape_quotes(node.get_prop("entity_type")) or "",
+                "_community_id":
+                "0"
+            })
             if len(node_list) >= 1024:
                 insert_node(nodes=node_list)
                 node_list = []
@@ -452,7 +465,7 @@ class TuGraphStore(GraphStore):
                 self.conn.run(query=edge_query)
             except Exception as e1:
                 logger.error(e1)
-                
+
                 for index, edge in enumerate(edges):
                     micro_query = ''
                     try:
@@ -468,20 +481,25 @@ class TuGraphStore(GraphStore):
                         continue
 
         for edge in edges:
-            edge_list.append(
-                {
-                    "src_id": escape_quotes(edge.sid),
-                    "tgt_id": escape_quotes(edge.tid),
-                    "id": escape_quotes(edge.name),
-                    "name": escape_quotes(edge.name),
-                    "description": escape_quotes(edge.get_prop("description")),
-                    "source_id": escape_quotes(edge.get_prop("source_id")),
-                    "weight": int(edge.get_prop("weight") or 0)
-                }
-            )
+            edge_list.append({
+                "src_id":
+                escape_quotes(edge.sid),
+                "tgt_id":
+                escape_quotes(edge.tid),
+                "id":
+                escape_quotes(edge.name),
+                "name":
+                escape_quotes(edge.name),
+                "description":
+                escape_quotes(edge.get_prop("description")),
+                "source_id":
+                escape_quotes(edge.get_prop("source_id")),
+                "weight":
+                int(edge.get_prop("weight") or 0)
+            })
             if len(edge_list) >= 1024:
                 insert_edge(edges=edge_list)
-                edge_list=[]
+                edge_list = []
         if len(edge_list) > 0:
             insert_edge(edges=edge_list)
 
@@ -496,11 +514,9 @@ class TuGraphStore(GraphStore):
 
     def delete_triplet(self, sub: str, rel: str, obj: str) -> None:
         """Delete triplet."""
-        del_query = (
-            f"MATCH (n1:{self._vertex_type} {{id:'{sub}'}})"
-            f"-[r:{self._edge_type} {{id:'{rel}'}}]->"
-            f"(n2:{self._vertex_type} {{id:'{obj}'}}) DELETE n1,n2,r"
-        )
+        del_query = (f"MATCH (n1:{self._vertex_type} {{id:'{sub}'}})"
+                     f"-[r:{self._edge_type} {{id:'{rel}'}}]->"
+                     f"(n2:{self._vertex_type} {{id:'{obj}'}}) DELETE n1,n2,r")
         self.conn.run(query=del_query)
 
     def get_schema(self, refresh: bool = False) -> str:
@@ -512,7 +528,8 @@ class TuGraphStore(GraphStore):
 
     def get_full_graph(self) -> Graph:
         """Get full graph."""
-        inner_graph = self.query(f"MATCH (n)-[r]-(m) RETURN n,r,m", white_list=["community_id"])
+        inner_graph = self.query(f"MATCH (n)-[r]-(m) RETURN n,r,m",
+                                 white_list=["community_id"])
         return inner_graph
 
     def explore(
@@ -528,7 +545,8 @@ class TuGraphStore(GraphStore):
             return MemoryGraph()
 
         if fan is not None:
-            raise ValueError("Fan functionality is not supported at this time.")
+            raise ValueError(
+                "Fan functionality is not supported at this time.")
         else:
             depth_string = f"1..{depth}"
             if depth is None:
@@ -544,15 +562,13 @@ class TuGraphStore(GraphStore):
             else:
                 rel = f"-[r:{self._edge_type}*{depth_string}]-"
 
-            query = (
-                f"MATCH p=(n:{self._vertex_type})"
-                f"{rel}(m:{self._vertex_type}) "
-                f"WHERE n.id IN {subs} RETURN p {limit_string}"
-            )
+            query = (f"MATCH p=(n:{self._vertex_type})"
+                     f"{rel}(m:{self._vertex_type}) "
+                     f"WHERE n.id IN {subs} RETURN p {limit_string}")
 
             logger.info(f'{__file__} {query}')
             return self.query(query)
-        
+
     async def get_neighbor_edges(
         self,
         vid: str,
@@ -561,7 +577,9 @@ class TuGraphStore(GraphStore):
     ) -> Iterator[Edge]:
         vid = escape_quotes(vid)
         memory_graph = self.explore(subs=[vid], depth=1)
-        return await memory_graph.get_neighbor_edges(vid=vid, direction=direction, limit=limit)
+        return await memory_graph.get_neighbor_edges(vid=vid,
+                                                     direction=direction,
+                                                     limit=limit)
 
     async def get_connections(
         self,
@@ -578,7 +596,7 @@ class TuGraphStore(GraphStore):
         memory_graph = self.query(query)
         return memory_graph.edges()
 
-    def get_node(self, vid:str) -> Vertex:
+    def get_node(self, vid: str) -> Vertex:
         vid = escape_quotes(vid)
         query = f"MATCH (n:{self._vertex_type}) WHERE n.id IN {[vid]} RETURN n"
         memory_graph = self.query(query)
@@ -591,9 +609,9 @@ class TuGraphStore(GraphStore):
         memory_graph = self.query(query)
         return memory_graph.get_edge(sid=sid, tid=tid)
 
-    async def get_nodes_by_edge(self, edge_name:str) -> Tuple[Edge, Edge]:
+    async def get_nodes_by_edge(self, edge_name: str) -> Tuple[Edge, Edge]:
         edge_name = escape_quotes(edge_name)
-        
+
         query = f'MATCH (n:entity)-[r:relation]-(m:entity) WHERE r.name = "{edge_name}" RETURN m,n'
         memory_graph = self.query(query=query)
         vertex_iter = memory_graph.vertices()
@@ -605,8 +623,8 @@ class TuGraphStore(GraphStore):
             return n0, n1
         except Exception as e:
             return n0, n1
-    
-    async def node_degree(self, vid:str) -> int:
+
+    async def node_degree(self, vid: str) -> int:
         vid = escape_quotes(vid)
         query = f'MATCH (n:entity)-[r:relation*1..1]-(m:entity) WHERE n.id = "{vid}" RETURN count(r)'
         result = self.conn.run(query=query)
@@ -627,6 +645,7 @@ class TuGraphStore(GraphStore):
             mg.append_edge(edge)
         return mg
 
+
 if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1 and sys.argv[1] == 'drop':
@@ -636,4 +655,6 @@ if __name__ == '__main__':
             logger.info('Remove the database.')
             store.drop()
     else:
-        print("`python3 -m huixiangdou.service.graph_store drop` to drop the graph.")
+        print(
+            "`python3 -m huixiangdou.service.graph_store drop` to drop the graph."
+        )

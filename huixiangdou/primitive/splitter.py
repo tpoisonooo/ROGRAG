@@ -1,4 +1,3 @@
-
 # modified from langchain
 # 1. Use `Chunk` instead of `Document`
 # 2. Default chunksize using 832
@@ -21,6 +20,7 @@ from .file_operation import FileOperation
 
 md_image_pattern = re.compile(r'\[([^\]]+)\]\(([a-zA-Z0-9:/._~#-]+)?\)')
 html_image_pattern = re.compile(r'<img\s+[^>]*?src=["\']([^"\']*)["\'][^>]*>')
+
 
 class LineType(TypedDict):
     """Line type as typed dict."""
@@ -132,8 +132,8 @@ class TextSplitter(ABC):
                     # - or if we still have any chunks and the length is long
                     while total > self._chunk_overlap or (
                             total + _len +
-                        (separator_len if len(current_chunk) > 0 else 0) >
-                            self._chunk_size and total > 0):
+                        (separator_len if len(current_chunk) > 0 else 0)
+                            > self._chunk_size and total > 0):
                         total -= self._length_function(current_chunk[0]) + (
                             separator_len if len(current_chunk) > 1 else 0)
                         current_chunk = current_chunk[1:]
@@ -385,9 +385,9 @@ class MarkdownHeaderTextSplitter:
         """
         # Given the headers we want to split on,
         # (e.g., "#, ##, etc") order by length
-        self.headers_to_split_on = sorted(
-            headers_to_split_on, key=lambda split: len(split[0]), reverse=True
-        )
+        self.headers_to_split_on = sorted(headers_to_split_on,
+                                          key=lambda split: len(split[0]),
+                                          reverse=True)
         # Strip headers split headers from the content of the chunk
         self.strip_headers = strip_headers
         super().__init__()
@@ -401,23 +401,20 @@ class MarkdownHeaderTextSplitter:
         aggregated_chunks: List[LineType] = []
 
         for line in lines:
-            if (
-                aggregated_chunks
-                and aggregated_chunks[-1]["metadata"] == line["metadata"]
-            ):
+            if (aggregated_chunks
+                    and aggregated_chunks[-1]["metadata"] == line["metadata"]):
 
                 # If the last line in the aggregated list
                 # has the same metadata as the current line,
                 # append the current content to the last lines's content
                 aggregated_chunks[-1]["content"] += "  \n" + line["content"]
-            elif (
-                aggregated_chunks
-                and aggregated_chunks[-1]["metadata"] != line["metadata"]
-                # may be issues if other metadata is present
-                and len(aggregated_chunks[-1]["metadata"]) < len(line["metadata"])
-                and aggregated_chunks[-1]["content"].split("\n")[-1][0] == "#"
-                and not self.strip_headers
-            ):
+            elif (aggregated_chunks
+                  and aggregated_chunks[-1]["metadata"] != line["metadata"]
+                  # may be issues if other metadata is present
+                  and len(aggregated_chunks[-1]["metadata"]) < len(
+                      line["metadata"]) and
+                  aggregated_chunks[-1]["content"].split("\n")[-1][0] == "#"
+                  and not self.strip_headers):
                 # If the last line in the aggregated list
                 # has different metadata as the current line,
                 # and has shallower header level than the current line,
@@ -465,7 +462,8 @@ class MarkdownHeaderTextSplitter:
             stripped_line = "".join(filter(str.isprintable, stripped_line))
             if not in_code_block:
                 # Exclude inline code spans
-                if stripped_line.startswith("```") and stripped_line.count("```") == 1:
+                if stripped_line.startswith("```") and stripped_line.count(
+                        "```") == 1:
                     in_code_block = True
                     opening_fence = "```"
                 elif stripped_line.startswith("~~~"):
@@ -484,20 +482,18 @@ class MarkdownHeaderTextSplitter:
             for sep, name in self.headers_to_split_on:
                 # Check if line starts with a header that we intend to split on
                 if stripped_line.startswith(sep) and (
-                    # Header with no text OR header is followed by space
-                    # Both are valid conditions that sep is being used a header
-                    len(stripped_line) == len(sep) or stripped_line[len(sep)] == " "
-                ):
+                        # Header with no text OR header is followed by space
+                        # Both are valid conditions that sep is being used a header
+                        len(stripped_line) == len(sep)
+                        or stripped_line[len(sep)] == " "):
                     # Ensure we are tracking the header as metadata
                     if name is not None:
                         # Get the current header level
                         current_header_level = sep.count("#")
 
                         # Pop out headers of lower or same level from the stack
-                        while (
-                            header_stack
-                            and header_stack[-1]["level"] >= current_header_level
-                        ):
+                        while (header_stack and header_stack[-1]["level"]
+                               >= current_header_level):
                             # We have encountered a new header
                             # at the same or higher level
                             popped_header = header_stack.pop()
@@ -510,7 +506,7 @@ class MarkdownHeaderTextSplitter:
                         header: HeaderType = {
                             "level": current_header_level,
                             "name": name,
-                            "data": stripped_line[len(sep) :].strip(),
+                            "data": stripped_line[len(sep):].strip(),
                         }
                         header_stack.append(header)
                         # Update initial_metadata with the current header
@@ -519,12 +515,12 @@ class MarkdownHeaderTextSplitter:
                     # Add the previous line to the lines_with_metadata
                     # only if current_content is not empty
                     if current_content:
-                        lines_with_metadata.append(
-                            {
-                                "content": "\n".join(current_content),
-                                "metadata": current_metadata.copy(),
-                            }
-                        )
+                        lines_with_metadata.append({
+                            "content":
+                            "\n".join(current_content),
+                            "metadata":
+                            current_metadata.copy(),
+                        })
                         current_content.clear()
 
                     if not self.strip_headers:
@@ -535,25 +531,27 @@ class MarkdownHeaderTextSplitter:
                 if stripped_line:
                     current_content.append(stripped_line)
                 elif current_content:
-                    lines_with_metadata.append(
-                        {
-                            "content": "\n".join(current_content),
-                            "metadata": current_metadata.copy(),
-                        }
-                    )
+                    lines_with_metadata.append({
+                        "content":
+                        "\n".join(current_content),
+                        "metadata":
+                        current_metadata.copy(),
+                    })
                     current_content.clear()
 
             current_metadata = initial_metadata.copy()
 
         if current_content:
-            lines_with_metadata.append(
-                {"content": "\n".join(current_content), "metadata": current_metadata}
-            )
+            lines_with_metadata.append({
+                "content": "\n".join(current_content),
+                "metadata": current_metadata
+            })
 
         # lines_with_metadata has each line with associated header metadata
         # aggregate these into chunks based on common metadata
         return self.aggregate_lines_to_chunks(lines_with_metadata,
                                               base_meta=metadata)
+
 
 def nested_split_markdown(filepath: str,
                           text: str,
@@ -586,17 +584,20 @@ def nested_split_markdown(filepath: str,
             header += chunk.metadata['Header 3']
 
         if len(chunk.content_or_path) > chunksize:
-            subchunks = text_ref_splitter.create_chunks([chunk.content_or_path], [chunk.metadata])
+            subchunks = text_ref_splitter.create_chunks(
+                [chunk.content_or_path], [chunk.metadata])
 
             for subchunk in subchunks:
                 if len(subchunk.content_or_path) >= 10:
-                    subchunk.content_or_path = '{} {}'.format(header, subchunk.content_or_path.lower())
+                    subchunk.content_or_path = '{} {}'.format(
+                        header, subchunk.content_or_path.lower())
                     text_chunks.append(subchunk)
-            
+
         elif len(chunk.content_or_path) >= 10:
             content = '{} {}'.format(header, chunk.content_or_path.lower())
-            text_chunks.append(Chunk(content_or_path=content, metadata=metadata))
-    
+            text_chunks.append(
+                Chunk(content_or_path=content, metadata=metadata))
+
         # extract images path
         dirname = os.path.dirname(filepath)
 
@@ -629,6 +630,7 @@ def nested_split_markdown(filepath: str,
     # logger.info('{} text_chunks, {} image_chunks'.format(len(text_chunks), len(image_chunks)))
     return text_chunks + image_chunks
 
+
 def split_python_code(filepath: str, text: str, metadata: dict = {}):
     """Split python code to class, function and annotation."""
     basename = os.path.basename(filepath)
@@ -641,8 +643,8 @@ def split_python_code(filepath: str, text: str, metadata: dict = {}):
             texts.append(data)
         for child_node in ast.walk(node):
             if isinstance(
-                child_node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
-            ):
+                    child_node,
+                (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 data = ast.get_docstring(child_node)
                 if data:
                     texts.append(f"{child_node.name} {data}")
@@ -652,6 +654,7 @@ def split_python_code(filepath: str, text: str, metadata: dict = {}):
     for text in texts:
         chunks.append(Chunk(content_or_path=text, metadata=metadata))
     return chunks
+
 
 def clean_md(text: str):
     """Remove parts of the markdown document that do not contain the key

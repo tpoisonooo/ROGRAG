@@ -1,4 +1,3 @@
-
 import json
 import os
 import pdb
@@ -16,12 +15,14 @@ from openai import OpenAI
 
 from .config import redis_host, redis_passwd, redis_port
 
+
 class TaskCode(Enum):
     FS_ADD_DOC = 'add_doc'
     FS_UPDATE_SAMPLE = 'update_sample'
     FS_UPDATE_PIPELINE = 'update_pipeline'
     CHAT = 'chat'
     CHAT_RESPONSE = 'chat_response'
+
 
 class ErrorCode(Enum):
     """Define an enumerated type for error codes, each has a numeric value and
@@ -365,6 +366,7 @@ def is_truth(llm: Any,
     if score >= throttle:
         return True, logs
     return False, logs
+
 
 # if __name__ == '__main__':
 #     print(kimi_ocr('/root/hxddev/wkteam/images/e36e48.jpg', ''))

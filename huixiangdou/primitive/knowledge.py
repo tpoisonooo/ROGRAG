@@ -9,12 +9,14 @@ from collections import defaultdict
 from enum import Enum
 from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
 
+
 # Modified from db-gpt
 class Direction(Enum):
     """Direction class."""
     OUT = 0
     IN = 1
     BOTH = 2
+
 
 class Elem(ABC):
     """Elem class."""
@@ -57,9 +59,11 @@ class Elem(ABC):
             return str(next(iter(self._props.values())))
 
         formatted_props = [
-            f"{k}:{json.dumps(v, ensure_ascii=False)}" for k, v in self._props.items()
+            f"{k}:{json.dumps(v, ensure_ascii=False)}"
+            for k, v in self._props.items()
         ]
         return f"{{{';'.join(formatted_props)}}}"
+
 
 class Vertex(Elem):
     """Vertex class."""
@@ -72,7 +76,7 @@ class Vertex(Elem):
             import pdb
             pdb.set_trace()
             pass
-            
+
         for k, v in props.items():
             self.set_prop(k, v)
 
@@ -103,13 +107,15 @@ class Vertex(Elem):
 
     def __repr__(self):
         return self.__str__()
-        
+
+
 class IdVertex(Vertex):
     """IdVertex class."""
 
     def __init__(self, vid: str):
         """Initialize Idvertex."""
         super().__init__(vid)
+
 
 class Edge(Elem):
     """Edge class."""
@@ -160,9 +166,10 @@ class Edge(Elem):
     def __str__(self):
         """Return the edge '(sid)->(tid)'."""
         return f"({self._sid})-[{self._name}]->({self._tid})"
-    
+
     def __repr__(self):
         return self.__str__()
+
 
 class Graph(ABC):
     """Graph class."""
@@ -200,7 +207,9 @@ class Graph(ABC):
         """Delete edges(sid -[name]-> tid) matches props."""
 
     @abstractmethod
-    def del_neighbor_edges(self, vid: str, direction: Direction = Direction.OUT):
+    def del_neighbor_edges(self,
+                           vid: str,
+                           direction: Direction = Direction.OUT):
         """Delete neighbor edges."""
 
     @abstractmethod
@@ -234,6 +243,7 @@ class Graph(ABC):
         limit: Optional[int] = None,
     ) -> Iterator[Edge]:
         """Get neighbor edges."""
+
 
 class MemoryGraph(Graph):
     """MemoryGraph class."""
@@ -272,21 +282,21 @@ class MemoryGraph(Graph):
 
         # update metadata
         self._vertex_prop_keys.update(vertex.props.keys())
-        
-    def upsert_node(self, name:str, data:dict):
+
+    def upsert_node(self, name: str, data: dict):
         if name is None:
             import pdb
             pdb.set_trace()
         v = Vertex(vid=name, name=name, **data)
         return self.upsert_vertex(v)
 
-    def has_edge(self, sid:str, tid:str) -> bool:
+    def has_edge(self, sid: str, tid: str) -> bool:
         if sid not in self._oes:
             return False
         if tid not in self._oes[sid]:
             return False
         return True
-    
+
     def get_edge(self, sid: str, tid: str) -> Optional[Edge]:
         """
         Retrieve an edge by source vertex ID, target vertex ID, and edge name.
@@ -329,7 +339,7 @@ class MemoryGraph(Graph):
         self._edge_count += 1
         return True
 
-    def upsert_edge(self, sid:str, tid:str, name:str, data:dict):
+    def upsert_edge(self, sid: str, tid: str, name: str, data: dict):
         """
         Insert or update an edge based on its source and target vertex IDs.
         If the edge already exists, update its properties. Otherwise, insert the edge.
@@ -345,7 +355,8 @@ class MemoryGraph(Graph):
         # Check if the edge already exists
         existing_edges = self._oes[sid].get(tid, set())
         for existing_edge in existing_edges:
-            if existing_edge.name == edge.name and existing_edge.has_props(**edge.props):
+            if existing_edge.name == edge.name and existing_edge.has_props(
+                    **edge.props):
                 # Update the existing edge's properties
                 existing_edge.props.update(edge.props)
                 return True
@@ -353,21 +364,21 @@ class MemoryGraph(Graph):
         # If the edge does not exist, insert it
         self.append_edge(edge)
         return False
-    
+
     def has_vertex(self, vid: str) -> bool:
         """Retrieve a vertex by ID."""
         return vid in self._vs
-    
+
     def get_vertex(self, vid: str) -> Vertex:
         """Retrieve a vertex by ID."""
         if vid not in self._vs:
             return None
         return self._vs[vid]
-    
+
     def has_node(self, vid: str) -> bool:
         return self.has_vertex(vid=vid)
-    
-    def get_node(self, vid:str) -> Vertex:
+
+    def get_node(self, vid: str) -> Vertex:
         return self.get_vertex(vid)
 
     def vertices(self) -> Iterator[Vertex]:
@@ -376,9 +387,10 @@ class MemoryGraph(Graph):
 
     def edges(self) -> Iterator[Edge]:
         """Return edges."""
-        return iter(e for nbs in self._oes.values() for es in nbs.values() for e in es)
-    
-    async def node_degree(self, vid:str) -> int:
+        return iter(e for nbs in self._oes.values() for es in nbs.values()
+                    for e in es)
+
+    async def node_degree(self, vid: str) -> int:
         ret = 0
         if vid in self._oes:
             ret += len(self._oes[vid])
@@ -391,7 +403,7 @@ class MemoryGraph(Graph):
         for vid in vids:
             self.del_neighbor_edges(vid, Direction.BOTH)
             self._vs.pop(vid, None)
-    
+
     def del_edges(self, sid: str, tid: str, name: str, **props):
         """Delete edges."""
         old_edge_cnt = len(self._oes[sid][tid])
@@ -400,17 +412,18 @@ class MemoryGraph(Graph):
             return set(
                 filter(
                     lambda e: not (
-                        (name == e.name if name else True) and e.has_props(**props)
-                    ),
+                        (name == e.name
+                         if name else True) and e.has_props(**props)),
                     es,
-                )
-            )
+                ))
 
         self._oes[sid][tid] = remove_matches(self._oes[sid][tid])
         self._ies[tid][sid] = remove_matches(self._ies[tid][sid])
         self._edge_count -= old_edge_cnt - len(self._oes[sid][tid])
 
-    def del_neighbor_edges(self, vid: str, direction: Direction = Direction.OUT):
+    def del_neighbor_edges(self,
+                           vid: str,
+                           direction: Direction = Direction.OUT):
         """Delete all neighbor edges."""
 
         def del_index(idx, i_idx):
@@ -431,11 +444,15 @@ class MemoryGraph(Graph):
             "schema": [
                 {
                     "type": "VERTEX",
-                    "properties": [{"name": k} for k in self._vertex_prop_keys],
+                    "properties": [{
+                        "name": k
+                    } for k in self._vertex_prop_keys],
                 },
                 {
                     "type": "EDGE",
-                    "properties": [{"name": k} for k in self._edge_prop_keys],
+                    "properties": [{
+                        "name": k
+                    } for k in self._edge_prop_keys],
                 },
             ]
         }
@@ -443,17 +460,12 @@ class MemoryGraph(Graph):
     def format(self) -> str:
         """Format graph to string."""
         vs_str = "\n".join(v.format() for v in self.vertices())
-        es_str = "\n".join(
-            f"{self.get_vertex(e.sid).format(concise=True)}"
-            f"{e.format()}"
-            f"{self.get_vertex(e.tid).format(concise=True)}"
-            for e in self.edges()
-        )
-        return (
-            f"Entities:\n{vs_str}\n\n" f"Relationships:\n{es_str}"
-            if (vs_str or es_str)
-            else ""
-        )
+        es_str = "\n".join(f"{self.get_vertex(e.sid).format(concise=True)}"
+                           f"{e.format()}"
+                           f"{self.get_vertex(e.tid).format(concise=True)}"
+                           for e in self.edges())
+        return (f"Entities:\n{vs_str}\n\n"
+                f"Relationships:\n{es_str}" if (vs_str or es_str) else "")
 
     def truncate(self):
         """Truncate graph."""
@@ -494,7 +506,8 @@ class MemoryGraph(Graph):
         subgraph = MemoryGraph()
 
         for vid in vids:
-            await self.__search(vid, direct, depth, fan, limit, 0, set(), subgraph)
+            await self.__search(vid, direct, depth, fan, limit, 0, set(),
+                                subgraph)
 
         return subgraph
 
@@ -532,13 +545,13 @@ class MemoryGraph(Graph):
 
         # next hop
         for nid in nids:
-            await self.__search(
-                nid, direct, depth, fan, limit, _depth + 1, _visited, _subgraph
-            )
-    
+            await self.__search(nid, direct, depth, fan, limit, _depth + 1,
+                                _visited, _subgraph)
+
     async def edge_degree(self, sid: str, tid: str) -> int:
-        return await self.node_degree(vid=sid) + await self.node_degree(vid=tid)
-    
+        return await self.node_degree(vid=sid) + await self.node_degree(vid=tid
+                                                                        )
+
     async def get_neighbor_edges(
         self,
         vid: str,
