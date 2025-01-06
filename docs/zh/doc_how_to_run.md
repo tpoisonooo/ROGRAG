@@ -1,28 +1,24 @@
-# 集成飞书群聊收发和撤回
+# 运行
 
-接入飞书完整功能需要公网 IP。假设使用[阿里云 ECS](https://www.aliyun.com/product/ecs)（学生免费版即可）、假设公网 IP 是 `101.133.161.20`。且已配置[安全组](https://help.aliyun.com/zh/ecs/user-guide/overview-44)，外部可访问 `6666` 端口号，尤其是部署飞书的云服务器公网地址能够访问。
+建图期间，我们会把 raw 文档整理成有结构的图谱形式。如图所示：
 
-常见地，有公网 IP 的机器往往没有 GPU，我们将分开部署 LLM 和飞书消息存储，**请注意命令执行时所在机器**。
+<img src="https://github.com/user-attachments/assets/b9872a7b-4b15-4f51-b361-7a5b0001134b" width=400>
 
-<img src="https://github.com/user-attachments/assets/16723ac4-6d2c-41e5-b674-2bcca8515ddc" width="400">
+检索期间，我们先基于 Query 从图谱获取子图和对应的 Chunks，再用 LLM 获取答案。
 
-## 一、创建测试企业
+<img src="https://github.com/user-attachments/assets/71241689-472b-4f1c-a821-32a12ade1409" width=400>
 
-测试企业是开发期间使用的测试环境，不需要正式权限审核。正式上线前都应该用测试企业的配置运行代码。
+本文档使用的工具如下：
+- **样例 raw 文档**：周树人所著《朝花夕拾》markdown，可换为任意其他文档
+- **图谱存储**：TuGraph，开源图数据库（看作 mysql-server 即可）
+- **LLM**：本文档以 siliconcloud 提供的 Qwen2.5-7B-Instruct 为例，用户可以切换为任何 openai API 形式的接口，无论模型来自 sft 还是 remote API
 
-**STEP1.** 打开[飞书开发者平台-开发者后台-创建企业自建应用](https://open.feishu.cn/app?lang=zh-CN)
+## 一、安装运行依赖
 
-<img src="https://github.com/user-attachments/assets/c560bc34-a048-4443-8267-0bbfed4c4140" width="400">
+## 二、创建知识库
 
-**STEP2.** 点击应用头像，创建测试企业
+## 三、查询
 
-<img src="https://github.com/user-attachments/assets/d51b65ad-70f8-44aa-84a0-78791c7b1f10" width="400">
-
-**STEP3.** 切换到测试企业，开始配置
-
-<img src="https://github.com/user-attachments/assets/e3569b2b-1f2b-47b4-8d8d-21ea71483864" width="400">
-
-## 二、配置机器人权限
 
 **STEP1.** 在阿里云 ECS（101.133.161.20 机器）上，安装 redis-server 和依赖
 
