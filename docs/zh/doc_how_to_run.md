@@ -6,12 +6,12 @@
 
 检索期间，我们先基于 Query 从图谱获取子图和对应的 Chunks，再用 LLM 获取答案。
 
-<img src="https://github.com/user-attachments/assets/71241689-472b-4f1c-a821-32a12ade1409" width=400>
+<img src="https://github.com/user-attachments/assets/71241689-472b-4f1c-a821-32a12ade1409" width=800>
 
 本文档使用的工具如下：
 - **样例 raw 文档**：周树人《朝花夕拾》片段，可换为任意其他文档
-- **图谱存储**：TuGraph，开源图数据库（看作 mysql-server 即可）
-- **LLM**：本文档以 siliconcloud 提供的 Qwen2.5-7B-Instruct 为例，用户可切换为任何 [PyPI `openai`](https://pypi.org/project/openai/) 接口，无论模型来自 SFT 还是 remote API
+- **图谱存储**：[TuGraph](https://github.com/TuGraph-family/tugraph-db)，开源图数据库（看作 mysql-server 即可）
+- **LLM**：本文档以 [SiliconCloud](https://cloud.siliconflow.cn) 提供的 Qwen2.5-7B-Instruct 为例，用户可切换为任何 [PyPI `openai`](https://pypi.org/project/openai/) 接口，无论模型来自 SFT 还是 remote API
 
 ## 一、安装依赖
 
@@ -52,7 +52,11 @@
 
    > Tips2: 也可以用 `vllm` 部署自己的模型。参考命令 `vllm serve /path/to/Qwen2.5-7B-Instruct  --enable-prefix-caching --served-model-name Qwen2.5-7B-Instruct --port 8000 --tensor-parallel-size 1`
 
-5. **配置`config.ini`**。如果模型路径、ip 和文档一致，不需要修改 `config.ini`；否则请参考 `config.ini`里的注释调整配置。[这里是完整的配置说明](./doc_config.md) 
+5. **配置`config.ini`**。把`config.ini.example`拷贝为`config.ini`，填写 SiliconCloud SK 即可。[这里是完整的配置说明](./doc_config.md) 
+
+   ```bash
+   cp config.ini.example config.ini
+   ```
 
 ## 二、创建
 
@@ -64,11 +68,22 @@ python3 -m huixiangdou.pipeline.store
 
 成功后，`workdir` 会出现多个特征目录；同时 TuGraph 图项目会看到名为 `HuixiangDou2` 的图谱。
 
+<img src="https://github.com/user-attachments/assets/873fedfe-c2fe-47f2-bbb1-723c1c21c463" width=400>
+
 ## 三、查询
 
 执行 `main.py` 可运行查询样例：
 ```bash
 python3 -m huixiangdou.main
+
++------------------+---------+---------------------------------+---------------+
+|      Query       |  State  |            Response             |  References   |
++==================+=========+=================================+===============+
+| 百草园里有什么？ | success | 百草园里有多种植物和昆虫，包括碧绿的菜畦、高大的皂荚树、紫红的 | baicaoyuan.md |
+|                  |         | 桑椹、像小珊瑚珠攒成的小球的覆盆子等植物，以及鸣蝉、黄蜂、叫天 |               |
+|                  |         | 子（云雀）、油蛉、蟋蟀、蜈蚣、斑蝥等昆虫。此外，还有何首乌藤和 |               |
+|                  |         | 木莲藤缠绕，石井栏和断砖作为自然特征存在。 |               |
++------------------+---------+---------------------------------+---------------+
 ```
 
 ## 四、删除已有知识库
@@ -78,5 +93,6 @@ python3 -m huixiangdou.main
 # 删除特征
 rm -rf workdir
 # 执行后输入 Y 确认删除实体关系
-python3 -m huixiangdou.service.graph_store 
+# 图名称配置在 `config.ini` 中，默认是 `HuixiangDou2`
+python3 -m huixiangdou.service.graph_store drop
 ```

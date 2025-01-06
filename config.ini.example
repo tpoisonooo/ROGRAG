@@ -1,4 +1,4 @@
-[feature_store]
+[store]
 reject_threshold = 0.18081151451255284
 # Local embedding path
 embedding_model_path = "/home/data/share/bce-embedding-base_v1"
@@ -25,13 +25,6 @@ save_dir = "logs/web_search_result"
 
 [llm]
 
-[llm.local]
-api_key = "EMPTY"
-max_token_size = 64000
-rpm = 10000
-tpm = 5000000
-model = "Qwen2.5-7B-Instruct"
-
 [llm.siliconcloud]
 # SiliconCloud API token
 api_key = "sk-ducerqngypuXXXXX"
@@ -39,6 +32,15 @@ max_token_size = 32000
 rpm = 8000
 tpm = 50000
 model = "Qwen/Qwen2.5-32B-Instruct"
+
+[llm.local]
+# Optional: vllm server
+# vllm serve /data/share/Qwen2.5-7B-Instruct  --enable-prefix-caching --served-model-name Qwen2.5-7B-Instruct --port 8000
+api_key = "EMPTY"
+max_token_size = 64000
+rpm = 10000
+tpm = 5000000
+model = "Qwen2.5-7B-Instruct"
 
 [llm.kimi]
 # Optional: kimi API token

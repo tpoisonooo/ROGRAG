@@ -47,7 +47,7 @@ class Session:
         return txt.replace('\n', '\\n').replace('\t', '\\t')
 
     def format(self, max_len:int=-1):
-        refs = list(set([c.metadata["source"] for c in self.fused_reply.sources] if self.fused_reply is not None else []))
+        refs = list(set([os.path.basename(c.metadata["source"]) for c in self.fused_reply.sources] if self.fused_reply is not None else []))
         
         table = Texttable()
         table.set_cols_valign(['t', 't', 't', 't'])

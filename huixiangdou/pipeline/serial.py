@@ -163,7 +163,7 @@ class SerialPipeline:
         sess.stage = "1_search"
         yield sess
         
-        run_graphrag = True
+        run_graphrag = False
         try:
             sess.retrieve_replies = [await self.retriever_reason.explore(query=sess.query)]
             sess.node = 'retriever_reason'

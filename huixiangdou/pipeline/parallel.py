@@ -96,7 +96,6 @@ class ParallelPipeline:
     def __init__(self, work_dir: str='workdir', config_path: str='config.ini'):
         self.resource = RetrieveResource(config_path)
         self.pool = SharedRetrieverPool(resource=self.resource)
-        self.retriever_reason = self.pool.get(work_dir=work_dir, method=RetrieveMethod.REASON)
         self.retriever_knowledge = self.pool.get(work_dir=work_dir, method=RetrieveMethod.KNOWLEDGE)
         self.retriever_web = self.pool.get(work_dir=work_dir, method=RetrieveMethod.WEB)
         self.retriever_bm25 = self.pool.get(work_dir=work_dir, method=RetrieveMethod.BM25)

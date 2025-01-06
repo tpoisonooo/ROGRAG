@@ -56,7 +56,7 @@ def check_env(args):
 
 
 async def show(assistant, _: dict):
-    queries = [('三味书屋是谁的财产？', '')]
+    queries = [('百草园里有什么？', '')]
     print(colored('Running some examples..', 'yellow'))
     for q in queries:
         print(colored('[Example]' + q[0], 'yellow'))
