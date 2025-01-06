@@ -382,7 +382,7 @@ async def write_back_config_threshold(resource: RetrieveResource, work_dir: str,
 
     with open(config_path, encoding='utf8') as f:
         config = pytoml.load(f)
-    config['feature_store']['reject_threshold'] = float(optimal_threshold)
+    config['store']['reject_threshold'] = float(optimal_threshold)
     with open(config_path, 'w', encoding='utf8') as f:
         pytoml.dump(config, f)
     logger.info(
