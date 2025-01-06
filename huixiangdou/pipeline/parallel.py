@@ -145,24 +145,24 @@ class ParallelPipeline:
         ]
 
         # if not a good question, return
+        async for sess in preproc.process(sess):
+            if sess.error in direct_chat_states:
+                async for resp in reduce.process(sess):
+                    yield resp
+                return
 
-        # try:
-        # async for sess in preproc.process(sess):
-        #     if sess.error in direct_chat_states:
-        #         async for resp in reduce.process(sess):
-        #             yield resp
-        #         return
-
-        sess.stage = "1_search"
-        yield sess
-
-        # parallel run text2vec, websearch and codesearch
-        tasks = [self.retriever_knowledge.explore(query=sess.query)]
-        sess.retrieve_replies = await asyncio.gather(*tasks,
-                                                     return_exceptions=True)
-        async for sess in reduce.process(sess):
+        try:
+            sess.stage = "1_search"
             yield sess
-        # except Exception as e:
-        #     pdb.set_trace()
-        #     logger.error(str(e))
+
+            # run retrieval
+            tasks = [self.retriever_knowledge.explore(query=sess.query)]
+            sess.retrieve_replies = await asyncio.gather(
+                *tasks, return_exceptions=True)
+            async for sess in reduce.process(sess):
+                yield sess
+
+        except Exception as e:
+            pdb.set_trace()
+            logger.error(str(e))
         return
