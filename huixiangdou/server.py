@@ -216,7 +216,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='SerialPipeline or Parallel Pipeline.')
     parser.add_argument('--work_dir',
                         type=str,
-                        default='workdir_1002',
+                        default='workdir',
                         help='Working directory.')
     parser.add_argument(
         '--config_path',

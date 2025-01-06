@@ -9,144 +9,74 @@
 <img src="https://github.com/user-attachments/assets/71241689-472b-4f1c-a821-32a12ade1409" width=400>
 
 本文档使用的工具如下：
-- **样例 raw 文档**：周树人所著《朝花夕拾》markdown，可换为任意其他文档
+- **样例 raw 文档**：周树人《朝花夕拾》片段，可换为任意其他文档
 - **图谱存储**：TuGraph，开源图数据库（看作 mysql-server 即可）
-- **LLM**：本文档以 siliconcloud 提供的 Qwen2.5-7B-Instruct 为例，用户可以切换为任何 openai API 形式的接口，无论模型来自 sft 还是 remote API
+- **LLM**：本文档以 siliconcloud 提供的 Qwen2.5-7B-Instruct 为例，用户可切换为任何 [PyPI `openai`](https://pypi.org/project/openai/) 接口，无论模型来自 SFT 还是 remote API
 
-## 一、安装运行依赖
+## 一、安装依赖
 
-## 二、创建知识库
+1. **安装 TuGraph**。[TuGraph 官方](https://tugraph-db.readthedocs.io/zh-cn/latest/5.installation%26running/index.html)支持 docker/在线服务/二进制文件部署，这里用 docker 方式
+
+   ```bash
+   # 拉取镜像
+   docker pull tugraph/tugraph-runtime-centos
+   # 运行
+   docker run -d -p 7070:7070  -p 7687:7687 -p 9090:9090 -v /root/tugraph/data:/var/lib/lgraph/data  -v /root/tugraph/log:/var/log/lgraph_log --name tugraph_demo ${REPOSITORY}:${VERSION}
+   # ${REPOSITORY}是镜像地址，${VERSION}是版本号。
+   # 7070是默认的http端口，访问tugraph-db-browser使用。   
+   # 7687是bolt端口，bolt client访问使用。
+   # 9090是默认的rpc端口，rpc client访问使用。
+   # /var/lib/lgraph/data是容器内的默认数据目录，/var/log/lgraph_log是容器内的默认日志目录
+   # 命令将数据目录和日志目录挂载到了宿主机的/root/tugraph/上进行持久化，您可以根据实际情况修改。
+   ```
+
+   成功后，在浏览器打开 7070 端口，会看到 TuGraph UI 界面，默认账号 admin，默认密码 73@TuGraph
+
+   <img src="https://github.com/user-attachments/assets/010224cc-76ee-4c1c-9198-9cf4f01e248d" width=400>
+
+2. **HuixiangDou2 依赖**。直接使用 `pip install` 即可
+
+   ```bash
+   python3 -m pip install -r requirements.txt
+   ```
+
+3. **下载 embedding 模型。** HuixiangDou2 支持 bce/bge 文本+图文模型。以 bce [embedding](https://huggingface.co/InfiniFlow/bce-embedding-base_v1) 和 [reranker](https://huggingface.co/InfiniFlow/bce-reranker-base_v1) 为例，假设模型下载到本机以下两个位置：
+   * `/home/data/share/bce-embedding-base_v1`
+   * `/home/data/share/bce-reranker-base_v1`
+
+4. **LLM Key**。我们用 [SiliconCloud](https://siliconflow.cn/zh-cn/siliconcloud) **免费** LLM API。
+   * 点击[API密钥](https://cloud.siliconflow.cn/account/ak) 获取 sk
+   * 本教程使用的模型均为 `Qwen/Qwen2.5-7B-Instruct`
+   
+   > Tips1: 新用户用这个链接注册，可在免费额度基础上，加送 token：https://cloud.siliconflow.cn/s/tpoisonooo
+
+   > Tips2: 也可以用 `vllm` 部署自己的模型。参考命令 `vllm serve /path/to/Qwen2.5-7B-Instruct  --enable-prefix-caching --served-model-name Qwen2.5-7B-Instruct --port 8000 --tensor-parallel-size 1`
+
+5. **配置`config.ini`**。如果模型路径、ip 和文档一致，不需要修改 `config.ini`；否则请参考 `config.ini`里的注释调整配置。[这里是完整的配置说明](./doc_config.md) 
+
+## 二、创建
+
+`tests/data` 下有两篇文档，把它拷贝到 `repodir`，建知识库。
+```bash
+cp -rf tests/data repodir
+python3 -m huixiangdou.pipeline.store
+```
+
+成功后，`workdir` 会出现多个特征目录；同时 TuGraph 图项目会看到名为 `HuixiangDou2` 的图谱。
 
 ## 三、查询
 
-
-**STEP1.** 在阿里云 ECS（101.133.161.20 机器）上，安装 redis-server 和依赖
-
+执行 `main.py` 可运行查询样例：
 ```bash
-# Ubuntu 启动 redis-server
-sudo apt install redis-server
-redis-server
-..
-
-# 在 CentOS 和 Red Hat 系统中，首先添加 EPEL 仓库，然后更新 yum 源
-sudo yum install epel-release
-sudo yum update
-# 然后安装 redis 数据库
-sudo yum -y install redis
-# 安装好后启动 redis 服务即可：
-sudo systemctl start redis
-..
+python3 -m huixiangdou.main
 ```
 
-确保 redis 在后台已经活跃
-![image](https://github.com/InternLM/HuixiangDou/assets/40042370/84804532-c9fa-40b9-8605-6fd760a75f72)
+## 四、删除已有知识库
 
-启动群聊消息监听
-
+删掉 `workdir` 和 `TuGraph` 里的实体关系即可。
+```bash
+# 删除特征
+rm -rf workdir
+# 执行后输入 Y 确认删除实体关系
+python3 -m huixiangdou.service.graph_store 
 ```
-# ECS 上，开个新终端，启动消息监听 6666 端口号
-cd huixiangdou
-python3 -m pip install -r requirements-lark-group.txt
-python3 -m huixiangdou.frontend.lark_group
-..
-* Running on all addresses (0.0.0.0)
-* Running on http://127.0.0.1:6666
-* Running on http://101.133.161.20:6666
-Press CTRL+C to quit
-```
-
-**STEP2.** 飞书开发者平台-添加应用能力-机器人
-
-<img src="https://github.com/user-attachments/assets/22d3f565-2fcb-4404-9232-2a3d3d077019" width="400">
-
-**STEP3.** 配置机器人的回调地址
-
-我们以`http://101.133.161.20:6666/event` 为例，点击右侧“验证”按钮，ECS 应能收到一条消息，此时还未配置 key 和 token 会报错。
-
-<img src="https://github.com/user-attachments/assets/f6228d80-a330-4d96-9fa6-4dfe899c8acb" width="400">
-
-这一步也需要同步配置加解密策略，防止解析报错：
-![image](https://github.com/InternLM/HuixiangDou/assets/40042370/8205cbc7-b7a1-4b50-ac46-8f6860be0ba0)
-
-**STEP4.** 权限管理-添加权限
-
-在测试企业中，添加权限不需要审批。以下是所需权限列表，搜索添加
-
-```
-* 读取群消息
-* 获取群组信息
-* 获取与发送单聊、群组消息
-* 接收群聊@机器人消息事件
-* 获取群组中所有消息
-* 获取用户发给机器人的单聊消息
-* 获取单聊、群组消息
-* 以应用的身份发消息
-```
-
-**STEP5.** 事件与回调-事件订阅
-
-配置请求地址，假设 key 是 `abc`，token 是 `def`；添加事件 “接收消息 v2.0”
-
-<img src="https://github.com/user-attachments/assets/4f98bfc8-ed5e-4dce-a143-30c0b322c1be" width="400">
-
-此时可在飞书 APP 上，**打开测试企业**，把应用“茴香豆” 加进群组。
-
-1. 在群里发消息，ECS 应保存到 redis 中
-
-2. 可以用 `curl -X POST -H "Content-Type: application/json" http://101.133.161.20:6666/fetch` 读取 redis 中的消息
-   测通的样例：
-   ![image](https://github.com/InternLM/HuixiangDou/assets/40042370/333b3e79-bd80-41fe-9116-329e2e5356ab)
-
-3. 为了能及时撤回。 用户依次发送 4 条消息：“1、2、3、豆哥撤回”，接收顺序应该是 “豆哥撤回、1、2、3”
-
-## 三、测试完整收发、撤回功能
-
-打开应用-凭证与基础信息，获取 App ID 和 App Secret，连同之前的 key、token 和回调地址，一起填入 `config.ini`。
-
-消息类型改成 `lark_group`
-
-```ini
-[frontend]
-type = "lark_group"
-..
-# ECS 回调地址
-webhook_url = "http://101.133.161.20:6666/fetch"
-
-[frontend.lark_group]
-# "lark_group" configuration examples, use your own app_id and secret !!!
-app_id = "cli_a53a34dcb7785xxx"
-app_secret = "2ajhg1ixSvlNm1bJkH4tJhPfTCsGGXXX"
-encrypt_key = "abc"
-verification_token = "def"
-```
-
-如同 README 运行测试，执行 `main`
-
-```shell
-python3 -m huixiangdou.main  --standalone
-..
-======== Running on http://0.0.0.0:8888 ========
-(Press CTRL+C to quit)
-```
-
-输入技术问题，茴香豆会作答；在群组里输入“豆哥撤回”，助手将撤回发送过的所有消息。
-
-<img src="https://github.com/user-attachments/assets/e057f413-f60e-440e-8b8a-d0e9b0bce4e7" width="400">
-
-## 四、正式上线
-
-切换回正式版本。添加权限、设置回调地址。
-
-点击“版本管理与发布-创建版本”，等待管理员审核上线。
-
-## 五、FAQ
-
-1. 如果`curl -X POST -H "Content-Type: application/json" http://101.133.161.20:6666/fetch`执行超时如下图。
-   ![image](https://github.com/InternLM/HuixiangDou/assets/40042370/ba4ddb79-5b3d-4dae-8e9e-d958f42a35b7)
-   解答：如果你的GPU机器有公网IP，修改webhook url地址为127.0.0.1
-   ![image](https://github.com/InternLM/HuixiangDou/assets/40042370/11c9159f-b479-4255-9582-92d6b3eab501)
-
-2. 报错huggingface_hub.utils.\_validators.HFValidationError: Repo id must be in the form
-   repo_name' or 'namespace/repo_name': '/data/bcee-embedding-base v1'. Use`repo_type` argument if needed
-   ![image](https://github.com/InternLM/HuixiangDou/assets/40042370/b67ba8f8-7f37-4f62-b995-15fd3ad5e12e)
-   解答：sentence_transformers包的bug,包版本降到2.2.2可以修复。

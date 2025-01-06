@@ -46,7 +46,7 @@ class RetrieveResource:
                  config_path: str,
                  rerank_topn: int = 4):
         with open(config_path, encoding='utf8') as f:
-            fs_config = pytoml.load(f)['feature_store']
+            fs_config = pytoml.load(f)['store']
 
         # load text2vec and rerank model
         logger.info('loading test2vec and rerank models')

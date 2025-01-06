@@ -11,7 +11,7 @@ import pytoml
 from loguru import logger
 from typing import List
 from huixiangdou.primitive import Query
-from huixiangdou.service import ErrorCode, SerialPipeline, ParallelPipeline, llm_serve, start_llm_server
+from huixiangdou.pipeline import ErrorCode, SerialPipeline, ParallelPipeline, llm_serve, start_llm_server
 import json
 from datetime import datetime
 
@@ -23,7 +23,7 @@ def ymd():
 
 def parse_args():
     """Parse args."""
-    parser = argparse.ArgumentParser(description='SerialPipeline.')
+    parser = argparse.ArgumentParser(description='ParallelPipeline.')
     parser.add_argument('--work_dir',
                         type=str,
                         default='workdir',
@@ -33,7 +33,7 @@ def parse_args():
         '--config_path',
         default='config.ini',
         type=str,
-        help='SerialPipeline configuration path. Default value is config.ini')
+        help='ParallelPipeline configuration path. Default value is config.ini')
     parser.add_argument('--standalone',
                         action='store_true',
                         default=True,
@@ -42,7 +42,7 @@ def parse_args():
                         action='store_false',
                         dest='standalone', 
                         help='Do not auto deploy required Hybrid LLM Service.')
-    parser.add_argument('--placeholder', type=str, default='How to install HuixiangDou ?', help='Placeholder for user query.')
+    parser.add_argument('--placeholder', type=str, default='How to install HuixiangDou2 ?', help='Placeholder for user query.')
     parser.add_argument('--image', action='store_true', default=True, help='')
     parser.add_argument('--no-image', action='store_false', dest='image', help='Close some components for readthedocs.')
     parser.add_argument('--theme', type=str, default='soft', help='Gradio theme, default value is `soft`. Open https://www.gradio.app/guides/theming-guide for all themes.')

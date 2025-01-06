@@ -38,9 +38,9 @@ def build_config_path():
     config = None
     with open(config_path) as f:
         config = pytoml.load(f)
-        config['feature_store'][
+        config['store'][
             'embedding_model_path'] = '/data2/khj/bce-embedding-base_v1/'
-        config['feature_store'][
+        config['store'][
             'reranker_model_path'] = '/data2/khj/bce-embedding-base_v1/'
         config['llm']['server']['remote_api_key'] = kimi_token
 
@@ -60,8 +60,8 @@ def run():
     actions = {
         'llm_server_hybrid':
         'python3 -m huixiangdou.service.llm_server_hybrid --config_path {}  --unittest',
-        'feature_store':
-        'python3 -m huixiangdou.service.feature_store --config_path {}',
+        'store':
+        'python3 -m huixiangdou.service.store --config_path {}',
         'main': 'python3 -m huixiangdou.main --standalone --config_path {}'
     }
 
