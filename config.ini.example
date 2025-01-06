@@ -1,0 +1,117 @@
+[store]
+reject_threshold = 0.18081151451255284
+
+# local embedding path
+# for example:
+#  "maidalun1020/bce-embedding-base_v1"
+#  "BAAI/bge-m3"
+#  "https://api.siliconflow.cn/v1/embeddings"
+embedding_model_path = "/home/data/share/bce-embedding-base_v1"
+
+# reranker model, support list:
+#  "maidalun1020/bce-reranker-base_v1"
+#  "BAAI/bge-reranker-v2-minicpm-layerwise"
+#  "https://api.siliconflow.cn/v1/rerank"
+reranker_model_path = "/home/data/share/bce-reranker-base_v1"
+
+# if using `siliconcloud` API as `embedding_model_path` or `reranker_model_path`, give the token
+api_token = ""
+api_rpm = 1000
+api_tpm = 40000
+work_dir = "workdir"
+
+[tugraph]
+# TuGraph config
+host = "127.0.0.1"
+port = 7687
+username = "admin"
+password = "73@TuGraph"
+name = "HuixiangDou2"
+
+[web_search]
+# web search engine support ddgs and serper
+# For ddgs, see https://pypi.org/project/duckduckgo-search
+# For serper, check https://serper.dev/api-key to get a free API key
+engine = "serper"
+serper_x_api_key = "SERPER_API_TOKEN"
+domain_partial_order = ["cabidigitallibrary.org", "patents.google.com", "ricedata.cn", "moa.gov.cn", "baike.baidu.com", "gdaas.cn", "chinbullbotany.com", "chinacrops.org", "zgdm.net", "baike.com", "rice.uga.edu", "wikipedia.org"]
+save_dir = "logs/web_search_result"
+
+[llm]
+
+# Supports configuring multiple LLM remote APIs simultaneously. 
+# When a backend is specified in the code, the explicit LLM will be used; 
+# if not specified, the first one will be used.
+
+[llm.siliconcloud]
+# SiliconCloud API token
+api_key = "sk-ducerqngypuXXXXX"
+max_token_size = 32000
+rpm = 8000
+tpm = 50000
+model = "Qwen/Qwen2.5-32B-Instruct"
+
+[llm.local]
+# Optional: vllm server
+# vllm serve /data/share/Qwen2.5-7B-Instruct  --enable-prefix-caching --served-model-name Qwen2.5-7B-Instruct --port 8000
+api_key = "EMPTY"
+max_token_size = 64000
+rpm = 10000
+tpm = 5000000
+model = "Qwen2.5-7B-Instruct"
+
+[llm.kimi]
+# Optional: kimi API token
+api_key = "eyJ0eXBlIjoiSldUIiXXXXX"
+max_token_size = 40000
+rpm = 500
+tpm = 50000
+
+[frontend]
+type = "none"
+webhook_url = "https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxxxxxxxxx"
+message_process_policy = "immediate"
+
+[frontend.lark_group]
+app_id = "cli_a53a34dcb778500e"
+app_secret = "2ajhg1ixSvlNm1bJkH4tJhPfTCsGGHT1"
+encrypt_key = "abc"
+verification_token = "def"
+
+[frontend.wechat_personal]
+bind_port = 9527
+
+[frontend.wechat_wkteam]
+callback_ip = "101.133.161.11"
+callback_port = 9528
+redis_host = "101.133.161.11"
+redis_port = "6380"
+redis_passwd = "hxd123"
+account = ""
+password = ""
+proxy = -1
+dir = "wkteam"
+
+[frontend.wechat_wkteam.43925126702]
+name = "茴香豆群（大暑）"
+introduction = "github https://github.com/InternLM/HuixiangDou 用户体验群"
+
+[frontend.wechat_wkteam.44546611710]
+name = "茴香豆群（立夏）"
+introduction = "github https://github.com/InternLM/HuixiangDou 用户体验群"
+
+[frontend.wechat_wkteam.38720590618]
+name = "茴香豆群（惊蛰）"
+introduction = "github https://github.com/InternLM/HuixiangDou 用户体验群"
+
+[frontend.wechat_wkteam.48437885473]
+name = "茴香豆群（谷雨）"
+introduction = "github https://github.com/InternLM/HuixiangDou 用户体验群"
+
+[frontend.wechat_wkteam.34744063953]
+name = "茴香豆群（雨水）"
+introduction = "github https://github.com/InternLM/HuixiangDou 用户体验群"
+
+[frontend.wechat_wkteam.18356748488]
+name = "卷卷群"
+introduction = "ncnn contributors group"
