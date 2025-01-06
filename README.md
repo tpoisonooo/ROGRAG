@@ -1,12 +1,12 @@
-[English](README.md) | 简体中文
+[English](README_en.md) | 简体中文
 
 <div align="center">
-<img src="resource/logo_black.svg" width="555px"/>
+<img src="resource/logo.png" width="160px"/>
 </div>
 
 HuixiangDou2 是一套 KG-LLM Retrieval 实现。
 
-在 [HuixiangDou](https://github.com/internlm/huixiangdou) 基础上做了精度提升和 `async` 改造：
+在 [HuixiangDou](https://github.com/internlm/huixiangdou)    基础上提升精度和 `async` 改造：
 1. **图谱方案**。稠密计算仅用于查询近似实体和关系
 2. 移植/合并多个开源实现，代码差异近 10k 行
   - **数据**。整理一套 LLM 未完全见过的、真实领域知识作测试（gpt 准确度 0.53）
@@ -20,12 +20,11 @@ HuixiangDou2 是一套 KG-LLM Retrieval 实现。
 
 ## 文档
 
-- [1. 如何运行](docs/zh/doc_how_to_run.md)
-- [2. 配置文件说明](docs/zh/doc_config.md)
-- [3. 目录结构功能](docs/zh/doc_architecture.md)
+- [1. 如何运行](docs/zh_cn/doc_how_to_run.md)
+- [2. 目录结构功能](docs/zh_cn/doc_architecture.md)
 
 ## 致谢
-- [SiliconCloud](https://siliconflow.cn/zh-cn/siliconcloud) 海量 LLM API，部分模型免费
-- [KAG](https://github.com/OpenSPG/KAG) 基于推理的图谱检索
-- [DB-GPT](https://github.com/eosphoros-ai/DB-GPT) LLM 工具集合体
-- [LightRAG](https://github.com/HKUDS/LightRAG) 简单高效的图谱检索方案
+- [SiliconCloud](https://siliconflow.cn/zh-cn/siliconcloud)    海量 LLM API，部分模型免费
+- [KAG](https://github.com/OpenSPG/KAG)    基于推理的图谱检索
+- [DB-GPT](https://github.com/eosphoros-ai/DB-GPT)    LLM 工具集合体
+- [LightRAG](https://github.com/HKUDS/LightRAG)    简单高效的图谱检索方案

@@ -16,41 +16,14 @@ We warmly welcome users' PRs and Issues!
    :maxdepth: 1
    :caption: Quick Start
 
-   copy_quickstart.md
+   doc_how_to_run.md
 
-.. _AdvanceConfiguration:
+.. _Architecture:
 .. toctree::
    :maxdepth: 1
-   :caption: Advance Configuration
+   :caption: Project Structure
 
-   copy_precision.md
-   doc_full_dev.md
-   doc_knowledge_graph.md
    doc_architecture.md
-   doc_rag_annotate_sft_data.md
-
-.. _readthedocs:
-.. toctree::
-   :maxdepth: 1
-   :caption: readthedocs Integration
-
-   doc_add_readthedocs.md
-
-.. _IMApplicaion:
-.. toctree::
-   :maxdepth: 1
-   :caption: IM Applicaion Integration
-
-   doc_add_wechat_accessibility.md
-   doc_add_wechat_commercial.md
-   doc_add_wechat_group.md
-   doc_add_lark_group.md
-   doc_send_only_lark_group.md
-
-.. _Others:
-.. toctree::
-   :maxdepth: 1
-   :caption: Others
 
 Indexes & Tables
 ==================

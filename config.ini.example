@@ -1,9 +1,20 @@
 [store]
 reject_threshold = 0.18081151451255284
-# Local embedding path
+
+# local embedding path
+# for example:
+#  "maidalun1020/bce-embedding-base_v1"
+#  "BAAI/bge-m3"
+#  "https://api.siliconflow.cn/v1/embeddings"
 embedding_model_path = "/home/data/share/bce-embedding-base_v1"
+
+# reranker model, support list:
+#  "maidalun1020/bce-reranker-base_v1"
+#  "BAAI/bge-reranker-v2-minicpm-layerwise"
+#  "https://api.siliconflow.cn/v1/rerank"
 reranker_model_path = "/home/data/share/bce-reranker-base_v1"
-# Support SiliconCloud embedding API
+
+# if using `siliconcloud` API as `embedding_model_path` or `reranker_model_path`, give the token
 api_token = ""
 api_rpm = 1000
 api_tpm = 40000
@@ -18,12 +29,19 @@ password = "73@TuGraph"
 name = "HuixiangDou2"
 
 [web_search]
+# web search engine support ddgs and serper
+# For ddgs, see https://pypi.org/project/duckduckgo-search
+# For serper, check https://serper.dev/api-key to get a free API key
 engine = "serper"
 serper_x_api_key = "SERPER_API_TOKEN"
 domain_partial_order = ["cabidigitallibrary.org", "patents.google.com", "ricedata.cn", "moa.gov.cn", "baike.baidu.com", "gdaas.cn", "chinbullbotany.com", "chinacrops.org", "zgdm.net", "baike.com", "rice.uga.edu", "wikipedia.org"]
 save_dir = "logs/web_search_result"
 
 [llm]
+
+# Supports configuring multiple LLM remote APIs simultaneously. 
+# When a backend is specified in the code, the explicit LLM will be used; 
+# if not specified, the first one will be used.
 
 [llm.siliconcloud]
 # SiliconCloud API token

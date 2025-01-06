@@ -92,7 +92,7 @@ python3 -m huixiangdou.main
 ```bash
 # 删除特征
 rm -rf workdir
-# 执行后输入 Y 确认删除实体关系
 # 图名称配置在 `config.ini` 中，默认是 `HuixiangDou2`
+# 执行后输入 Y 确认删除实体关系
 python3 -m huixiangdou.service.graph_store drop
 ```
