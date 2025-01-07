@@ -68,17 +68,17 @@ async def show(assistant, _: dict):
         for_question = q[0] + q[1]
         query = Query(text=for_retrieve, generation_question=for_question)
         async for sess in assistant.generate(query=query, history=[]):
-            logger.info(sess.stage)
             pass
 
         logger.info('\n' + sess.format())
 
-    while False:
+    while True:
         user_input = input(
             "🔆 Input your question here, type `bye` for exit:\n")
         if 'bye' in user_input:
             break
 
+        sess = None
         for sess in assistant.generate(query=user_input,
                                        history=[],
                                        groupname=''):

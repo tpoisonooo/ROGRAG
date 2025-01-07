@@ -37,7 +37,7 @@ class PreprocNode:
         prompt = PROMPTS['extract_topic_intention'][sess.language].format(
             input_text=sess.query.text)
         json_str = await self.resource.llm.chat(prompt=prompt)
-        sess.logger.info(f'{__file__} {json_str}')
+        sess.logger.info(f'preproc: {json_str}')
         try:
             if json_str.startswith('```json'):
                 json_str = json_str[len('```json'):]
@@ -90,14 +90,19 @@ class ReduceGenerate:
             sess.fused_reply = Retriever.fuse(replies=sess.retrieve_replies,
                                               query=sess.query,
                                               resource=self.resource)
-            prompt = sess.fused_reply.format(query=real_question,
+            prompt = sess.fused_reply.format_prompt(query=real_question,
                                              language=sess.language)
 
         sess.stage = "3_generate"
         yield sess
 
-        sess.response = await self.resource.llm.chat(prompt=prompt,
-                                                     history=sess.history)
+        response = ""
+        sess.logger.info(f'generate: {prompt}')
+        async for delta in self.resource.llm.chat_stream(prompt=prompt, history=sess.history):
+            sess.delta = delta
+            response += delta
+            yield sess
+        sess.response = response
         sess.debug[sess.node] = {
             "prompt": prompt,
             "token_len": len(encode_string(prompt)),
@@ -111,18 +116,23 @@ class PPLCheck:
     def __init__(self, resource: RetrieveResource):
         self.resource = resource
 
-    async def process(self, sess: Session) -> AsyncGenerator[Session, bool]:
+    # Following or Preceding check
+    async def process(self, sess: Session, mode='following') -> AsyncGenerator[Session, bool]:
         prompt = None
-        prompt = PROMPTS['perplexsity_check'][sess.language].format(
-            input_query=sess.query.text,
-            input_evidence=str(sess.fused_reply),
-            input_response=sess.response)
+        
+        if 'following' == mode:
+            prompt = PROMPTS['perplexsity_check_following'][sess.language].format(
+                input_query=sess.query.text,
+                input_evidence=sess.fused_reply.format_prompt(language=sess.language),
+                input_response=sess.response)
+        else:
+            prompt = PROMPTS['perplexsity_check_preceding'][sess.language].format(
+                input_query=sess.query.text,
+                input_evidence=sess.fused_reply.format_evidence(language=sess.language))
+        
+        sess.logger.info(f'ppl: {prompt}')
         ppl = await self.resource.llm.chat(prompt=prompt, history=sess.history)
 
-        # with open('ppl.txt', 'a') as f:
-        #     f.write(f'ppl check\n query.text:{sess.query.text} \n evidence:{sess.fused_reply} \n response:{sess.response} \n ppl:{ppl}')
-        #     f.write('\n' + '@' * 32 + '\n')
-        #     f.write('\n')
         sess.debug['ppl'] = ppl
         if 'yes' in ppl.lower():
             return True
@@ -154,7 +164,8 @@ class SerialPipeline:
                        query: Union[Query, str],
                        history: List[Pair] = [],
                        request_id: str = 'default',
-                       language: str = 'zh_cn'):
+                       language: str = 'zh_cn',
+                       **kwargs):
         if type(query) is str:
             query = Query(text=query)
 
@@ -177,7 +188,7 @@ class SerialPipeline:
 
         # if not a good simple question, return
         async for sess in preproc.process(sess):
-            if sess.error in direct_chat_states:
+            if sess.code in direct_chat_states:
                 async for resp in reduce.process(sess):
                     yield resp
                 return
@@ -192,13 +203,13 @@ class SerialPipeline:
                 await self.retriever_reason.explore(query=sess.query)
             ]
             sess.node = 'retriever_reason'
-            async for sess in reduce.process(sess):
-                if sess.response:
-                    success = await ppl.process(sess)
-                    if success:
-                        yield sess
-                        break
-                    run_graphrag = True
+            sess.fused_reply = Retriever.fuse(replies=sess.retrieve_replies, query=sess.query, resource=self.resource)
+            
+            success = await ppl.process(sess, mode='preceding')
+            if success:
+                async for sess in reduce.process(sess):
+                    yield sess
+                return
 
         except Exception as e:
             logger.error(str(e) + f"{__file__}")

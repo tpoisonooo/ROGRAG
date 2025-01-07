@@ -207,6 +207,80 @@ class LLM:
         await instance.rpm.wait()
         return content
 
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=30, max=60),
+        retry=retry_if_exception_type(
+            (RateLimitError, APIConnectionError, Timeout, APITimeoutError)),
+    )
+    async def chat_stream(self,
+                   prompt: str,
+                   backend: str = 'default',
+                   system_prompt=None,
+                   history=[],
+                   allow_truncate=False,
+                   timeout=600) -> str:
+        # choose backend
+        # if user not specify model, use first one
+        if backend == 'default':
+            backend = list(self.backends.keys())[0]
+        instance = self.backends[backend]
+
+        # try truncate input prompt
+        input_tokens = encode_string(content=prompt)
+        input_token_size = len(input_tokens)
+        if input_token_size > instance.max_token_size:
+            if not allow_truncate:
+                raise Exception(
+                    f'input token size {input_token_size}, max {instance.max_token_size}'
+                )
+
+            tokens = input_tokens[0:instance.max_token_size - input_token_size]
+            prompt = decode_tokens(tokens=tokens)
+            input_token_size = len(tokens)
+
+        await instance.tpm.wait(token_count=input_token_size)
+
+        # build messages
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.extend(history)
+        messages.append({"role": "user", "content": prompt})
+
+        content = ''
+        try:
+            model = self.choose_model(backend=instance,
+                                      token_size=input_token_size)
+            openai_async_client = AsyncOpenAI(base_url=instance.base_url,
+                                              api_key=instance.api_key,
+                                              timeout=timeout)
+            # response = await openai_async_client.chat.completions.create(model=model, messages=messages, max_tokens=8192, temperature=0.7, top_p=0.7, extra_body={'repetition_penalty': 1.05})
+            stream = await openai_async_client.chat.completions.create(
+                model=model, messages=messages, temperature=0.7, top_p=0.7, stream=True)
+            
+            content = ""
+            async for chunk in stream:
+                if chunk.choices is None:
+                    raise Exception(str(chunk))
+                delta = chunk.choices[0].delta
+                if delta.content:
+                    content += delta.content
+                    yield delta.content
+
+        except Exception as e:
+            logger.error(str(e) + ' input len {}'.format(len(str(messages))))
+            raise e
+        content_token_size = len(encode_string(content=content))
+
+        self.sum_input_token_size += input_token_size
+        self.sum_output_token_size += content_token_size
+
+        await instance.tpm.wait(token_count=content_token_size)
+        await instance.rpm.wait()
+        return
+
     def chat_sync(self,
                   prompt: str,
                   backend: str = 'default',

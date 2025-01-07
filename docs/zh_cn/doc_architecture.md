@@ -1,12 +1,10 @@
 # 代码结构说明
 
-<img src="./figures/huixiangdou.png" width="400">
-
 本文主要解释各目录和功能。文档可能无法随代码即时更新，但已有定义不会再变动。
 
 ## 第一层：项目介绍
 
-项目最外层，只有 huixiangdou python module 和 1 个配置文件。
+项目最外层，只有 module 和 1 个配置文件。
 
 ```bash
 .
@@ -15,9 +13,9 @@
 ├── huixiangdou         # 实现
 ├── tests               # 代码片段验证
 └── unittest            # 单元测试
-
-`config.ini` 实际是 toml 格式，为了避免用户觉得陌生，改名 windows 常见的 .ini
 ```
+
+`config.ini.example` 实际是 toml 格式，为了避免用户觉得陌生，改名 windows 常见的 .ini
 
 ## 第二层：module
 
@@ -38,7 +36,7 @@ huixiangdou 内：
 
 ## 第三层：retriever
 
-这里是 HuixiangDou2 具体支持的 retriever 方法：
+这里是具体支持的 retriever 方法：
 
 ```bash
 .

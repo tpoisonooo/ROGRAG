@@ -24,12 +24,16 @@ class Session:
                  history: List[Dict],
                  request_id: str = 'default',
                  group_chats: Dict = {},
-                 language: str = 'zh_cn'):
+                 language: str = 'zh_cn',
+                 enable_web_search: bool = False,
+                 enable_code_search: bool = False):
         # retriever inputs
         self.query = query
         self.history = history
         self.group_chats = group_chats
         self.language = language
+        self.enable_web_search = enable_web_search
+        self.enable_code_search = enable_code_search
 
         # retriever outputs
         self.retrieve_replies = []
@@ -50,13 +54,18 @@ class Session:
     def visible_str(self, txt):
         return txt.replace('\n', '\\n').replace('\t', '\\t')
 
-    def format(self, max_len: int = -1):
+    def references(self):
+        if not self.fused_reply:
+            return []
         refs = list(
             set([
                 os.path.basename(c.metadata["source"])
                 for c in self.fused_reply.sources
             ] if self.fused_reply is not None else []))
+        return refs
 
+    def format(self, max_len: int = -1):
+        refs = self.references()
         table = Texttable()
         table.set_cols_valign(['t', 't', 't', 't'])
         table.header(['Query', 'State', 'Response', 'References'])

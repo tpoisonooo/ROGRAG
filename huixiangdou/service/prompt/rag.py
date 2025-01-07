@@ -165,7 +165,7 @@ Determine the association of user input with prohibited content such as politics
 
 # =========================================== perplexsity check =========================================
 
-rag_prompts["perplexsity_check"] = {
+rag_prompts["perplexsity_check_following"] = {
     "zh_cn":
     """你是一个中英文阅卷人，擅长分析学生答案和问题的关联度。
 ## 任务
@@ -197,28 +197,92 @@ rag_prompts["perplexsity_check"] = {
 {input_response}
 """,
     "en":
-    """You are a Chinese-English grader, skilled at analyzing the semantics in student answer.
+    """You are a grader proficient in analyzing the correlation between student answers and questions in both Chinese and English.
 ## Task
-Please read the student answer carefully and determine whether the students have answered the question.
+Please carefully read the exam question, student evidence, and student answer to determine whether the student's answer is reasonable.
 
 ## Output Format Requirements
-- If the student's answer does not address the question, output **no**
-- If the student's answer is highly confident, output **yes**
-- If the student's answer partially addresses the question but with low confidence, output **no**
-- In your explanations, you need to cite student references. Unless there is a clear context, you will not guess reasonable answers to questions.
+- If the student's answer lacks reference evidence, output no
+- If the student's answer is highly confident and well-supported, output yes
+- If the student's answer partially addresses the question but lacks confidence, output no
+- Before giving the final yes/no, you will explain why you made this judgment
+- In your explanation, you need to reference the student's evidence. Unless there is a clear context, you will not speculate on the reasonable answer to the question
 
-## Precautions
-- During the examination of student answers, you will pay attention to differences in units of expression
+## Notes
+- In the process of checking student answers, you will notice differences in expression units, such as 1 kilogram being 2 jin
 
-## Examples
-- Output no: "It cannot be determined, the information in options A, B, C, and D does not match the content provided in the literature."
-- Output no: "Based on the available information, we cannot determine the female and male parents of Koshihikari. However, the literature mentions that Koshihikari was used as a parent with other conventional varieties (lines) in hybridization."
-- Output yes: "According to the provided materials, the parents of Koshihikari are Kinki 34 (♀) and Hokuriku No. 4 (♂)."
+## Example Student Answers
+- Explanation followed by output no: "Cannot determine, the information in options A, B, C, and D does not match the content provided in the literature."
+- Explanation followed by output no: "Based on the existing information, we cannot determine the maternal and paternal parents of Yueguang. However, the literature mentions that Yueguang was used as a parent for hybridization with other conventional varieties (lines)."
+- Explanation followed by output yes: "According to the provided material, the parents of Yueguang are Kinai 34 (♀) and Hokuriku 4 (♂)"
 
+## Exam Question
+{input_query}
+
+## Student Evidence
+```txt
+{input_evidence}
+```
 ## Student Answer
-{input_text}
+{input_response}
 """
 }
+
+rag_prompts["perplexsity_check_preceding"] = {
+    "zh_cn":
+    """你是一个中英文阅卷人，擅长分析根据学生依据能否获得试卷问题的答案。
+## 任务
+请仔细阅读试卷问题和学生依据，判断依据能否解答问题。
+
+## 输出格式要求
+- 如果学生依据不足，输出 no
+- 如果学生依据里包含或能够推导出试卷问题的答案，输出 yes
+- 给出最终的 yes/no 前，你会解释为什么给出这个判断
+
+## 注意事项
+- 在检验学生答案过程中，你会注意到表达单位的差异，例如1公斤是2斤
+
+## 学生答案示例
+- 解释后输出 no：“无法确定，选项A、B、C、D中的信息与文献提供的内容不符。”
+- 解释后输出 no：“基于现有信息，我们无法确定越光的育种母本和父本。但文献提到越光是作为亲本与其他常规品种（系）进行了杂交配组”
+- 解释后输出 yes：“根据提供的材料，越光的亲本是近畿34(♀)和北陆4号(♂)”
+
+## 试卷问题
+{input_query}
+
+## 学生依据
+```txt
+{input_evidence}
+```
+""",
+    "en":
+    """You are a grader proficient in both Chinese and English, skilled at analyzing whether students can answer exam questions based on the information they provide.
+## Task
+Please carefully read the exam questions and the students' evidence to determine if the evidence can answer the question.
+
+## Output Format Requirements
+- If the student's evidence is insufficient, output no
+- If the student's evidence contains or can deduce the answer to the exam question, output yes
+- Before giving the final yes/no, you will explain why you made this judgment
+
+## Notes
+- In the process of checking student answers, you will notice differences in expression units, such as 1 kilogram being 2 jin
+
+## Examples of Student Answers
+- Explanation followed by output no: "Cannot determine, the information in options A, B, C, and D does not match the content provided in the literature."
+- Explanation followed by output no: "Based on the existing information, we cannot determine the maternal and paternal parents of Yueguang. However, the literature mentions that Yueguang was crossed with other conventional varieties (lines) as a parent."
+- Explanation followed by output yes: "According to the provided materials, the parents of Yueguang are Kinai 34 (♀) and Hokuriku 4 (♂)"
+
+## Exam Question
+{input_query}
+
+## Student Evidence
+```txt
+{input_evidence}
+```
+"""
+}
+
 
 # =========================================== citation generation =========================================
 

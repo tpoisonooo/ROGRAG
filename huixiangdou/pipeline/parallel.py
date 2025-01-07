@@ -90,16 +90,19 @@ class ReduceGenerate:
             sess.fused_reply = Retriever.fuse(replies=sess.retrieve_replies,
                                               query=sess.query,
                                               resource=self.resource)
-            prompt = sess.fused_reply.format(query=real_question,
+            prompt = sess.fused_reply.format_prompt(query=real_question,
                                              language=sess.language)
 
         sess.stage = "3_generate"
         yield sess
 
-        sess.response = await self.resource.llm.chat(prompt=prompt,
-                                                     history=sess.history)
+        response = ""
+        async for delta in self.resource.llm.chat_stream(prompt=prompt, history=sess.history):
+            sess.delta = delta
+            response += delta
+            yield sess
+        sess.response = response
         yield sess
-
 
 class ParallelPipeline:
 
@@ -124,7 +127,9 @@ class ParallelPipeline:
                        query: Union[Query, str],
                        history: List[Pair] = [],
                        request_id: str = 'default',
-                       language: str = 'zh_cn'):
+                       language: str = 'zh_cn',
+                       enable_web_search: bool = False,
+                       enable_code_search: bool = False):
         if type(query) is str:
             query = Query(text=query)
 
@@ -132,7 +137,9 @@ class ParallelPipeline:
         sess = Session(query=query,
                        history=history,
                        request_id=request_id,
-                       language=language)
+                       language=language,
+                       enable_web_search=enable_web_search,
+                       enable_code_search=enable_code_search)
         sess.stage = "0_parse"
         yield sess
 
@@ -146,7 +153,7 @@ class ParallelPipeline:
 
         # if not a good question, return
         async for sess in preproc.process(sess):
-            if sess.error in direct_chat_states:
+            if sess.code in direct_chat_states:
                 async for resp in reduce.process(sess):
                     yield resp
                 return
