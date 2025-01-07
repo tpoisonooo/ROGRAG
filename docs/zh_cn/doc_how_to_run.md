@@ -72,7 +72,9 @@ python3 -m huixiangdou.pipeline.store
 
 ## 三、查询
 
-执行 `main.py` 可运行查询样例：
+### 命令行方式
+
+执行 `main.py` 可在命令行运行查询样例：
 ```bash
 python3 -m huixiangdou.main
 
@@ -85,6 +87,18 @@ python3 -m huixiangdou.main
 |                  |         | 木莲藤缠绕，石井栏和断砖作为自然特征存在。 |               |
 +------------------+---------+---------------------------------+---------------+
 ```
+
+### Gradio UI 方式
+
+俺也实现了 Gradio 接入方法
+
+```bash
+python3 -m huixiangdou.gradio_ui
+```
+
+然后打开浏览器 7860 端口，可以流式响应
+
+<img src="https://github.com/user-attachments/assets/b7b7cb90-4a85-4ffc-9de0-52670dd9159e" width=800>
 
 ## 四、删除已有知识库
 
