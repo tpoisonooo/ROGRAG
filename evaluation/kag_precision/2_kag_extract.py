@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
     if not args.outdir:
         args.outdir = newdir()
-    output_file = os.path.join(args.outdir, '2_hybrid_zero_shot_kag_seedllm_{}.jsonl'.format(modelname))
+    output_file = os.path.join(args.outdir, '2_hybrid_zero_shot_kag_{}.jsonl'.format(modelname))
     if os.path.exists(output_file):
         raise Exception(f'{output_file} already exists')
 

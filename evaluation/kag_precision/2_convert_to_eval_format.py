@@ -2,9 +2,9 @@ import os
 import json
 import pdb
 
-output_dir = '/home/data/khj/workspace/seedllm/HuixiangDou/eval/zero-shot'
+output_dir = '/home/data/khj/workspace/HuixiangDou/eval/zero-shot'
 outputs = dict()
-with open('2_zero_shot_kag_seedllm_Qwen2.5-7B-Instruct.jsonl') as f:
+with open('2_zero_shot_kag_Qwen2.5-7B-Instruct.jsonl') as f:
     for line in f:
         if not line:
             break

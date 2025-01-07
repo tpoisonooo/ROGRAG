@@ -47,7 +47,7 @@ def build_low_high_level_db(work_dir:str, resource: RetrieveResource):
 class TestKAG(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.config_path = build_config()
-        self.work_dir='/home/khj/seedllm/HuixiangDou/workdir'
+        self.work_dir='/home/HuixiangDou/workdir'
         # build_low_high_level_db(work_dir=self.work_dir, resource=self.resource)
         self.resource = RetrieveResource(config_path=self.config_path)
         self.kag = KnowledgeRetriever(resource=self.resource, work_dir=self.work_dir)

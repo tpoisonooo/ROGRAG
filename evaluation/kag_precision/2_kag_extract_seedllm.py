@@ -38,7 +38,7 @@ assistant = ParallelPipeline(work_dir=work_dir, config_path=config_path)
 # 遍历base目录
 modelname = assistant.resource.llm.default_model_info()['model']
 modelname = modelname.split('/')[-1]
-output_file = '2_zero_shot_kag_seedllm_{}.jsonl'.format(modelname)
+output_file = '2_zero_shot_kag_{}.jsonl'.format(modelname)
 
 # get looper
 loop = always_get_an_event_loop()
