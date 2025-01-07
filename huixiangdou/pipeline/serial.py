@@ -90,7 +90,7 @@ class ReduceGenerate:
             sess.fused_reply = Retriever.fuse(replies=sess.retrieve_replies,
                                               query=sess.query,
                                               resource=self.resource)
-            prompt = sess.fused_reply.format(query=real_question,
+            prompt = sess.fused_reply.format_prompt(query=real_question,
                                              language=sess.language)
 
         sess.stage = "3_generate"

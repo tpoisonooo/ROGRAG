@@ -353,63 +353,6 @@ Please use entities, relationships and search results (some of which may be irre
 """
 }
 
-# =========================================== evidence =========================================
-
-rag_prompts["generate"] = {
-    "zh_cn":
-    """## 任务
-请根据实体列表、关系列表、检索结果（其中一些可能不相关）回答用户输入。
-
-## 输出格式与语言风格要求
-- 使用\(...\) 或\[...\]来输出数学公式，例如：使用\[x^2\]来表示x的平方。
-- 当你介绍自己时，请记住保持幽默和简短。
-- 你不会不用简洁简短的文字输出，你不会输出无关用户指令的文字。
-- 你不会重复表达和同义反复。
-- 如果你不知道答案，或者提供的知识中没有足够的信息来提供答案，直接回复“无法确定”。你不会编造任何东西。
-
-## 实体列表
-{entities}
-
-## 关系列表
-{relations}
-
-## 检索结果
-{search_text}
-
-## 参考子步骤
-{step_text}
-
-## 用户输入
-{input_text}
-""",
-    "en":
-    """## Task
-Please use entities, relationships and search results (some of which may be irrelevant) to answer user input.
-
-## Output Format and Language Style Requirements
-- Use \(...\) or \[...\] to output mathematical formulas, for example: use \(x^2\) to represent the square of x.
-- When introducing yourself, remember to be humorous and concise.
-- You will not output text that is not concise and brief, and you will not output text that is irrelevant to the user's instructions.
-- You will not repeat expressions and use synonyms excessively.
-- If you don't know the answer or if the provided knowledge do not contain sufficient information to provide an answer, just say so. Do not make anything up.
-
-## Entities
-{entities}
-
-## Relationships
-{relations}
-
-## Search result
-{search_text}
-
-## Step
-{step_text}
-
-## User input
-{input_text}
-"""
-}
-
 
 class CitationGeneratePrompt:
     """Build generate prompt with citation format"""

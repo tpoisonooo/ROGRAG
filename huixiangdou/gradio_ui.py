@@ -121,10 +121,6 @@ async def predict(text: str, image: str):
     global serial_assistant
     global parallel_assistant
 
-    with open('query.txt', 'a') as f:
-        f.write(json.dumps({'data': text, 'date': ymd()}, ensure_ascii=False))
-        f.write('\n')
-
     if image is not None:
         filename = 'image.png'
         image_path = os.path.join(main_args.work_dir, filename)

@@ -68,7 +68,6 @@ async def show(assistant, _: dict):
         for_question = q[0] + q[1]
         query = Query(text=for_retrieve, generation_question=for_question)
         async for sess in assistant.generate(query=query, history=[]):
-            logger.info(sess.stage)
             pass
 
         logger.info('\n' + sess.format())
