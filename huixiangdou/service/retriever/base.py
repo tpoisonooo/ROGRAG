@@ -29,7 +29,7 @@ class RetrieveReply:
     def add_source(self, source: Chunk):
         self.sources.append(source)
 
-    def format(self, query: str, language: str = "zh_cn"):
+    def format_prompt(self, query: str, language: str = "zh_cn"):
 
         def list_of_list_to_csv(data: List[List[str]]) -> str:
             output = io.StringIO()
@@ -40,6 +40,28 @@ class RetrieveReply:
         text_units = [["参考文献", "参考内容"]] + [[
             os.path.basename(s.metadata['source']), s.content_or_path
         ] for s in self.sources]
+        formatted_str = rag_prompts["generate"][language].format(
+            entities=list_of_list_to_csv(self.nodes),
+            relations=list_of_list_to_csv(self.relations),
+            search_text=list_of_list_to_csv(text_units),
+            step_text=self.sub_qa,
+            input_text=query)
+        return formatted_str
+
+
+    def format_evidence(self, language: str = "zh_cn"):
+
+        def list_of_list_to_csv(data: List[List[str]]) -> str:
+            output = io.StringIO()
+            writer = csv.writer(output)
+            writer.writerows(data)
+            return output.getvalue()
+
+        text_units = [["参考文献", "参考内容"]] + [[
+            os.path.basename(s.metadata['source']), s.content_or_path
+        ] for s in self.sources]
+        
+        
         formatted_str = rag_prompts["generate"][language].format(
             entities=list_of_list_to_csv(self.nodes),
             relations=list_of_list_to_csv(self.relations),

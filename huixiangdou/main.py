@@ -73,12 +73,13 @@ async def show(assistant, _: dict):
 
         logger.info('\n' + sess.format())
 
-    while False:
+    while True:
         user_input = input(
             "🔆 Input your question here, type `bye` for exit:\n")
         if 'bye' in user_input:
             break
 
+        sess = None
         for sess in assistant.generate(query=user_input,
                                        history=[],
                                        groupname=''):

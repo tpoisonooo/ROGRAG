@@ -11,7 +11,8 @@ import pytoml
 from loguru import logger
 from typing import List
 from huixiangdou.primitive import Query
-from huixiangdou.pipeline import ErrorCode, SerialPipeline, ParallelPipeline, llm_serve, start_llm_server
+from huixiangdou.service import ErrorCode
+from huixiangdou.pipeline import SerialPipeline, ParallelPipeline
 import json
 from datetime import datetime
 
@@ -30,27 +31,15 @@ def parse_args():
                         type=str,
                         default='workdir',
                         help='Working directory.')
-    parser.add_argument('--pipeline-count',
-                        type=int,
-                        default=2,
-                        help='Support user choosing all pipeline types.')
     parser.add_argument(
         '--config_path',
         default='config.ini',
         type=str,
         help='ParallelPipeline configuration path. Default value is config.ini'
     )
-    parser.add_argument('--standalone',
-                        action='store_true',
-                        default=True,
-                        help='Auto deploy required Hybrid LLM Service.')
-    parser.add_argument('--no-standalone',
-                        action='store_false',
-                        dest='standalone',
-                        help='Do not auto deploy required Hybrid LLM Service.')
     parser.add_argument('--placeholder',
                         type=str,
-                        default='How to install HuixiangDou2 ?',
+                        default='百草园里有什么？',
                         help='Placeholder for user query.')
     parser.add_argument('--image', action='store_true', default=True, help='')
     parser.add_argument('--no-image',
@@ -72,9 +61,9 @@ def parse_args():
 language = 'en'
 enable_web_search = False
 enable_code_search = True
-pipeline = 'chat_with_repo'
+pipeline = 'serial'
 main_args = None
-paralle_assistant = None
+parallel_assistant = None
 serial_assistant = None
 
 
@@ -130,7 +119,7 @@ async def predict(text: str, image: str):
     global pipeline
     global main_args
     global serial_assistant
-    global paralle_assistant
+    global parallel_assistant
 
     with open('query.txt', 'a') as f:
         f.write(json.dumps({'data': text, 'date': ymd()}, ensure_ascii=False))
@@ -144,49 +133,35 @@ async def predict(text: str, image: str):
         image_path = None
 
     query = Query(text, image_path)
-    if 'chat_in_group' in pipeline:
+    assistant = None
+    if 'serial' in pipeline:
         if serial_assistant is None:
             serial_assistant = SerialPipeline(
                 work_dir=main_args.work_dir, config_path=main_args.config_path)
-        args = {'query': query, 'history': [], 'groupname': ''}
-        pipeline = {'status': {}}
-        debug = dict()
-        stream_chat_content = ''
-        for sess in serial_assistant.generate(**args):
-            if len(sess.delta) > 0:
-                # start chat, display
-                stream_chat_content += sess.delta
-                yield stream_chat_content
-            else:
-                status = {
-                    "state": str(sess.code),
-                    "response": sess.response,
-                    "refs": sess.references
-                }
-                pipeline['status'] = status
-                pipeline['debug'] = sess.debug
-
-                json_str = json.dumps(pipeline, indent=2, ensure_ascii=False)
-                yield json_str
+        assistant = serial_assistant
 
     else:
-        if paralle_assistant is None:
-            paralle_assistant = ParallelPipeline(
+        if parallel_assistant is None:
+            parallel_assistant = ParallelPipeline(
                 work_dir=main_args.work_dir, config_path=main_args.config_path)
-        args = {'query': query, 'history': [], 'language': language}
-        args['enable_web_search'] = enable_web_search
-        args['enable_code_search'] = enable_code_search
+        assistant = parallel_assistant
+        
+    args = {'query': query, 'history': [], 'language': language}
+    args['enable_web_search'] = enable_web_search
+    args['enable_code_search'] = enable_code_search
 
-        sentence = ''
-        async for sess in paralle_assistant.generate(**args):
-            if sentence == '' and len(sess.references) > 0:
-                sentence = format_refs(sess.references)
+    sentence = ''
+    async for sess in assistant.generate(**args):
+        if sentence == '' and sess.fused_reply:
+            sentence = '\n'.join(sess.references()) + '\n'
 
-            if len(sess.delta) > 0:
-                sentence += sess.delta
-                yield sentence
-
-        yield sentence
+        if len(sess.delta) > 0:
+            sentence += sess.delta
+            print('{}'.format(sess.delta), end="")
+            yield sentence
+    
+    print('yield2 {}'.format(sentence))
+    yield sentence
 
 
 def download_and_unzip(main_args):
@@ -221,18 +196,10 @@ if __name__ == '__main__':
     build_feature_store(main_args)
 
     show_image = True
-    radio_options = ["chat_with_repo"]
+    radio_options = ["serial", "parallel"]
 
     if not main_args.image:
         show_image = False
-
-    if main_args.pipeline_count > 1:
-        radio_options.append('chat_in_group')
-
-    # start service
-    if main_args.standalone is True:
-        # hybrid llm serve
-        start_llm_server(config_path=main_args.config_path)
 
     themes = {
         'soft': gr.themes.Soft(),
@@ -266,7 +233,7 @@ if __name__ == '__main__':
                         radio_options,
                         label="Pipeline type",
                         info=
-                        "Group-chat is slow but accurate and safe, default value is `chat_with_repo`"
+                        "Default value is `serial`"
                     )
                     ui_pipeline.change(fn=on_pipeline_changed,
                                        inputs=ui_pipeline,
