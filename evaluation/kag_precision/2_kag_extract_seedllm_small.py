@@ -16,7 +16,7 @@ assistant = ParallelPipeline(work_dir=work_dir, config_path=config_path)
 # 遍历base目录
 modelname = assistant.resource.llm.default_model_info()['model']
 modelname = modelname.split('/')[-1]
-output_file = '1202_kag_seedllm_{}.jsonl'.format(modelname)
+output_file = '1202_kag_{}.jsonl'.format(modelname)
 if os.path.exists(output_file):
     logger.error(f'{output_file} already exists')
     sys.exit(0)

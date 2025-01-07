@@ -63,7 +63,7 @@ def process_md_files(source_dir, output_dir):
 
 # 设置源目录和输出目录
 source_dir = '/home/wangzhefan/pdfs-text'
-output_dir = '/home/khj/workspace/seedllm/HuixiangDou/repodir'
+output_dir = '/home/khj/workspace/HuixiangDou/repodir'
 
 # 处理md文件
 process_md_files(source_dir, output_dir)

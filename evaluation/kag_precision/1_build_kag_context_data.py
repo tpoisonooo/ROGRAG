@@ -4,7 +4,7 @@ import json
 # 把 UltraDomain 去重后的数据，按照 "领域/编号" 的形式放入 repodir
 
 input_dir = '/home/khj/workspace/rag-data0'
-output_base = '/home/khj/workspace/seedllm/HuixiangDou/repodir'
+output_base = '/home/khj/workspace/HuixiangDou/repodir'
 filenames = os.listdir(input_dir)
 
 for filename in filenames:
