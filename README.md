@@ -1,4 +1,4 @@
-English | [Simplified Chinese](./README.md)
+English | [Simplified Chinese](./README_zh_cn.md)
 
 <div align="center">
 <img src="resource/logo.png" width="160px"/>

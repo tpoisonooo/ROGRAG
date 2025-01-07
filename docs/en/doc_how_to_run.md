@@ -72,6 +72,7 @@ After successful creation, multiple feature directories will appear in `workdir`
 
 ## III. Query
 
+### CMD mode
 Running `main.py` will execute a query example:
 ```bash
 python3 -m huixiangdou.main
@@ -82,6 +83,18 @@ python3 -m huixiangdou.main
 | What is in the Hundred Grass Garden? | success | The Hundred Grass Garden has various plants and insects, including green vegetable plots, tall soapberry trees, purple mulberries, raspberries that look like small coral beads, and insects such as cicadas, hornets, skylarks, crickets, centipedes, and blister beetles. In addition, there are twining vines of Polygonum multiflorum and climbing fig, as well as natural features like stone wells and broken bricks. | baicaoyuan.md |
 +------------------+---------+---------------------------------+---------------+
 ```
+
+### Gradio UI mode
+
+We also implement Gradio inside it
+
+```bash
+python3 -m huixiangdou.gradio_ui
+```
+
+Open port 7860 in web browser:
+
+<img src="https://github.com/user-attachments/assets/b7b7cb90-4a85-4ffc-9de0-52670dd9159e" width=800>
 
 ## IV. Drop Existing Knowledge Base
 
