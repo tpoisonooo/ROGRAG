@@ -134,7 +134,7 @@ class PPLCheck:
         ppl = await self.resource.llm.chat(prompt=prompt, history=sess.history)
 
         sess.debug['ppl'] = ppl
-        if 'yes' in ppl.lower():
+        if 'YES' in ppl:
             return True
         return False
 
