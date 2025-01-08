@@ -30,7 +30,7 @@ def precision_verifier(name, ppls, dts, gts, knowledges):
         ppl = ppls[i]
         resp = dt['response']
 
-        if 'yes' in ppl:
+        if 'YES' in ppl:
             if gts[i] in resp.lower():
                 true_cnt += 1
             else:
@@ -74,21 +74,21 @@ def join_precision(name, ppls, reasons, knowledges, gts):
     for i in range(len(gts)):
         reason_resp = reasons[i]['response'].lower()
         knowledge_resp = knowledges[i]['response'].lower()
-        ppl = ppls[i].lower()
+        ppl = ppls[i]
 
         # 正类
         if gts[i] in reason_resp.lower():
-            if 'yes' in ppl.lower():
+            if 'YES' in ppl:
                 ppl_tp += 1
             else:
                 ppl_fn += 1
         else:
-            if 'yes' in ppl.lower():
+            if 'YES' in ppl:
                 ppl_fp += 1
             else:
                 ppl_tn += 1
         
-        if 'yes' in ppl.lower():
+        if 'YES' in ppl:
             dt = reason_resp.lower()
         else:
             dt = knowledge_resp.lower()
