@@ -37,5 +37,6 @@ if __name__ == '__main__':
     else:
         # path = '/home/data/khj/workspace/seedllm/HuixiangDou/2_zero_shot_kag_seedllm_Qwen2.5-7B-Instruct.jsonl'
         path = '/data/khj/workspace/HuixiangDou/1202_kag_seedllm_Qwen2.5-7B-Instruct.jsonl'
-        path = '/data/khj/workspace/HuixiangDou/2024-12-26_13/2_hybrid_zero_shot_kag_seedllm_Qwen2.5-7B-Instruct.jsonl'
+        # path = '/data/khj/workspace/HuixiangDou/2024-12-26_13/2_hybrid_zero_shot_kag_seedllm_Qwen2.5-7B-Instruct.jsonl'
+        path = '/data/khj/workspace/HuixiangDou/2025-01-08_15/2_hybrid_zero_shot_kag_seedllm_Qwen2.5-7B-Instruct.jsonl'
     calc(path=path)

@@ -22,3 +22,11 @@ evaluation/candidates.zip
 evaluation/feature_stores.zip
 evaluation/query.log
 llm.jsonl
+
+1202_kag_seedllm_Qwen2.5-7B-Instruct.jsonl.*
+*.jsonl
+*.bak
+repodir.full/
+repodir.full.112/
+tests/data/
+*.txt

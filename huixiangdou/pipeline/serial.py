@@ -72,7 +72,7 @@ class ReduceGenerate:
     def __init__(self, resource: RetrieveResource):
         self.resource = resource
 
-    async def process(self, sess: Session) -> AsyncGenerator[Session, Session]:
+    async def process(self, sess: Session, node:str) -> AsyncGenerator[Session, Session]:
         prompt = None
         real_question = sess.query.generation_question if sess.query.generation_question else sess.query.text
 
@@ -83,13 +83,13 @@ class ReduceGenerate:
             sess.stage = "2_rerank"
             yield sess
             sess.fused_reply = Retriever.fuse(replies=sess.retrieve_replies, query=sess.query, resource=self.resource)
-            prompt = sess.fused_reply.format(query=real_question, language=sess.language)
+            prompt = sess.fused_reply.format_prompt(query=real_question, language=sess.language)
 
         sess.stage = "3_generate"
         yield sess
         
         sess.response = await self.resource.llm.chat(prompt=prompt, history=sess.history)
-        sess.debug[sess.node] = {
+        sess.debug[node] = {
             "prompt": prompt,
             "token_len": len(encode_string(prompt)),
             "response": sess.response
@@ -100,17 +100,30 @@ class PPLCheck:
     def __init__(self, resource: RetrieveResource):
         self.resource = resource
 
-    async def process(self, sess: Session) -> AsyncGenerator[Session, bool]:
+    async def process(self, sess: Session, mode='following') -> AsyncGenerator[Session, bool]:
         prompt = None
-        prompt = PROMPTS['perplexsity_check'][sess.language].format(input_query=sess.query.text, input_evidence=str(sess.fused_reply), input_response=sess.response)
+        
+        if 'following' == mode:
+            prompt = PROMPTS['perplexsity_check_following'][sess.language].format(
+                input_query=sess.query.text,
+                input_evidence=sess.fused_reply.format_prompt(language=sess.language),
+                input_response=sess.response)
+        else:
+            prompt = PROMPTS['perplexsity_check_preceding'][sess.language].format(
+                input_query=sess.query.text,
+                input_evidence=sess.fused_reply.format_evidence(language=sess.language))
+        
         ppl = await self.resource.llm.chat(prompt=prompt, history=sess.history)
 
         # with open('ppl.txt', 'a') as f:
         #     f.write(f'ppl check\n query.text:{sess.query.text} \n evidence:{sess.fused_reply} \n response:{sess.response} \n ppl:{ppl}')
         #     f.write('\n' + '@' * 32 + '\n')
         #     f.write('\n')
+        # if not 'YES' in ppl:
+        #     pdb.set_trace()
+        #     pass
         sess.debug['ppl'] = ppl
-        if 'yes' in ppl.lower():
+        if 'YES' in ppl:
             return True
         return False
 
@@ -166,14 +179,12 @@ class SerialPipeline:
         run_graphrag = True
         try:
             sess.retrieve_replies = [await self.retriever_reason.explore(query=sess.query)]
-            sess.node = 'retriever_reason'
-            async for sess in reduce.process(sess):
-                if sess.response:
-                    success = await ppl.process(sess)
-                    if success:
-                        yield sess
-                        break
-                    run_graphrag = True
+            sess.fused_reply = Retriever.fuse(replies=sess.retrieve_replies, query=sess.query, resource=self.resource)
+
+            success = await ppl.process(sess, mode='preceding')
+            if success:
+                async for _sess in reduce.process(sess, node='retriever_reason'):
+                    yield _sess
 
         except Exception as e:
             logger.error(str(e) + f"{__file__}")
@@ -181,7 +192,6 @@ class SerialPipeline:
         
         if run_graphrag:
             sess.retrieve_replies = [await self.retriever_knowledge.explore(query=sess.query)]
-            sess.node = 'retriever_knowledge'
-            async for sess in reduce.process(sess):
+            async for sess in reduce.process(sess, node='retriever_knowledge'):
                 yield sess
         return

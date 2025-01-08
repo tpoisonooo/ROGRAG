@@ -13,6 +13,12 @@ from ..prompt import rag_prompts, GRAPH_FIELD_SEP
 from collections import defaultdict
 import pdb
 
+def list_of_list_to_csv(data: List[List[str]]) -> str:
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerows(data)
+    return output.getvalue()
+
 class RetrieveReply:
     def __init__(self, nodes:List[List[str]]=None, relations: List[List[str]]=None, sources:List=None, sub_qa:List=None):
         self.nodes = nodes if nodes is not None else []
@@ -23,19 +29,41 @@ class RetrieveReply:
     def add_source(self, source: Chunk):
         self.sources.append(source)
         
-    def format(self, query:str, language:str="zh_cn"):
-        def list_of_list_to_csv(data: List[List[str]]) -> str:
-            output = io.StringIO()  
-            writer = csv.writer(output)
-            writer.writerows(data)
-            return output.getvalue()
-        
-        text_units = [["参考文献", "参考内容"]] + [[os.path.basename(s.metadata['source']), s.content_or_path] for s in self.sources]
-        formatted_str = rag_prompts["generate"][language].format(entities=list_of_list_to_csv(self.nodes), 
-                                                                 relations=list_of_list_to_csv(self.relations), 
-                                                                 search_text=list_of_list_to_csv(text_units), 
-                                                                 step_text=self.sub_qa, 
-                                                                 input_text=query)
+    def format_prompt(self, query: str, language: str = "zh_cn"):
+        text_units = [["参考文献", "参考内容"]] + [[
+            os.path.basename(s.metadata['source']), s.content_or_path
+        ] for s in self.sources]
+        formatted_str = rag_prompts["generate"][language].format(
+            entities=list_of_list_to_csv(self.nodes),
+            relations=list_of_list_to_csv(self.relations),
+            search_text=list_of_list_to_csv(text_units),
+            step_text=self.sub_qa,
+            input_text=query)
+        return formatted_str
+
+    def format_evidence(self, language: str = "zh_cn"):
+        text_units = [["参考文献", "参考内容"]] + [[
+            os.path.basename(s.metadata['source']), s.content_or_path
+        ] for s in self.sources]
+
+        template = """## entities
+{entities}
+
+## relations
+{relations}
+
+## search text
+{search_text}
+
+## sub-problems and sub-answers after decomposition
+{step_text}
+"""
+        formatted_str = template.format(
+            entities=list_of_list_to_csv(self.nodes),
+            relations=list_of_list_to_csv(self.relations),
+            search_text=list_of_list_to_csv(text_units),
+            step_text=self.sub_qa
+        )
         return formatted_str
 
     def __repr__(self):

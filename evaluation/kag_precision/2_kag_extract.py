@@ -52,7 +52,6 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-
 if __name__ == '__main__':
     args = parse_args()
 
@@ -111,6 +110,7 @@ if __name__ == '__main__':
                         debugfile = os.path.join(args.outdir, 'debug.jsonl')
                         sess.debug['gt'] = answer
                         sess.debug['input'] = generation_question
+                        print(sess.debug.keys())
                         with open(debugfile, 'a') as f:
                             jsonstr = json.dumps(sess.debug, ensure_ascii=False)
                             f.write(jsonstr)
