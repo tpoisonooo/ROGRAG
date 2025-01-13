@@ -28,3 +28,13 @@ HuixiangDou2 是一套 KG-LLM Retrieval 实现。
 - [KAG](https://github.com/OpenSPG/KAG)    基于推理的图谱检索
 - [DB-GPT](https://github.com/eosphoros-ai/DB-GPT)    LLM 工具集合体
 - [LightRAG](https://github.com/HKUDS/LightRAG)    简单高效的图谱检索方案
+
+## 引用
+```text
+@misc{huixiangdou2,
+  author = {Huanjun Kong},
+  title = {HuixiangDou2: A Graph-based Augmented Generation Approach},
+  howpublished = {\url{https://github.com/tpoisonooo/HuixiangDou2}},
+  year = {2025}
+}
+```
