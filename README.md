@@ -27,3 +27,13 @@ If it is useful to you, please star it ⭐
 - [KAG](https://github.com/OpenSPG/KAG) Graph retrieval based on reasoning
 - [DB-GPT](https://github.com/eosphoros-ai/DB-GPT) LLM tool collection
 - [LightRAG](https://github.com/HKUDS/LightRAG) Simple and efficient graph retrieval solution
+
+## Citation
+```text
+@misc{huixiangdou2,
+  author = {Huanjun Kong},
+  title = {HuixiangDou2: A Graph-based Augmented Generation Approach},
+  howpublished = {\url{https://github.com/tpoisonooo/HuixiangDou2}},
+  year = {2025}
+}
+```
