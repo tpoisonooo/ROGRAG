@@ -17,6 +17,8 @@ The tools used in this document are as follows:
 
 1. **Install TuGraph**. [TuGraph Official](https://tugraph-db.readthedocs.io/zh-cn/latest/5.installation%26running/index.html) supports deployment via docker/online service/binary files, and here we use the docker method.
 
+   My server version is **4.5.0**
+
    ```bash
    # Pull the image
    docker pull tugraph/tugraph-runtime-centos
@@ -34,17 +36,17 @@ The tools used in this document are as follows:
 
    <img src="https://github.com/user-attachments/assets/010224cc-76ee-4c1c-9198-9cf4f01e248d" width=400>
 
-2. **HuixiangDou2 Dependencies**. Simply use `pip install`.
+3. **HuixiangDou2 Dependencies**. Simply use `pip install`.
 
    ```bash
    python3 -m pip install -r requirements.txt
    ```
 
-3. **Download the embedding model**. HuixiangDou2 supports bce/bge text and image-text models. For example, using bce [embedding](https://huggingface.co/InfiniFlow/bce-embedding-base_v1) and [reranker](https://huggingface.co/InfiniFlow/bce-reranker-base_v1), assume the models are downloaded to the following two locations on your machine:
+4. **Download the embedding model**. HuixiangDou2 supports bce/bge text and image-text models. For example, using bce [embedding](https://huggingface.co/InfiniFlow/bce-embedding-base_v1) and [reranker](https://huggingface.co/InfiniFlow/bce-reranker-base_v1), assume the models are downloaded to the following two locations on your machine:
    * `/home/data/share/bce-embedding-base_v1`
    * `/home/data/share/bce-reranker-base_v1`
 
-4. **LLM Key**. We use the [SiliconCloud](https://siliconflow.cn/zh-cn/siliconcloud) **free** LLM API.
+5. **LLM Key**. We use the [SiliconCloud](https://siliconflow.cn/zh-cn/siliconcloud) **free** LLM API.
    * Click [API Key](https://cloud.siliconflow.cn/account/ak) to obtain the sk.
    * The models used in this tutorial are all `Qwen/Qwen2.5-7B-Instruct`.
 
@@ -52,7 +54,7 @@ The tools used in this document are as follows:
 
    > Tip 2: You can also deploy your own model using `vllm`. Refer to the command `vllm serve /path/to/Qwen2.5-7B-Instruct  --enable-prefix-caching --served-model-name Qwen2.5-7B-Instruct --port 8000 --tensor-parallel-size 1`
 
-5. **Configure `config.ini`**. Copy `config.ini.example` to `config.ini` and fill in the SiliconCloud SK. [Here is the complete configuration guide](./doc_config.md).
+6. **Configure `config.ini`**. Copy `config.ini.example` to `config.ini` and fill in the SiliconCloud SK. [Here is the complete configuration guide](./doc_config.md).
 
    ```bash
    cp config.ini.example config.ini
