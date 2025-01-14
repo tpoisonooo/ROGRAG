@@ -15,7 +15,9 @@
 
 ## 一、安装依赖
 
-1. **安装 TuGraph**。[TuGraph 官方](https://tugraph-db.readthedocs.io/zh-cn/latest/5.installation%26running/index.html)支持 docker/在线服务/二进制文件部署，这里用 docker 方式
+1. **安装 TuGraph**。[TuGraph 官方](https://tugraph-db.readthedocs.io/zh-cn/latest/5.installation%26running/index.html)支持 docker/在线服务/二进制文件部署，这里用 docker 方式。
+   
+   我使用的 Server 版本是 **4.5.0**
 
    ```bash
    # 拉取镜像
@@ -34,17 +36,17 @@
 
    <img src="https://github.com/user-attachments/assets/010224cc-76ee-4c1c-9198-9cf4f01e248d" width=400>
 
-2. **HuixiangDou2 依赖**。直接使用 `pip install` 即可
+3. **HuixiangDou2 依赖**。直接使用 `pip install` 即可
 
    ```bash
    python3 -m pip install -r requirements.txt
    ```
 
-3. **下载 embedding 模型。** HuixiangDou2 支持 bce/bge 文本+图文模型。以 bce [embedding](https://huggingface.co/InfiniFlow/bce-embedding-base_v1) 和 [reranker](https://huggingface.co/InfiniFlow/bce-reranker-base_v1) 为例，假设模型下载到本机以下两个位置：
+4. **下载 embedding 模型。** HuixiangDou2 支持 bce/bge 文本+图文模型。以 bce [embedding](https://huggingface.co/InfiniFlow/bce-embedding-base_v1) 和 [reranker](https://huggingface.co/InfiniFlow/bce-reranker-base_v1) 为例，假设模型下载到本机以下两个位置：
    * `/home/data/share/bce-embedding-base_v1`
    * `/home/data/share/bce-reranker-base_v1`
 
-4. **LLM Key**。我们用 [SiliconCloud](https://siliconflow.cn/zh-cn/siliconcloud) **免费** LLM API。
+5. **LLM Key**。我们用 [SiliconCloud](https://siliconflow.cn/zh-cn/siliconcloud) **免费** LLM API。
    * 点击[API密钥](https://cloud.siliconflow.cn/account/ak) 获取 sk
    * 本教程使用的模型均为 `Qwen/Qwen2.5-7B-Instruct`
    
@@ -52,7 +54,7 @@
 
    > Tips2: 也可以用 `vllm` 部署自己的模型。参考命令 `vllm serve /path/to/Qwen2.5-7B-Instruct  --enable-prefix-caching --served-model-name Qwen2.5-7B-Instruct --port 8000 --tensor-parallel-size 1`
 
-5. **配置`config.ini`**。把`config.ini.example`拷贝为`config.ini`，填写 SiliconCloud SK 即可。[这里是完整的配置说明](./doc_config.md) 
+6. **配置`config.ini`**。把`config.ini.example`拷贝为`config.ini`，填写 SiliconCloud SK 即可。[这里是完整的配置说明](./doc_config.md) 
 
    ```bash
    cp config.ini.example config.ini
