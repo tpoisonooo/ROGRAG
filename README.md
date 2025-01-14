@@ -21,6 +21,7 @@ If it is useful to you, please star it ⭐
 ## Documentation
 - [1. How to Run](docs/en/doc_how_to_run.md)
 - [2. Directory Structure and Function](docs/en/doc_architecture.md)
+- [**FAQ** about environment and error](https://github.com/tpoisonooo/HuixiangDou2/issues/8) 
 
 ## Acknowledgements
 - [SiliconCloud](https://siliconflow.cn) Abundant LLM API, some models are free
