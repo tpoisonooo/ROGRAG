@@ -22,6 +22,7 @@ HuixiangDou2 是一套 KG-LLM Retrieval 实现。
 
 - [1. 如何运行](docs/zh_cn/doc_how_to_run.md)
 - [2. 目录结构功能](docs/zh_cn/doc_architecture.md)
+- [环境、报错 **FAQ**](https://github.com/tpoisonooo/HuixiangDou2/issues/8)
 
 ## 致谢
 - [SiliconCloud](https://siliconflow.cn/zh-cn/siliconcloud)    海量 LLM API，部分模型免费
