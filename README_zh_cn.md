@@ -14,13 +14,13 @@
 
 与 [HuixiangDou1](https://github.com/internlm/huixiangdou) 相比做了精度优化和 `async` 重构：
 1. **图谱方案**。稠密计算仅用于查询近似实体和关系
-2. 移植/合并多个开源实现，代码差异近 10k 行
+2. 移植/合并多个开源实现，代码差异 ~18k 行
   - **数据**。整理一套 LLM 未完全见过的、真实领域知识作测试（gpt4o-0612 准确度低于 0.6）
   - **消融**。确认不同环节和参数对精度的影响
   - **改进**。对比表如图
-  <div>
-  <img src="https://github.com/user-attachments/assets/c3453bc8-85d5-47e1-8160-7ba28a467a70" width="300">
-  </div>
+    <div>
+    <img src="https://github.com/user-attachments/assets/c3453bc8-85d5-47e1-8160-7ba28a467a70" width="300">
+    </div>
 
 3. API 保持兼容。过去的 GradioUI/`main.py` 能正常用
 
