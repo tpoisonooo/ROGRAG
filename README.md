@@ -24,7 +24,7 @@ Compared to [HuixiangDou1](https://github.com/internlm/huixiangdou), this repo i
      
 3. API remains compatible
 
-> **Note**: The impact of open-source on different fields/industries varies. We can only provide code implementation and test conclusions, and the test data cannot be provided.
+> **Note**: The impact of open-source on different fields/industries varies. We can **only give the code and test conclusions, and the test data cannot be provided**.
 
 If it is useful to you, please star it ⭐
 
