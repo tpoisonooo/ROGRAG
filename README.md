@@ -14,7 +14,7 @@ We ultimately developed a GraphRAG implementation whose performance has been rec
 
 Compared to [HuixiangDou1](https://github.com/internlm/huixiangdou), this repo improves accuracy and `async` refactor:
 1. **Graph Schema**. Dense retrieval is only for querying similar entities and relationships.
-2. Ported/merged multiple open-source implementations, with code differences of nearly 10k lines:
+2. Ported/merged multiple open-source implementations, with code differences of nearly 18k lines:
    - **Data**. Organized a set of real domain knowledge that LLM has not fully seen for testing (gpt4o-0613 accuracy < 0.6)
    - **Ablation**. Confirmed the impact of different stages and parameters on accuracy
    - **Improvement**. As shown below.
