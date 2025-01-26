@@ -1,12 +1,16 @@
-[English](README_en.md) | 简体中文
+[English](./README.md) | 简体中文
+
+# HuixiangDou2: A Robustly Optimized GraphRAG Approach
+
+我们整合四个开源项目——HuixiangDou、KAG、LightRAG 和 DB-GPT，总计 18k 行代码，并在 `Qwen2.5-7B-Instruct` 表现不佳的测试集上进行了对比实验。分数从 60 涨到 74.5，[这里是详细报告](https://github.com/tpoisonooo/HuixiangDou2/blob/main/docs/huixiangdou2_github.pdf)。
 
 <div align="center">
-<img src="resource/logo.png" width="160px"/>
+<img src="https://github.com/user-attachments/assets/19558f67-9a3a-48a1-a1c1-7b0a0654602f" width="400">
 </div>
 
-HuixiangDou2 是一套 KG-LLM Retrieval 实现。
+## 版本说明
 
-在 [HuixiangDou1](https://github.com/internlm/huixiangdou) 基础上完成精度优化和 `async` 重构：
+与 [HuixiangDou1](https://github.com/internlm/huixiangdou) 相比做了精度优化和 `async` 重构：
 1. **图谱方案**。稠密计算仅用于查询近似实体和关系
 2. 移植/合并多个开源实现，代码差异近 10k 行
   - **数据**。整理一套 LLM 未完全见过的、真实领域知识作测试（gpt 准确度 0.53）
