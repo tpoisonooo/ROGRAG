@@ -1,12 +1,16 @@
 English | [Simplified Chinese](./README_zh_cn.md)
 
+# HuixiangDou2: A Robustly Optimized GraphRAG Approach
+
+We integrated 4 open-source projects (HuixiangDou, KAG, LightRAG, and DB-GPT, totaling 18,000 lines of code) and conducted comparative experiments on a test set where the performance of `Qwen2.5-7B-Instruct` was subpar. The results showed an improvement from a baseline score of 0.6 to ~0.75, [here is the report]([./docs/](https://github.com/tpoisonooo/HuixiangDou2/blob/main/docs/huixiangdou2_github.pdf)).
+
 <div align="center">
-<img src="resource/logo.png" width="160px"/>
+<img src="https://github.com/user-attachments/assets/19558f67-9a3a-48a1-a1c1-7b0a0654602f" width=400>
 </div>
 
-HuixiangDou2 is an implementation of KG-LLM Retrieval.
+## Version Description
 
-Compared to [HuixiangDou1](https://github.com/internlm/huixiangdou), it improves accuracy and `async` refactor:
+Compared to [HuixiangDou1](https://github.com/internlm/huixiangdou), this repo improves accuracy and `async` refactor:
 1. **Graph Schema**. Dense retrieval is only for querying similar entities and relationships.
 2. Ported/merged multiple open-source implementations, with code differences of nearly 10k lines:
    - **Data**. Organized a set of real domain knowledge that LLM has not fully seen for testing (GPT accuracy 0.53)
