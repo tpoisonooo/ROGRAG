@@ -8,6 +8,8 @@ GraphRAG pipeline involves numerous components and parameters that require tunin
 
 HuixiangDou2 does not propose new method, but integrated 4 open-source projects (HuixiangDou, KAG, LightRAG, and DB-GPT, totaling 18k lines of code)，conducted comparative experiments on a test set where the performance of `Qwen2.5-7B-Instruct` was subpar. The results showed an improvement from a baseline score of 0.6 to ~0.75.
 
+> **Note**: The impact of open-source on different fields/industries varies. Since licensing restriction, we can **only give the code and test conclusions, and the test data cannot be provided**.
+
 We ultimately developed a GraphRAG implementation whose performance has been recognized by domain experts. [Here is the report]([./docs/](https://github.com/tpoisonooo/HuixiangDou2/blob/main/docs/huixiangdou2_github.pdf)).
 
 <div align="center">
@@ -27,8 +29,6 @@ Compared to [HuixiangDou1](https://github.com/internlm/huixiangdou), this repo i
       </div>
      
 3. API remains compatible
-
-> **Note**: The impact of open-source on different fields/industries varies. We can **only give the code and test conclusions, and the test data cannot be provided**.
 
 If it is useful to you, please star it ⭐
 
