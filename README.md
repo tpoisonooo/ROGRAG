@@ -2,7 +2,11 @@ English | [Simplified Chinese](./README_zh_cn.md)
 
 # HuixiangDou2: A Robustly Optimized GraphRAG Approach
 
-We integrated 4 open-source projects (HuixiangDou, KAG, LightRAG, and DB-GPT, totaling 18k lines of code) and conducted comparative experiments on a test set where the performance of `Qwen2.5-7B-Instruct` was subpar. The results showed an improvement from a baseline score of 0.6 to ~0.75.
+## Introduction
+
+GraphRAG pipeline involves numerous components and parameters that require tuning, which makes it difficult to determine whether the performance gains are due to pipeline optimization or internal parameters. Additionally, many public QA datasets have been incorporated into LLM training sets. The different input prompts of LLMs can affect the generated results while identifying which key tokens trigger appropriate outcomes is challenging for non-LLM training personnel. This uncertainty decreases the differentiation of RAG results (for example, our tests on citation RAG accuracy improvements on certain small LLMs yielded random results). 
+
+HuixiangDou2 does not propose new method, but integrated 4 open-source projects (HuixiangDou, KAG, LightRAG, and DB-GPT, totaling 18k lines of code)，conducted comparative experiments on a test set where the performance of `Qwen2.5-7B-Instruct` was subpar. The results showed an improvement from a baseline score of 0.6 to ~0.75.
 
 We ultimately developed a GraphRAG implementation whose performance has been recognized by domain experts. [Here is the report]([./docs/](https://github.com/tpoisonooo/HuixiangDou2/blob/main/docs/huixiangdou2_github.pdf)).
 
