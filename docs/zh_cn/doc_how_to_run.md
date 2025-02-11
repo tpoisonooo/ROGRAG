@@ -15,7 +15,7 @@
 
 ## 一、安装依赖
 
-1. **安装 TuGraph**。[TuGraph 官方](https://tugraph-db.readthedocs.io/zh-cn/latest/5.installation%26running/index.html)支持 docker/在线服务/二进制文件部署，这里用 docker 方式。
+1. **安装 TuGraph**。[TuGraph 官方](https://tugraph-db.readthedocs.io/zh-cn/latest/5.installation%26running/index.html)支持 docker/在线服务/二进制文件部署，这里用 docker 部署 TuGraph（和 HuixiangDou2 环境无关，二者可以不在同一台机器上）
    
    我使用的 Server 版本是 **4.5.0**
 
@@ -31,6 +31,8 @@
    # /var/lib/lgraph/data是容器内的默认数据目录，/var/log/lgraph_log是容器内的默认日志目录
    # 命令将数据目录和日志目录挂载到了宿主机的/root/tugraph/上进行持久化，您可以根据实际情况修改。
    ```
+
+   TuGraph 是 C++ 开发，如果不方便使用 docker，也可以从[官网下载](https://github.com/TuGraph-family/tugraph-db/releases)编译好的 deb/rpm 安装运行。
 
    成功后，在浏览器打开 7070 端口，会看到 TuGraph UI 界面，默认账号 admin，默认密码 73@TuGraph
 
