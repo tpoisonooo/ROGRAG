@@ -6,7 +6,7 @@ English | [Simplified Chinese](./README_zh_cn.md)
 
 GraphRAG has many tuning spots, making it hard to discern whether performance gains stem from parameter adjustments or pipeline optimizations. Moreover, RAG test data is embedded in LLM training sets. LLM input tokens impact generation probabilities (background: phi-4 technical report). It's unclear if precision improvements originate from key token searches or retrievals.
 
-Thus, HuixiangDou2 didn't introduce new methods but integrated multiple open-source projects (HuixiangDou, KAG, LightRAG, and DB-GPT, totaling 18k lines of code) and conducted comparative experiments on a test set where Qwen2.5-7B-Instruct underperformed. The score rose from 60 to 74.5. Ultimately, a GraphRAG implementation with performance recognized by human domain experts was developed. [Here is the report]([./docs/](https://github.com/tpoisonooo/HuixiangDou2/blob/main/docs/huixiangdou2_github.pdf)).
+Thus, HuixiangDou2 didn't introduce new methods but integrated multiple open-source projects (HuixiangDou, KAG, LightRAG, and DB-GPT, totaling 18k lines of code) and conducted comparative experiments on a test set where Qwen2.5-7B-Instruct underperformed. The score rose from 60 to 74.5. Ultimately, a GraphRAG implementation with performance recognized by human domain experts was developed. [Here is the report](https://github.com/tpoisonooo/HuixiangDou2/blob/main/docs/huixiangdou2_github.pdf).
 
 > **Note**: The impact of open-source on different fields/industries varies. Since licensing restriction, we can **only give the code and test conclusions, and the test data cannot be provided**.
 
