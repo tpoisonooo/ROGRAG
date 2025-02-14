@@ -77,7 +77,7 @@ class RetrieveResource:
             fs_config = pytoml.load(f)['store']
 
         # load text2vec and rerank model
-        logger.info('loading test2vec and rerank models')
+        logger.info('loading text2vec and rerank models')
         self.embedder = Embedder(model_config=fs_config)
         self.reranker = Reranker(model_config=fs_config, topn=rerank_topn)
         self.llm = LLM(config_path=config_path)

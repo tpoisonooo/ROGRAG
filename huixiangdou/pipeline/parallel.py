@@ -88,7 +88,7 @@ class ReduceGenerate:
         sess.stage = "3_generate"
         yield sess
         
-        sess.response = await self.resource.llm.chat(prompt=prompt, history=sess.history)
+        sess.response = await self.resource.llm.chat(prompt=prompt, history=sess.history, max_tokens=1024)
         yield sess
 
 class ParallelPipeline:
@@ -133,7 +133,7 @@ class ParallelPipeline:
     
         # try:
             # async for sess in preproc.process(sess):
-            #     if sess.error in direct_chat_states:
+            #     if sess.code in direct_chat_states:
             #         async for resp in reduce.process(sess):
             #             yield resp
             #         return

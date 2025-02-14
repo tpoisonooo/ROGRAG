@@ -30,3 +30,7 @@ repodir.full/
 repodir.full.112/
 tests/data/
 *.txt
+workdir.*
+repodir.*
+config.ini.*
+export_*
