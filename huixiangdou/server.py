@@ -8,7 +8,7 @@ from aiohttp import web
 from loguru import logger
 from termcolor import colored
 
-from ..pipeline import SerialPipeline, ParallelPipeline
+from .pipeline import SerialPipeline, ParallelPipeline
 from .primitive import Query, Pair, Token
 import asyncio
 from fastapi import FastAPI, APIRouter
@@ -19,7 +19,6 @@ import uvicorn
 import json
 from typing import List
 import uuid
-from .api import TextSimilarity, newquestionNode
 import jieba
 
 assistant = None
