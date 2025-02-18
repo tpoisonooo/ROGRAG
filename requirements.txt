@@ -2,6 +2,7 @@ aiohttp
 beautifulsoup4
 duckduckgo_search
 einops
+redis
 # faiss-gpu
 loguru
 lxml_html_clean
@@ -14,6 +15,7 @@ pydantic>=1.10.13
 pymupdf
 python-docx
 pytoml
+pypinyin
 readability-lxml
 redis
 requests

@@ -20,7 +20,8 @@ class Session:
                  history: List[Dict],
                  request_id: str = 'default',
                  group_chats: Dict = {},
-                 language: str = 'zh_cn'):
+                 language: str = 'zh_cn', 
+                 response_type: str = 'stream'):
         # retriever inputs
         self.query = query
         self.history = history
@@ -30,7 +31,9 @@ class Session:
         # retriever outputs
         self.retrieve_replies = []
         self.fused_reply = None
-        
+        # response type, stream or direct
+        self.response_type = response_type
+
         # chat reply
         self.delta = ''
         self.response = ''
