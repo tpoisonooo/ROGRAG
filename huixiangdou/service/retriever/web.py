@@ -91,6 +91,8 @@ class WebRetriever(Retriever):
                     logger.debug(json_obj)
 
                     for organic in json_obj['organic']:
+                        if len(r.sources) >= 3:
+                            break
                         content = '{},{}'.format(organic['title'], organic['snippet'])
                         c = Chunk(content_or_path=content, metadata={"source": organic['link']})
                         r.add_source(c)
