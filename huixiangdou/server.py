@@ -316,7 +316,7 @@ def extract_history(talk_seed):
     return history
 
 @app.post("/v2/chat")
-async def huixiangdou_stream(talk_seed: Talk_seed):
+async def chat(talk_seed: Talk_seed):
     global assistant
     query = Query(text=talk_seed.user,
                   generation_question=talk_seed.user,
@@ -333,28 +333,30 @@ async def huixiangdou_stream(talk_seed: Talk_seed):
                 language=language,
         ):
             status = {"code": int(sess.code), "error": str(sess.code)}
-
-            reply_refs = list(
-                set([c.metadata["source"] for c in sess.fused_reply.
-                     sources] if sess.fused_reply else []))
             references = []
-            fasta_suffix = '.fasta'
 
-            for i, ref in enumerate(reply_refs):
-                if '://' in ref:
-                    show_type = 'web'
-                elif ref.endswith(fasta_suffix):
-                    show_type = 'fasta'
-                else:
-                    show_type = 'local'
+            if sess.fused_reply and not sess.delta:
+                sources = sess.fused_reply.sources if sess.fused_reply else []
+                fasta_suffix = '.fasta'
 
-                reference = {
-                    "chunk": sess.context_chunk[i],
-                    "source_or_url": ref,
-                    "show_type": show_type,
-                    "download_token": '',
-                }
-                references.append(reference)
+                logger.info(sources)
+                for source in sources:
+                    ref = source.metadata["source"]
+
+                    if '://' in ref:
+                        show_type = 'web'
+                    elif ref.endswith(fasta_suffix):
+                        show_type = 'fasta'
+                    else:
+                        show_type = 'local'
+
+                    reference = {
+                        "chunk": source.content_or_path,
+                        "source_or_url": ref,
+                        "show_type": show_type,
+                        "download_token": '',
+                    }
+                    references.append(reference)
 
             data = {
                 "_id": req_id,
@@ -372,13 +374,15 @@ async def huixiangdou_stream(talk_seed: Talk_seed):
 
 
 @app.post("/v2/exemplify")
-async def huixiangdou_stream(talk_seed: Talk_seed):
+async def examplify(talk_seed: Talk_seed):
     global analogy
-    return await analogy.process(query=talk_seed.user)
+    if analogy:
+        return await analogy.process(query=talk_seed.user)
+    return '{}'
 
 
 @app.post("/v2/download")
-async def huixiangdou_stream(token: Token):
+async def download(token: Token):
     return 'deprecated'
 
 

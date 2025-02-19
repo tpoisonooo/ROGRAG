@@ -1,5 +1,5 @@
 from huixiangdou.primitive import Query
-from ..service import ErrorCode
+from ..service import ErrorCode, RetrieveReply
 import os
 import json
 from time import time
@@ -30,7 +30,7 @@ class Session:
         
         # retriever outputs
         self.retrieve_replies = []
-        self.fused_reply = None
+        self.fused_reply: RetrieveReply = None
         # response type, stream or direct
         self.response_type = response_type
 
