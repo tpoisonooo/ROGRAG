@@ -13,7 +13,7 @@ def test_chat():
     # 示例请求体
     request_body = {
         "language": "zh_CN",
-        "enable_web_search": False,
+        "enable_web_search": True,
         "user": "Using available resources (e.g., the internet or your own database, such as a knowledge graph), what do we currently know about Os09g0472900?",
         "history": [
             {

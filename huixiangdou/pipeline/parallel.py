@@ -105,11 +105,11 @@ class ParallelPipeline:
     def __init__(self, work_dir: str='workdir', config_path: str='config.ini'):
         self.resource = RetrieveResource(config_path)
         self.pool = SharedRetrieverPool(resource=self.resource)
-        self.retriever_reason = self.pool.get(work_dir=work_dir, method=RetrieveMethod.REASON)
+        # self.retriever_reason = self.pool.get(work_dir=work_dir, method=RetrieveMethod.REASON)
         self.retriever_knowledge = self.pool.get(work_dir=work_dir, method=RetrieveMethod.KNOWLEDGE)
         self.retriever_web = self.pool.get(work_dir=work_dir, method=RetrieveMethod.WEB)
-        self.retriever_bm25 = self.pool.get(work_dir=work_dir, method=RetrieveMethod.BM25)
-        self.retriever_inverted = self.pool.get(work_dir=work_dir, method=RetrieveMethod.INVERTED)
+        # self.retriever_bm25 = self.pool.get(work_dir=work_dir, method=RetrieveMethod.BM25)
+        # self.retriever_inverted = self.pool.get(work_dir=work_dir, method=RetrieveMethod.INVERTED)
         
         self.config_path = config_path
         self.work_dir = work_dir
@@ -150,7 +150,7 @@ class ParallelPipeline:
         yield sess
 
         # parallel run text2vec, websearch and codesearch
-        tasks = [self.retriever_knowledge.explore(query=sess.query)]
+        tasks = [self.retriever_knowledge.explore(query=sess.query), self.retriever_web.explore(query=sess.query)]
         sess.retrieve_replies = await asyncio.gather(*tasks, return_exceptions=True)
         async for sess in reduce.process(sess):
             yield sess

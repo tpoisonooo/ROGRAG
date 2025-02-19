@@ -11,7 +11,9 @@ import os
 import csv
 from ..prompt import rag_prompts, GRAPH_FIELD_SEP
 from collections import defaultdict
+import json
 import pdb
+
 
 def list_of_list_to_csv(data: List[List[str]]) -> str:
     output = io.StringIO()
@@ -25,6 +27,12 @@ class RetrieveReply:
         self.relations = relations if relations is not None else []
         self.sources = sources if sources is not None else []
         self.sub_qa = sub_qa if sub_qa is not None else []
+
+    def empty(self):
+        if not self.nodes and not self.relations and not self.sources and not self.sub_qa:
+            logger.warning('empty RetrieveReply')
+            return True
+        return False
 
     def add_source(self, source: Chunk):
         self.sources.append(source)
@@ -42,10 +50,14 @@ class RetrieveReply:
         return formatted_str
 
     def format_evidence(self, language: str = "zh_cn"):
-        text_units = [["参考文献", "参考内容"]] + [[
-            os.path.basename(s.metadata['source']), s.content_or_path
-        ] for s in self.sources]
-
+        if 'zh' in language:
+            text_units = [["参考文献", "参考内容"]] + [[
+                os.path.basename(s.metadata['source']), s.content_or_path
+            ] for s in self.sources]
+        else:
+            text_units = [["Sources", "References"]] + [[
+                os.path.basename(s.metadata['source']), s.content_or_path
+            ] for s in self.sources]
         template = """## entities
 {entities}
 
@@ -67,7 +79,7 @@ class RetrieveReply:
         return formatted_str
 
     def __repr__(self):
-        return self.format(query='')
+        return self.format_evidence()
 
 class RetrieveResource:
     def __init__(self,
@@ -102,6 +114,8 @@ class Retriever(ABC):
         nodes = []
         relations = []
         for r in replies:
+            if r.empty():
+                continue
             chunks += r.sources
             nodes += r.nodes
             relations += r.relations

@@ -337,7 +337,6 @@ async def chat(talk_seed: Talk_seed):
 
             if sess.fused_reply and not sess.delta:
                 sources = sess.fused_reply.sources if sess.fused_reply else []
-                fasta_suffix = '.fasta'
 
                 logger.info(sources)
                 for source in sources:
@@ -345,8 +344,6 @@ async def chat(talk_seed: Talk_seed):
 
                     if '://' in ref:
                         show_type = 'web'
-                    elif ref.endswith(fasta_suffix):
-                        show_type = 'fasta'
                     else:
                         show_type = 'local'
 

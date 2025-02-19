@@ -145,8 +145,8 @@ class SerialPipeline:
         self.retriever_reason = self.pool.get(work_dir=work_dir, method=RetrieveMethod.REASON)
         self.retriever_knowledge = self.pool.get(work_dir=work_dir, method=RetrieveMethod.KNOWLEDGE)
         self.retriever_web = self.pool.get(work_dir=work_dir, method=RetrieveMethod.WEB)
-        self.retriever_bm25 = self.pool.get(work_dir=work_dir, method=RetrieveMethod.BM25)
-        self.retriever_inverted = self.pool.get(work_dir=work_dir, method=RetrieveMethod.INVERTED)
+        # self.retriever_bm25 = self.pool.get(work_dir=work_dir, method=RetrieveMethod.BM25)
+        # self.retriever_inverted = self.pool.get(work_dir=work_dir, method=RetrieveMethod.INVERTED)
         
         self.config_path = config_path
         self.work_dir = work_dir

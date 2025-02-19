@@ -299,21 +299,21 @@ class FeatureStore:
 
         await self.build_knowledge(files=documents)
         return 
-        tasks = []
-        if 'bm25' in args.method:
-            tasks.append(self.build_bm25(files=code))
+        # tasks = []
+        # if 'bm25' in args.method:
+        #     tasks.append(self.build_bm25(files=code))
         
-        if 'knowledge' in args.method:
-            tasks.append(self.build_knowledge(files=documents))
+        # if 'knowledge' in args.method:
+        #     tasks.append(self.build_knowledge(files=documents))
         
-        if 'inverted' in args.method:
-            fasta = Fasta(work_dir=self.work_dir, embedder=self.embedder)
-            tasks.append(fasta.init(ner_path=args.fasta_ner, file_dir=args.fasta_file))
+        # if 'inverted' in args.method:
+        #     fasta = Fasta(work_dir=self.work_dir, embedder=self.embedder)
+        #     tasks.append(fasta.init(ner_path=args.fasta_ner, file_dir=args.fasta_file))
         
-        if 'dense' in args.method:
-            tasks.append(self.build_dense(files=documents))
+        # if 'dense' in args.method:
+        #     tasks.append(self.build_dense(files=documents))
 
-        await asyncio.gather(*tasks, return_exceptions=True)
+        # await asyncio.gather(*tasks, return_exceptions=True)
 
 def parse_args():
     """Parse command-line arguments."""
