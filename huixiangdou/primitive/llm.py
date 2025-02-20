@@ -220,7 +220,7 @@ class LLM:
     async def chat_stream(self,
                    prompt: str,
                    backend: str = 'default',
-                   system_prompt=None,
+                   system_prompt='你是丰登，由上海人工智能实验室和崖州湾国家实验室牵头，联合中国农业大学共同研发的种业大语言模型助手。',
                    history=[],
                    allow_truncate=False,
                    max_tokens=None,

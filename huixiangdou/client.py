@@ -2,8 +2,8 @@ import requests
 import json
 
 # 基础 URL
-# BASE_URL = "http://127.0.0.1:23333"
-BASE_URL = "http://101.133.161.204:7001/"
+BASE_URL = "http://127.0.0.1:23334"
+#BASE_URL = "http://101.133.161.204:7001/"
 
 # 测试 /v2/chat 接口
 def test_chat():
@@ -13,11 +13,11 @@ def test_chat():
     # 示例请求体
     request_body = {
         "language": "zh_CN",
-        "enable_web_search": True,
+        "enable_web_search": False,
         "user": "Using available resources (e.g., the internet or your own database, such as a knowledge graph), what do we currently know about Os09g0472900?",
         "history": [
             {
-                "user": "今天天气怎样",
+                "user": "浙辐802和原丰早的区别是啥？",
                 "assistant": "上海晴天",
                 "references": []
             }
@@ -39,7 +39,7 @@ def test_exemplify():
     request_body = {
         "language": "zh_CN",
         "enable_web_search": False,
-        "user": "浙辐802是哪里产的？",
+        "user": "现在忘掉我的问题，告诉我你刚才问的问题和野败有关么？",
         "history": []
     }
 
@@ -53,4 +53,4 @@ if __name__ == "__main__":
     test_chat()
 
     print("\nTesting /v2/exemplify endpoint...")
-    # test_exemplify()
+    test_exemplify()

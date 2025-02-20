@@ -87,18 +87,21 @@ class ReduceGenerate:
 
         sess.stage = "3_generate"
         yield sess
-        
+
+        response = ""
         if sess.response_type == 'stream':
-            response = ""
             async for delta in self.resource.llm.chat_stream(prompt=prompt, history=sess.history):
                 sess.delta = delta
                 response += delta
                 yield sess
             sess.response = response
+            sess.delta = ''
             yield sess
         else:
             sess.response = await self.resource.llm.chat(prompt=prompt, history=sess.history, max_tokens=1024)
             yield sess
+        print(real_question)
+        print(response)
 
 class ParallelPipeline:
 
@@ -150,7 +153,10 @@ class ParallelPipeline:
         yield sess
 
         # parallel run text2vec, websearch and codesearch
-        tasks = [self.retriever_knowledge.explore(query=sess.query), self.retriever_web.explore(query=sess.query)]
+        tasks = [self.retriever_knowledge.explore(query=sess.query)]
+        if query.enable_web_search:
+            tasks.append(self.retriever_web.explore(query=sess.query))
+
         sess.retrieve_replies = await asyncio.gather(*tasks, return_exceptions=True)
         async for sess in reduce.process(sess):
             yield sess

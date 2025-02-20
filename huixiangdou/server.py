@@ -21,6 +21,8 @@ assistant = None
 analogy = None
 app = FastAPI(docs_url='/')
 
+def get_req_uuid():
+    return str(uuid.uuid4())[0:6]
 
 class TextSimilarity:
 
@@ -110,12 +112,29 @@ class ExampleAnalogy:
 
         # init llm chat template
         if 'zh' in language:
-            self.GENERATE_TEMPLATE = '问题：“{}” \n 请生成三个与该问题尽可能相似的问题，返回格式为[["问题1"],["问题2"],["问题3"]]'  # noqa E501
-            self.ABSTRACT_TEMPLATE = '问题：“{}” \n 请帮我从问题中提取五个关键词'
-        else:
-            self.GENERATE_TEMPLATE = 'Question: "{}"\n Please generate three questions that are as similar as possible to the problem, with the return format being [["Question 1"], ["Question 2"], ["Question 3"]]'  # noqa E501
-            self.ABSTRACT_TEMPLATE = 'Question: "{}"\n Please help me extract five keywords from the question'
+            self.GENERATE_TEMPLATE = '''
+请生成三个与该问题尽可能相似的问题，返回格式为 json list
 
+## 样例返回
+["问题1","问题2","问题3"]
+
+## 问题
+```text
+{query}
+```
+'''
+        else:
+           self.GENERATE_TEMPLATE = '''
+Please generate three questions that are as similar as possible to the problem, return format is json list
+
+## example output
+["Q1","Q2","Q3"]
+
+## problem
+```text
+{query}
+```
+'''
     async def process(self, query: str):
         metric = TextSimilarity()
         if metric.is_chinese_dominant(query):
@@ -141,8 +160,6 @@ class ExampleAnalogy:
             elif word == '基因' or word == 'gene':
                 matched_gene = word
 
-        # print('matched_gene:',matched_gene)
-        # print('matched_rice:',matched_rice)
         #如果gene类型和rice同时出现,则检索gene类型
         if matched_word is not None:
             print('检索成功!')
@@ -150,15 +167,15 @@ class ExampleAnalogy:
               and matched_gene is None) or (matched_gene is not None
                                             and matched_rice is None):
             #如果是关于水稻/基因但没涉及种类，使用大模型生成新问题
-            prompt = self.GENERATE_TEMPLATE.format(query)
-            response = self.llm.chat(prompt=prompt, backend='remote')
+            prompt = self.GENERATE_TEMPLATE.format(query=query)
+            response = await self.llm.chat(prompt=prompt)
             similar_questions = response
             response_body = {}
             response_body['status'] = {}
             response_body['data'] = {}
             response_body['status']['code'] = 0
             response_body['status']['error'] = 'None'
-            response_body['data']['_id'] = str(uuid.uuid4())
+            response_body['data']['_id'] = get_req_uuid()
             response_body['data']['cases'] = similar_questions
             return response_body
         else:
@@ -168,7 +185,7 @@ class ExampleAnalogy:
             response_body['data'] = {}
             response_body['status']['code'] = 1
             response_body['status']['error'] = 'Not special specy'
-            response_body['data']['_id'] = str(uuid.uuid4())
+            response_body['data']['_id'] = get_req_uuid()
             response_body['data']['cases'] = []
             return response_body
 
@@ -269,23 +286,23 @@ class ExampleAnalogy:
             response_body['data'] = {}
             response_body['status']['code'] = 0
             response_body['status']['error'] = 'None'
-            response_body['data']['_id'] = str(uuid.uuid4())
+            response_body['data']['_id'] = get_req_uuid()
             response_body['data']['cases'] = similar_questions
             return response_body
-        else:
-            # 如果问指定物种但问题无关，使用大模型生成新问题
-            prompt = self.GENERATE_TEMPLATE.format(query)
-            response = await self.llm.chat(prompt=prompt)
-            similar_questions = response
-            # print(similar_questions)
-            response_body = {}
-            response_body['status'] = {}
-            response_body['data'] = {}
-            response_body['status']['code'] = 0
-            response_body['status']['error'] = 'None'
-            response_body['data']['_id'] = str(uuid.uuid4())
-            response_body['data']['cases'] = similar_questions
-            return response_body
+        
+        # 如果问指定物种但问题无关，使用大模型生成新问题
+        prompt = self.GENERATE_TEMPLATE.format(query=query)
+        response = await self.llm.chat(prompt=prompt)
+        similar_questions = response
+        # print(similar_questions)
+        response_body = {}
+        response_body['status'] = {}
+        response_body['data'] = {}
+        response_body['status']['code'] = 0
+        response_body['status']['error'] = 'None'
+        response_body['data']['_id'] = get_req_uuid()
+        response_body['data']['cases'] = similar_questions
+        return response_body
 
 class Talk(BaseModel):
     text: str
@@ -318,14 +335,15 @@ def extract_history(talk_seed):
 @app.post("/v2/chat")
 async def chat(talk_seed: Talk_seed):
     global assistant
+    print('enable web search {}'.format(talk_seed.enable_web_search))
     query = Query(text=talk_seed.user,
                   generation_question=talk_seed.user,
                   enable_web_search=talk_seed.enable_web_search)
-    req_id = str(uuid.uuid4())[0:6]
+    req_id = get_req_uuid()
     pipeline = {}
     language = 'zh_cn' if 'zh' in talk_seed.language else 'en'
     history = extract_history(talk_seed)
-
+    logger.info('input query: {}'.format(talk_seed.user))
     async def event_stream():
         async for sess in assistant.generate(
                 query=query,
@@ -343,16 +361,19 @@ async def chat(talk_seed: Talk_seed):
                     ref = source.metadata["source"]
 
                     if '://' in ref:
-                        show_type = 'web'
+                        reference = {
+                            "chunk": source.content_or_path,
+                            "source_or_url": ref,
+                            "show_type": 'web',
+                            "download_token": '',
+                        }
                     else:
-                        show_type = 'local'
-
-                    reference = {
-                        "chunk": source.content_or_path,
-                        "source_or_url": ref,
-                        "show_type": show_type,
-                        "download_token": '',
-                    }
+                        reference = {
+                            "chunk": source.content_or_path,
+                            "source_or_url": ref.split('/')[-1][0:12] + '..',
+                            "show_type": 'local',
+                            "download_token": '',
+                        }
                     references.append(reference)
 
             data = {
@@ -364,7 +385,6 @@ async def chat(talk_seed: Talk_seed):
 
             pipeline['status'] = status
             pipeline['data'] = data
-            # print(sess)
             yield f"data:{json.dumps(pipeline, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
@@ -403,6 +423,12 @@ def parse_args():
         help=
         'Select pipeline type for difference scenario, default value is `parallel`'
     )
+    parser.add_argument(
+        '--port',
+        type=int,
+        default=23333,
+        help='bind port'
+    )
     args = parser.parse_args()
     return args
 
@@ -421,4 +447,4 @@ if __name__ == '__main__':
     analogy = ExampleAnalogy(resource=assistant.resource,
                              api_data_dir=api_data_dir)
 
-    uvicorn.run(app, host='0.0.0.0', port=23333, log_level='info')
+    uvicorn.run(app, host='0.0.0.0', port=args.port, log_level='info')

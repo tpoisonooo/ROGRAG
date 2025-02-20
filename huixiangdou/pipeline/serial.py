@@ -90,21 +90,24 @@ class ReduceGenerate:
         
         if sess.response_type == 'stream':
             response = ""
-            async for delta in self.resource.llm.chat(prompt=prompt, history=sess.history):
+            async for delta in self.resource.llm.chat_stream(prompt=prompt, history=sess.history):
                 sess.delta = delta
                 response += delta
                 yield sess
+            sess.delta = ''
             sess.response = response
             yield sess
         else:
             sess.response = await self.resource.llm.chat(prompt=prompt, history=sess.history, max_tokens=1024)
             yield sess
 
-        sess.debug[node] = {
-            "prompt": prompt,
-            "token_len": len(encode_string(prompt)),
-            "response": sess.response
-        }
+        # sess.debug[node] = {
+        #     "prompt": prompt,
+        #     "token_len": len(encode_string(prompt)),
+        #     "response": sess.response
+        # }
+        print(real_question)
+        print(response)
         yield sess
 
 class PPLCheck:
@@ -202,7 +205,11 @@ class SerialPipeline:
             run_graphrag = True
         
         if run_graphrag:
-            sess.retrieve_replies = [await self.retriever_knowledge.explore(query=sess.query)]
+            tasks = [self.retriever_knowledge.explore(query=sess.query)]
+            if query.enable_web_search:
+                tasks.append(self.retriever_web.explore(query=sess.query))
+            sess.retrieve_replies = await asyncio.gather(*tasks, return_exceptions=True)
+            
             async for sess in reduce.process(sess, node='retriever_knowledge'):
                 yield sess
         return

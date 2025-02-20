@@ -91,6 +91,7 @@ class WebRetriever(Retriever):
                     logger.debug(json_obj)
 
                     for organic in json_obj['organic']:
+                        print(organic)
                         if len(r.sources) >= 3:
                             break
                         content = '{},{}'.format(organic['title'], organic['snippet'])
