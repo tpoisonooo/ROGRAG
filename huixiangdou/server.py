@@ -151,9 +151,11 @@ Please generate three questions that are as similar as possible to the problem, 
         question_type = None
         # print('self.gene_set',self.gene_set)
         for word in words:
-            if word in self.gene_set:
+            if len(word) <= 1:
+                continue
+            if not matched_word and word in self.gene_set:
                 matched_word = word
-            elif word in self.variety_set:
+            elif not matched_word and word in self.variety_set:
                 matched_word = word
             elif word == '水稻' or word == 'rice':
                 matched_rice = word
@@ -375,11 +377,10 @@ async def chat(talk_seed: Talk_seed):
                             "download_token": '',
                         }
                     references.append(reference)
-
             data = {
                 "_id": req_id,
                 "stage": sess.stage,
-                "references": references,
+                "references": references[0:assistant.resource.reranker.topn],
                 "delta": sess.delta,
             }
 

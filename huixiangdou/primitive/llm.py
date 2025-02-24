@@ -220,7 +220,7 @@ class LLM:
     async def chat_stream(self,
                    prompt: str,
                    backend: str = 'default',
-                   system_prompt='你是丰登，由上海人工智能实验室和崖州湾国家实验室牵头，联合中国农业大学共同研发的种业大语言模型助手。',
+                   system_prompt= None,
                    history=[],
                    allow_truncate=False,
                    max_tokens=None,
@@ -260,6 +260,8 @@ class LLM:
             openai_async_client = AsyncOpenAI(base_url=instance.base_url,
                                               api_key=instance.api_key,
                                               timeout=timeout)
+            
+            print(messages)
             stream = await openai_async_client.chat.completions.create(
                 model=model, messages=messages, temperature=0.7, top_p=0.7, max_tokens=max_tokens, stream=True)
             

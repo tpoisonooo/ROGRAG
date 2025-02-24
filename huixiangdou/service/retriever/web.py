@@ -1,6 +1,5 @@
 
 """Web search utils."""
-import asyncio
 import aiohttp
 import json
 import types
@@ -92,8 +91,6 @@ class WebRetriever(Retriever):
 
                     for organic in json_obj['organic']:
                         print(organic)
-                        if len(r.sources) >= 3:
-                            break
                         content = '{},{}'.format(organic['title'], organic['snippet'])
                         c = Chunk(content_or_path=content, metadata={"source": organic['link']})
                         r.add_source(c)

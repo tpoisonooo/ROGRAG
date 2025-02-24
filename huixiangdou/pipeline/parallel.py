@@ -83,6 +83,7 @@ class ReduceGenerate:
             sess.stage = "2_rerank"
             yield sess
             sess.fused_reply = Retriever.fuse(replies=sess.retrieve_replies, query=sess.query, resource=self.resource)
+            
             prompt = sess.fused_reply.format_prompt(query=real_question, language=sess.language)
 
         sess.stage = "3_generate"
@@ -90,7 +91,7 @@ class ReduceGenerate:
 
         response = ""
         if sess.response_type == 'stream':
-            async for delta in self.resource.llm.chat_stream(prompt=prompt, history=sess.history):
+            async for delta in self.resource.llm.chat_stream(prompt=prompt, history=sess.history, system_prompt=sess.response_system):
                 sess.delta = delta
                 response += delta
                 yield sess

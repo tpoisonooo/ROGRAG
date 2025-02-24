@@ -90,7 +90,7 @@ class ReduceGenerate:
         
         if sess.response_type == 'stream':
             response = ""
-            async for delta in self.resource.llm.chat_stream(prompt=prompt, history=sess.history):
+            async for delta in self.resource.llm.chat_stream(prompt=prompt, history=sess.history, system_prompt=sess.response_system):
                 sess.delta = delta
                 response += delta
                 yield sess

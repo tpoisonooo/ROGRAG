@@ -33,6 +33,10 @@ class Session:
         self.fused_reply: RetrieveReply = None
         # response type, stream or direct
         self.response_type = response_type
+        if 'zh' in language:
+            self.response_system = '你是丰登，由上海人工智能实验室和崖州湾实验室牵头，联合中国农业大学共同研发的种业大语言模型助手。'
+        else:
+            self.response_system = 'You are SeedLLM, a agricultural large language model jointly developed by Shanghai Artificial Intelligence Laboratory and Yazhouwan Laboratory, in collaboration with China Agricultural University.'
 
         # chat reply
         self.delta = ''

@@ -12,7 +12,6 @@ import csv
 from ..prompt import rag_prompts, GRAPH_FIELD_SEP
 from collections import defaultdict
 import json
-import pdb
 
 
 def list_of_list_to_csv(data: List[List[str]]) -> str:
@@ -84,7 +83,7 @@ class RetrieveReply:
 class RetrieveResource:
     def __init__(self,
                  config_path: str,
-                 rerank_topn: int = 4):
+                 rerank_topn: int = 10):
         with open(config_path, encoding='utf8') as f:
             fs_config = pytoml.load(f)['store']
 
@@ -114,16 +113,18 @@ class Retriever(ABC):
         nodes = []
         relations = []
         for r in replies:
+            if type(r) is not RetrieveReply:
+                logger.error(str(r))
+                continue
             if r.empty():
                 continue
             chunks += r.sources
             nodes += r.nodes
             relations += r.relations
         
-        chunks = resource.reranker.rerank(query=query.text, chunks=chunks)
-        chunks = truncate_list_by_token_size(list_data=chunks, key=lambda x:x.content_or_path, max_token_size=query.max_token_for_text_unit)
-
-        r = RetrieveReply(nodes=nodes, relations=relations, sources=chunks)
+        rchunks = resource.reranker.rerank(query=query.text, chunks=chunks)
+        rchunks = truncate_list_by_token_size(list_data=rchunks, key=lambda x:x.content_or_path, max_token_size=query.max_token_for_text_unit)
+        r = RetrieveReply(nodes=nodes, relations=relations, sources=rchunks)
         return r
 
 # for reasoning
