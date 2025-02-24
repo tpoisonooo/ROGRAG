@@ -111,8 +111,7 @@ class KnowledgeRetriever(Retriever):
         ]
 
         all_one_hop_text_units_lookup = {
-            k:
-            set(
+            k: set(
                 split_string_by_multi_markers(v.props.get('source_id'),
                                               [GRAPH_FIELD_SEP]))
             for k, v in zip(all_one_hop_nodes, all_one_hop_nodes_data)

@@ -13,7 +13,8 @@ sentences = ['大佬们，请问如何安装mmcv?\n']
 # sentences = [query.text]
 
 # init embedding model
-model1 = SentenceTransformer(model_name_or_path='/data2/khj/bce-embedding-base_v1')
+model1 = SentenceTransformer(
+    model_name_or_path='/data2/khj/bce-embedding-base_v1')
 emb1 = model1.encode(sentences, normalize_embeddings=True)
 print(emb1[0, 0:100])
 # [ 2.27064490e-02  6.52235700e-03 -6.60670735e-03  2.82378905e-02
@@ -42,7 +43,6 @@ print(emb1[0, 0:100])
 #  -7.06254854e-04 -9.24953539e-03 -9.37404204e-03 -2.96557285e-02
 #  -1.49586275e-02 -5.31528378e-03 -3.70575525e-02 -1.99552961e-02]
 
-
 # fp32
 model2 = EmbeddingModel(model_name_or_path='/data2/khj/bce-embedding-base_v1')
 emb2 = model2.encode(sentences, normalize_to_unit=True)
@@ -64,4 +64,3 @@ emb2 = model2.encode(sentences, normalize_to_unit=True)
 #  -0.00277072 -0.03315896 -0.00208498  0.06014286 -0.02470733  0.02014162
 #  -0.01798468  0.00464859 -0.01090737 -0.0263143  -0.0091747  -0.01841594
 #  -0.01608938 -0.00095074 -0.03385591 -0.02494052]
-

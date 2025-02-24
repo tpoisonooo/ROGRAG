@@ -5,15 +5,13 @@ import requests
 from typing import List, Tuple
 
 import numpy as np
-
+from loguru import logger
 from .chunk import Chunk
 from .embedder import Embedder
 from .limitter import RPM
 
 
 class Reranker:
-    _type: str
-    topn: int
 
     def __init__(self, model_config: dict, topn: int = 10):
 
@@ -173,4 +171,7 @@ class Reranker:
 
         # During reranking, we just take image path as text
         indexes = self._sort(texts=texts, query=query)
+        if len(indexes) > 10:
+            import pdb
+            pdb.set_trace()
         return [chunks[i] for i in indexes]

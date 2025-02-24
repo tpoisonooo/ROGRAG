@@ -301,21 +301,25 @@ async def parse_chunk_to_knowledge(chunks: List[Chunk], llm: LLM,
         history = pack_user_assistant_to_messages(
             hint_prompt, final_result)  # 重复提取实体词，until LLM 判断为 finished
         entity_extract_max_gleaning = 1
-        for now_glean_index in range(entity_extract_max_gleaning):
-            glean_result = await llm.chat(continue_prompt[language],
-                                          history=history)
-            history += pack_user_assistant_to_messages(
-                continue_prompt[language], glean_result)
-            final_result += glean_result
-            if now_glean_index == entity_extract_max_gleaning - 1:
-                break
 
-            if_loop_result: str = await llm.chat(if_loop_prompt[language],
-                                                 history=history)
-            if_loop_result = if_loop_result.strip().strip('"').strip(
-                "'").lower()
-            if "yes" in if_loop_result:
-                break
+        try:
+            for now_glean_index in range(entity_extract_max_gleaning):
+                glean_result = await llm.chat(continue_prompt[language],
+                                              history=history)
+                history += pack_user_assistant_to_messages(
+                    continue_prompt[language], glean_result)
+                final_result += glean_result
+                if now_glean_index == entity_extract_max_gleaning - 1:
+                    break
+
+                if_loop_result: str = await llm.chat(if_loop_prompt[language],
+                                                     history=history)
+                if_loop_result = if_loop_result.strip().strip('"').strip(
+                    "'").lower()
+                if "yes" in if_loop_result:
+                    break
+        except Exception as e:
+            logger.warning(e)
 
         records = split_string_by_multi_markers(
             final_result,

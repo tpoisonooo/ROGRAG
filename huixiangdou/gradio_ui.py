@@ -141,7 +141,7 @@ async def predict(text: str, image: str):
             parallel_assistant = ParallelPipeline(
                 work_dir=main_args.work_dir, config_path=main_args.config_path)
         assistant = parallel_assistant
-        
+
     args = {'query': query, 'history': [], 'language': language}
     args['enable_web_search'] = enable_web_search
     args['enable_code_search'] = enable_code_search
@@ -155,7 +155,7 @@ async def predict(text: str, image: str):
             sentence += sess.delta
             print('{}'.format(sess.delta), end="")
             yield sentence
-    
+
     print('yield2 {}'.format(sentence))
     yield sentence
 
@@ -225,12 +225,9 @@ if __name__ == '__main__':
         with gr.Row():
             if len(radio_options) > 1:
                 with gr.Column():
-                    ui_pipeline = gr.Radio(
-                        radio_options,
-                        label="Pipeline type",
-                        info=
-                        "Default value is `serial`"
-                    )
+                    ui_pipeline = gr.Radio(radio_options,
+                                           label="Pipeline type",
+                                           info="Default value is `serial`")
                     ui_pipeline.change(fn=on_pipeline_changed,
                                        inputs=ui_pipeline,
                                        outputs=[])

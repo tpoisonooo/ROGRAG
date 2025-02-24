@@ -1,5 +1,5 @@
 from huixiangdou.primitive import Query
-from ..service import ErrorCode
+from ..service import ErrorCode, RetrieveReply
 import os
 import json
 from time import time
@@ -24,21 +24,21 @@ class Session:
                  history: List[Dict],
                  request_id: str = 'default',
                  group_chats: Dict = {},
-                 language: str = 'zh_cn',
-                 enable_web_search: bool = False,
-                 enable_code_search: bool = False):
+                 language: str = 'zh_cn', 
+                 response_type: str = 'stream'):
         # retriever inputs
         self.query = query
         self.history = history
         self.group_chats = group_chats
         self.language = language
-        self.enable_web_search = enable_web_search
-        self.enable_code_search = enable_code_search
-
+        
         # retriever outputs
         self.retrieve_replies = []
-        self.fused_reply = None
-
+        self.fused_reply: RetrieveReply = None
+        # response type, stream or direct
+        self.response_type = response_type
+        self.response_system = None
+		
         # chat reply
         self.delta = ''
         self.response = ''

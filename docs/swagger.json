@@ -1,0 +1,248 @@
+openapi: 3.1.0
+info:
+  title: Swagger Petstore - OpenAPI 3.1
+  description: |-
+    This is a sample Pet Store Server based on the OpenAPI 3.1 specification.  You can find out more about
+    Swagger at [https://swagger.io](https://swagger.io). In the third iteration of the pet store, we've switched to the design first approach!
+    You can now help us improve the API whether it's by making changes to the definition itself or to the code.
+    That way, with time, we can improve the API in general, and expose some of the new features in OAS3.
+
+    Some useful links:
+    - [The Pet Store repository](https://github.com/swagger-api/swagger-petstore)
+    - [The source API definition for the Pet Store](https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml)
+
+  termsOfService: http://swagger.io/terms/
+  contact:
+    email: apiteam@swagger.io
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+servers:
+  - url: https://petstore3.swagger.io/api/v3
+tags:
+  - name: rag
+    description: 丰登 LLM
+
+paths:
+  /v2/chat:
+    post:
+      tags:
+        - rag
+      summary: 多阶段 RAG chat
+      description: 输入问题和历史消息，yield 处理阶段和最终的 streaming chat 结果
+      operationId: rag_chat
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Query'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatReply'
+  /v2/exemplify:
+    post:
+      tags:
+        - rag
+      summary: 举一反三
+      description: 举一反三
+      operationId: exemplify_question
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Query'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+             schema:
+              $ref: '#/components/schemas/Case'
+
+  /v2/download:
+    post:
+      tags:
+        - rag
+      summary: 下载基因文件
+      description: 基于阿里云 OSS 下载，服务端给临时 URL  https://help.aliyun.com/zh/oss/user-guide/authorize-third-party-users-to-download-objects?spm=a2c4g.11186623.0.0.233926e4E9geop
+      operationId: download
+      requestBody:
+        content:
+          application/json:
+             schema:
+              $ref: '#/components/schemas/Token'
+
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+             schema:
+              $ref: '#/components/schemas/DownloadURL'
+
+components:
+  schemas:
+    Token:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Reference 里的 token
+    
+    DownloadURL:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+
+        data:
+          type: object
+          properties:
+            url:
+              type: string
+              description: 阿里云 URL
+
+    Reference:
+      type: object
+      description: 聊天期间返回的参考文档
+      properties:
+        chunk:
+          type: string
+          examples: 
+            - 今天是 2024 年 8 月 22 号，今日上海气温 35 摄氏度晴天
+        source_or_url:
+          type: string
+          examples:
+            - "/mnt/data/path/filename"
+            - "http://bing.com"
+        show_type:
+          description: 参考文档的展示类型。若支持下载，则用 download_token 调用下载接口
+          type: string
+          enum:
+            - web
+            - local
+            - fasta # 可下载的基因文件
+        download_token:
+          type: string
+
+    Pair:
+      type: object
+      properties:
+        user:
+          type: string
+          examples: 
+            - 今天天气怎样
+        assistant:
+          type: string
+          examples: 
+            - 上海晴天
+        references:
+          type: array
+          $ref: '#/components/schemas/Reference'
+
+    Query:
+      type: object
+      properties:
+        language:
+          type: string
+          examples:
+            - zh_CN
+            - en
+        enable_web_search:
+          type: boolean
+          examples:
+            - false
+        user:
+          type: string
+          examples: 
+            - 后天天气如何
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pair'
+
+    Status:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int64
+          description: 只有 0 是 success，别的全是异常，直接 show 下面的 error info
+          examples:
+            - 1
+            - 0
+        error:
+          type: string
+          description: 服务端提供报错内容，全英文
+          examples:
+            - parameter error
+
+    ChatReply:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+
+        data:
+          type: object
+          properties:
+            _id:
+              type: string
+              description: 每次请求都给 unique ID 用来调试
+              examples:
+                - 每次请求都给 unique ID 用来调试
+
+            stage:
+              type: string
+              description: chat 期间的阶段
+              enum:
+                - 0_parse
+                - 1_search
+                - 2_rerank
+                - 3_generate
+            
+            references:
+              type: array
+              items:
+                $ref: '#/components/schemas/Reference'
+              description: 检索结果，只有 `2_rerank` 期间才有。如果为空就是不用搜索结果直接 LLM 答复
+
+            delta:
+              type: string
+              description: streaming chat 的流式部分结果，markdown 格式。`3_generate` 期间才有，需要自己拼接显示
+              examples:
+                - 上海
+                - 今天
+                - 晴
+                - 天
+    
+    Case:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+
+        data:
+          type: object
+          properties:
+            _id:
+              type: string
+              description: 每次请求都给 unique ID 用来调试
+              examples:
+                - 每次请求都给 unique ID 用来调试
+
+            cases:
+              type: array
+              description: 举一反三结果，内容为空就是没有。
+              items:
+                type: string
+                examples:
+                  - 上海秋天雨水多么？

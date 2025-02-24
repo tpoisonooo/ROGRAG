@@ -12,8 +12,10 @@ def load_secret():
     with open('unittest/token.json') as f:
         json_obj = json.load(f)
         return json_obj
-    
+
+
 class TestLLM(unittest.TestCase):
+
     def setUp(self):
         config_path = 'config.ini'
         if os.path.exists('unittest/token.json'):
@@ -25,9 +27,9 @@ class TestLLM(unittest.TestCase):
                 config['llm']['step']['api_key'] = secrets['step']
             config_path = '/tmp/config.ini'
             with open(config_path, 'w', encoding='utf8') as f:
-                pytoml.dump(config ,f)
+                pytoml.dump(config, f)
                 f.flush()
-        
+
         self.llm = LLM(config_path)
 
     def test_init(self):
@@ -45,7 +47,7 @@ class TestLLM(unittest.TestCase):
         # 测试超出最大长度的情况
         with self.assertRaises(ValueError):
             self.llm.choose_model(backend=backend, token_size=128001)
-            
+
     async def test_real_chat(self):
         await self.llm.chat(prompt='hi')
 
@@ -67,14 +69,15 @@ class TestLLM(unittest.TestCase):
         with self.assertRaises(Timeout):
             await self.llm.chat('Test prompt', 'kimi')
 
+
 def always_get_an_event_loop() -> asyncio.AbstractEventLoop:
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
-        logger.info("Creating a new event loop in a sub-thread.")
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
     return loop
+
 
 if __name__ == '__main__':
     handler = TestLLM()
