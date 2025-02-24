@@ -4,8 +4,6 @@ import json
 # 基础 URL
 BASE_URL = "http://127.0.0.1:23334"
 
-#BASE_URL = "http://101.133.161.204:7001/"
-
 
 # 测试 /v2/chat 接口
 def test_chat_coref():
