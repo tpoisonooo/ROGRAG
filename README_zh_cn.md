@@ -34,7 +34,7 @@ GraphRAG 有很多地方要调，很难确保是参数生效还是 pipeline 生�
 
 ## 文档
 
-- [1. 如何运行](docs/zh_cn/doc_how_to_run.md)
+- [1. 如何运行（命令行、Swagger API、Gradio 三种方式）](docs/zh_cn/doc_how_to_run.md)
 - [2. 目录结构功能](docs/zh_cn/doc_architecture.md)
 - [环境、报错 **FAQ**](https://github.com/tpoisonooo/HuixiangDou2/issues/8)
 

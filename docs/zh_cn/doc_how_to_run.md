@@ -104,6 +104,22 @@ python3 -m huixiangdou.gradio_ui
 
 <img src="https://github.com/user-attachments/assets/b7b7cb90-4a85-4ffc-9de0-52670dd9159e" width=800>
 
+### Swagger API
+同样也支持 [swagger API 文档](../swagger.json)
+
+启动 server
+
+```bash
+python3 -m huixiangdou.server --port 23334
+```
+
+执行 client 测试
+
+```bash
+python3 huixiangdou/client.py
+```
+
+
 ## 四、删除已有知识库
 
 删掉 `workdir` 和 `TuGraph` 里的实体关系即可。

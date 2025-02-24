@@ -98,6 +98,21 @@ Open port 7860 in web browser:
 
 <img src="https://github.com/user-attachments/assets/b7b7cb90-4a85-4ffc-9de0-52670dd9159e" width=800>
 
+### Swagger API
+Also support [Swagger API](../swagger.json)
+
+Start server
+
+```bash
+python3 -m huixiangdou.server --port 23334
+```
+
+Test with client
+
+```bash
+python3 huixiangdou/client.py
+```
+
 ## IV. Drop Existing Knowledge Base
 
 Simply delete the entities and relationships in `workdir` and TuGraph.
