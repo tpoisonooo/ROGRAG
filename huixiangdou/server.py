@@ -7,9 +7,9 @@ from loguru import logger
 
 from .pipeline import SerialPipeline, ParallelPipeline
 from .primitive import Query, Pair, Token
+from .service import server_prompts
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 import json
@@ -60,7 +60,7 @@ class ExampleAnalogy:
                  resource,
                  api_data_dir: str,
                  threshold: float = 0.3,
-                 language: str = 'zh'):
+                 language: str = 'zh_cn'):
         if not os.path.exists(api_data_dir):
             logger.info('api_data_dir not exist, quit')
             return
@@ -80,7 +80,7 @@ class ExampleAnalogy:
                                           'variety/jieba_variety.txt')
         jieba_variety_pinyin_path = os.path.join(
             api_data_dir, 'variety/jieba_variety_pinyin.txt')
-        jieba_gene_path = os.path.join(api_data_dir, 'gene/jieba_gene.txt')
+        # jieba_gene_path = os.path.join(api_data_dir, 'gene/jieba_gene.txt')
         # jieba.load_userdict(jieba_gene_path)
         jieba.load_userdict(jieba_variety_path)
         jieba.load_userdict(jieba_variety_pinyin_path)
@@ -111,30 +111,8 @@ class ExampleAnalogy:
                                      for item in row.split(sep) if item)
 
         # init llm chat template
-        if 'zh' in language:
-            self.GENERATE_TEMPLATE = '''
-请生成三个与该问题尽可能相似的问题，返回格式为 json list
+        self.EXAMPLIFY_TEMPLATE = server_prompts['examplify'][language]
 
-## 样例返回
-["问题1","问题2","问题3"]
-
-## 问题
-```text
-{query}
-```
-'''
-        else:
-           self.GENERATE_TEMPLATE = '''
-Please generate three questions that are as similar as possible to the problem, return format is json list
-
-## example output
-["Q1","Q2","Q3"]
-
-## problem
-```text
-{query}
-```
-'''
     async def process(self, query: str):
         metric = TextSimilarity()
         if metric.is_chinese_dominant(query):
@@ -169,7 +147,7 @@ Please generate three questions that are as similar as possible to the problem, 
               and matched_gene is None) or (matched_gene is not None
                                             and matched_rice is None):
             #如果是关于水稻/基因但没涉及种类，使用大模型生成新问题
-            prompt = self.GENERATE_TEMPLATE.format(query=query)
+            prompt = self.EXAMPLIFY_TEMPLATE.format(query=query)
             response = await self.llm.chat(prompt=prompt)
             similar_questions = response
             response_body = {}
@@ -293,7 +271,7 @@ Please generate three questions that are as similar as possible to the problem, 
             return response_body
         
         # 如果问指定物种但问题无关，使用大模型生成新问题
-        prompt = self.GENERATE_TEMPLATE.format(query=query)
+        prompt = self.EXAMPLIFY_TEMPLATE.format(query=query)
         response = await self.llm.chat(prompt=prompt)
         similar_questions = response
         # print(similar_questions)
@@ -334,18 +312,40 @@ def extract_history(talk_seed):
         history.append({"role": "assistant", "content": item.assistant})
     return history
 
+async def coreference_resolution(query: str, history: List, language: str):
+    if not history:
+        return query
+    global assistant
+    pronouns = ['it', 'he', 'she', 'their', 'they', 'him', 'her', 'this', 'that', '它', '他', '她', '这', '那']
+    for p in pronouns:
+        if p in query:
+            template = server_prompts['corefence_resolution'][language]
+            json_str = json.dumps(history[-1], ensure_ascii=False)
+            prompt = template.format(query=query, history=json_str)
+            response = await assistant.resource.llm.chat(prompt=prompt)
+            if 'NO' in response:
+                return query
+            return response
+    return query
+
 @app.post("/v2/chat")
 async def chat(talk_seed: Talk_seed):
     global assistant
     print('enable web search {}'.format(talk_seed.enable_web_search))
-    query = Query(text=talk_seed.user,
-                  generation_question=talk_seed.user,
-                  enable_web_search=talk_seed.enable_web_search)
     req_id = get_req_uuid()
     pipeline = {}
     language = 'zh_cn' if 'zh' in talk_seed.language else 'en'
     history = extract_history(talk_seed)
-    logger.info('input query: {}'.format(talk_seed.user))
+    
+    # disable coreference resolution
+    # coref_input = await coreference_resolution(query=talk_seed.user, history=history, language=language)
+    coref_input = talk_seed.user
+    logger.info('talk_seed.user {}, coref_input {}'.format(talk_seed.user, coref_input))
+
+    query = Query(text=coref_input,
+                  generation_question=coref_input,
+                  enable_web_search=talk_seed.enable_web_search)
+
     async def event_stream():
         async for sess in assistant.generate(
                 query=query,

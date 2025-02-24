@@ -9,3 +9,4 @@ from .retriever import RetrieveReply, Retriever, SharedRetrieverPool, InvertedRe
 from .sql import ChunkSQL, Entity2ChunkSQL
 from .graph_store import TuGraphStore, TuGraphConnector, GraphStore
 from .nlu import parse_chunk_to_knowledge
+from .prompt import server_prompts

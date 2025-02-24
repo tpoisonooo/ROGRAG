@@ -389,3 +389,4 @@ class CitationGeneratePrompt:
 
         prompt = head + context_prompt + question_prompt
         return prompt
+    
