@@ -398,7 +398,7 @@ async def write_back_config_threshold(resource: RetrieveResource,
 
     # retrieve score
     pool = SharedRetrieverPool(resource=resource)
-    retriever = pool.get(work_dir=work_dir)
+    retriever = pool.get(work_dir=work_dir, method=RetrieveMethod.KNOWLEDGE)
 
     for question in questions:
         score = await retriever.similarity_score(query=question)
@@ -443,17 +443,10 @@ if __name__ == '__main__':
     after_cost = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(
     )
 
-    if False:
-        with open('cost', 'a') as f:
-            input_token_cost = after_cost[0] - before_cost[0]
-            output_token_cost = after_cost[1] - before_cost[1]
-            time_cost = int(after_cost[2] - before_cost[2])
-            f.write(f'{input_token_cost} {output_token_cost} {time_cost}')
-            f.write('\n')
-
-        # async def init(self, files: List[FileName], graph_store: TuGraphStore, fasta_ner:str, fasta_file:str):
+    input_token_cost = after_cost[0] - before_cost[0]
+    output_token_cost = after_cost[1] - before_cost[1]
+    time_cost = int(after_cost[2] - before_cost[2])
+    logger.info(f'input token: {input_token_cost}, output token: {output_token_cost}, timecost: {time_cost}')
     del store
 
-    # calculate config threshold, write it back
-    # TODO uncomment
-    # loop.run_until_complete(write_back_config_threshold(resource=resource, work_dir=args.work_dir, config_path=args.config_path))
+    loop.run_until_complete(write_back_config_threshold(resource=resource, work_dir=args.work_dir, config_path=args.config_path))
