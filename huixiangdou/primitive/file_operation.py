@@ -38,6 +38,7 @@ class FileOperation:
         self.text_suffix = ['.txt', '.text']
         self.excel_suffix = ['.xlsx', '.xls', '.csv']
         self.pdf_suffix = '.pdf'
+        self.json_suffix = ['.json', '.jsonl']
         self.ppt_suffix = '.pptx'
         self.html_suffix = ['.html', '.htm', '.shtml', '.xhtml']
         self.word_suffix = ['.docx', '.doc']
@@ -97,6 +98,10 @@ class FileOperation:
             if filepath.endswith(suffix):
                 return 'text'
 
+        for suffix in self.json_suffix:
+            if filepath.endswith(suffix):
+                return 'json'
+
         for suffix in self.word_suffix:
             if filepath.endswith(suffix):
                 return 'word'
@@ -146,6 +151,7 @@ class FileOperation:
         for root, _, filenames in os.walk(repo_dir):
             for filename in filenames:
                 _type = self.get_type(filename)
+                print(filename, _type)
                 if _type is not None:
                     files.append(
                         FileName(root=root, filename=filename, _type=_type))
@@ -182,6 +188,16 @@ class FileOperation:
         json_text = table.dropna(axis=1).to_json(force_ascii=False)
         return json_text
 
+    def load_content(self, filepath: str, encodings=['utf-8', 'ISO-8859-1']):
+        for encoding in encodings:
+            try:
+                with open(filepath, 'r', encoding=encoding) as file:
+                    content = file.read()
+                    return content
+            except UnicodeDecodeError as e:
+                logger.debug(f'Open {filepath} failed, try next encoding.')
+        raise ValueError("Could not read file with provided encodings.")
+
     def read(self, filepath: str):
         file_type = self.get_type(filepath)
 
@@ -191,10 +207,8 @@ class FileOperation:
             return text, None
 
         try:
-
-            if file_type == 'md' or file_type == 'text':
-                with open(filepath, encoding='utf-8') as f:
-                    text = f.read()
+            if file_type == 'md' or file_type == 'text' or file_type == 'json':
+                text = self.load_content(filepath)
 
             elif file_type == 'pdf':
                 text += self.read_pdf(filepath)

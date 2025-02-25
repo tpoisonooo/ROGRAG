@@ -3,20 +3,16 @@ import asyncio
 import json
 import pdb
 
+
 async def post_event_source(url, prompt, history, backend):
     # 准备POST请求的headers和数据
-    headers = {
-        'Content-Type': 'application/json'
-    }
-    data = {
-        'prompt': prompt,
-        'history': history,
-        'backend': backend
-    }
+    headers = {'Content-Type': 'application/json'}
+    data = {'prompt': prompt, 'history': history, 'backend': backend}
 
     # 发送POST请求
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, headers=headers, data=json.dumps(data)) as response:
+        async with session.post(url, headers=headers,
+                                data=json.dumps(data)) as response:
             # 确保请求成功
             if response.status == 200:
                 # 处理SSE响应
@@ -31,20 +27,16 @@ async def post_event_source(url, prompt, history, backend):
             else:
                 print(f"Failed to connect: {response.status}")
 
+
 async def post_single(url, prompt, history, backend):
     # 准备POST请求的headers和数据
-    headers = {
-        'Content-Type': 'application/json'
-    }
-    data = {
-        'prompt': prompt,
-        'history': history,
-        'backend': backend
-    }
+    headers = {'Content-Type': 'application/json'}
+    data = {'prompt': prompt, 'history': history, 'backend': backend}
 
     # 发送POST请求
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, headers=headers, data=json.dumps(data)) as response:
+        async with session.post(url, headers=headers,
+                                data=json.dumps(data)) as response:
             # 确保请求成功
             if response.status == 200:
                 async for chunk in response.content.iter_any():
@@ -53,6 +45,7 @@ async def post_single(url, prompt, history, backend):
             else:
                 print(f"Failed to connect: {response.status}")
 
+
 # 使用示例
 async def main():
     prompt = 'What is the weather like today?'
@@ -60,7 +53,9 @@ async def main():
     backend = 'local'
 
     # await post_event_source('http://10.1.52.22:8888/stream_chat', prompt, history, backend)
-    await post_single('http://10.1.52.22:8888/inference', prompt, history, backend)
+    await post_single('http://10.1.52.22:8888/inference', prompt, history,
+                      backend)
+
 
 # 运行异步main函数
 if __name__ == '__main__':

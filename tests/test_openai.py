@@ -51,14 +51,3 @@ def call2():
 
 
 call2()
-# call_openai("../models/Qwen1.5-14B-Chat/", '如何安装 mmdeploy', [])
-
-# curl http://10.140.24.142:29500/v1/chat/completions \
-#     -H "Content-Type: application/json" \
-#     -d '{
-#     "model": "../models/Qwen1.5-14B-Chat/",
-#     "messages": [
-#     {"role": "system", "content": "You are a helpful assistant."},
-#     {"role": "user", "content": "Tell me something about large language models."}
-#     ]
-#     }'

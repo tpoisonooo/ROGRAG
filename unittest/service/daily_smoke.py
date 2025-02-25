@@ -60,8 +60,7 @@ def run():
     actions = {
         'llm_server_hybrid':
         'python3 -m huixiangdou.service.llm_server_hybrid --config_path {}  --unittest',
-        'store':
-        'python3 -m huixiangdou.service.store --config_path {}',
+        'store': 'python3 -m huixiangdou.service.store --config_path {}',
         'main': 'python3 -m huixiangdou.main --standalone --config_path {}'
     }
 

@@ -128,7 +128,7 @@ async def predict(text: str, image: str):
     else:
         image_path = None
 
-    query = Query(text, image_path)
+    query = Query(text=text, image=image_path, enable_web_search=enable_web_search, enable_code_search=enable_code_search)
     assistant = None
     if 'serial' in pipeline:
         if serial_assistant is None:
@@ -143,8 +143,6 @@ async def predict(text: str, image: str):
         assistant = parallel_assistant
         
     args = {'query': query, 'history': [], 'language': language}
-    args['enable_web_search'] = enable_web_search
-    args['enable_code_search'] = enable_code_search
 
     sentence = ''
     async for sess in assistant.generate(**args):

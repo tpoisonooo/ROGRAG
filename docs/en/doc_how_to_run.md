@@ -42,6 +42,12 @@ The tools used in this document are as follows:
    python3 -m pip install -r requirements.txt
    ```
 
+   We also support cpu-only
+   ```bash
+   # CPU only
+   python3 -m pip install -r requirements/cpu.txt
+   ```
+
 4. **Download the embedding model**. HuixiangDou2 supports bce/bge text and image-text models. For example, using bce [embedding](https://huggingface.co/InfiniFlow/bce-embedding-base_v1) and [reranker](https://huggingface.co/InfiniFlow/bce-reranker-base_v1), assume the models are downloaded to the following two locations on your machine:
    * `/home/data/share/bce-embedding-base_v1`
    * `/home/data/share/bce-reranker-base_v1`
@@ -97,6 +103,21 @@ python3 -m huixiangdou.gradio_ui
 Open port 7860 in web browser:
 
 <img src="https://github.com/user-attachments/assets/b7b7cb90-4a85-4ffc-9de0-52670dd9159e" width=800>
+
+### Swagger API
+Also support [Swagger API](../swagger.json)
+
+Start server
+
+```bash
+python3 -m huixiangdou.server --port 23334
+```
+
+Test with client
+
+```bash
+python3 huixiangdou/client.py
+```
 
 ## IV. Drop Existing Knowledge Base
 

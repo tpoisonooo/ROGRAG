@@ -1,5 +1,6 @@
 # PreprocNode
 from typing import List
+import re
 
 rag_prompts = {}
 
@@ -169,22 +170,22 @@ rag_prompts["perplexsity_check_following"] = {
     "zh_cn":
     """你是一个中英文阅卷人，擅长分析学生答案和问题的关联度。
 ## 任务
-请仔细阅读试卷问题、学生依据和学生答案，判断学生答案是否合理，输出对应的 YES 或 NO。
+请仔细阅读试卷问题、学生依据和学生答案，判断学生答案是否合理。
 
 ## 输出格式要求
-- 如果学生答案没有参考依据，输出 NO
-- 如果学生答案自信度较高且依据充分，输出 YES
-- 如果学生答案部分解答了问题，但自信度不高，输出 NO
-- 给出最终的 YES/NO 前，你会解释为什么给出这个判断
+- 如果学生答案没有参考依据，输出 no
+- 如果学生答案自信度较高且依据充分，输出 yes
+- 如果学生答案部分解答了问题，但自信度不高，输出 no
+- 给出最终的 yes/no 前，你会解释为什么给出这个判断
 - 在你的解释中，需要引用学生依据。除非有明确上下文，你不会猜测问题的合理答案
 
 ## 注意事项
 - 在检验学生答案过程中，你会注意到表达单位的差异，例如1公斤是2斤
 
 ## 学生答案示例
-- 解释后输出 NO：“无法确定，选项A、B、C、D中的信息与文献提供的内容不符。”
-- 解释后输出 NO：“基于现有信息，我们无法确定越光的育种母本和父本。但文献提到越光是作为亲本与其他常规品种（系）进行了杂交配组”
-- 解释后输出 YES：“根据提供的材料，越光的亲本是近畿34(♀)和北陆4号(♂)”
+- 解释后输出 no：“无法确定，选项A、B、C、D中的信息与文献提供的内容不符。”
+- 解释后输出 no：“基于现有信息，我们无法确定越光的育种母本和父本。但文献提到越光是作为亲本与其他常规品种（系）进行了杂交配组”
+- 解释后输出 yes：“根据提供的材料，越光的亲本是近畿34(♀)和北陆4号(♂)”
 
 ## 试卷问题
 {input_query}
@@ -202,19 +203,19 @@ rag_prompts["perplexsity_check_following"] = {
 Please carefully read the exam question, student evidence, and student answer to determine whether the student's answer is reasonable.
 
 ## Output Format Requirements
-- If the student's answer lacks reference evidence, output NO
-- If the student's answer is highly confident and well-supported, output YES
-- If the student's answer partially addresses the question but lacks confidence, output NO
-- Before giving the final YES/no, you will explain why you made this judgment
+- If the student's answer lacks reference evidence, output no
+- If the student's answer is highly confident and well-supported, output yes
+- If the student's answer partially addresses the question but lacks confidence, output no
+- Before giving the final yes/no, you will explain why you made this judgment
 - In your explanation, you need to reference the student's evidence. Unless there is a clear context, you will not speculate on the reasonable answer to the question
 
 ## Notes
 - In the process of checking student answers, you will notice differences in expression units, such as 1 kilogram being 2 jin
 
 ## Example Student Answers
-- Explanation followed by output NO: "Cannot determine, the information in options A, B, C, and D does not match the content provided in the literature."
-- Explanation followed by output NO: "Based on the existing information, we cannot determine the maternal and paternal parents of Yueguang. However, the literature mentions that Yueguang was used as a parent for hybridization with other conventional varieties (lines)."
-- Explanation followed by output YES: "According to the provided material, the parents of Yueguang are Kinai 34 (♀) and Hokuriku 4 (♂)"
+- Explanation followed by output no: "Cannot determine, the information in options A, B, C, and D does not match the content provided in the literature."
+- Explanation followed by output no: "Based on the existing information, we cannot determine the maternal and paternal parents of Yueguang. However, the literature mentions that Yueguang was used as a parent for hybridization with other conventional varieties (lines)."
+- Explanation followed by output yes: "According to the provided material, the parents of Yueguang are Kinai 34 (♀) and Hokuriku 4 (♂)"
 
 ## Exam Question
 {input_query}
@@ -230,9 +231,9 @@ Please carefully read the exam question, student evidence, and student answer to
 
 rag_prompts["perplexsity_check_preceding"] = {
     "zh_cn":
-    """你是一个中英文阅卷人，擅长分析根据学生依据能否获得试卷问题的答案。
+    """你是一个中英文阅卷人，擅长分析根据学生依据能否获得试卷问题的答案，并因此给出 YES 或 NO
 ## 任务
-请仔细阅读试卷问题和学生依据，判断依据能否解答问题。
+请仔细阅读试卷问题和学生依据，判断学生依据能否解答试卷问题。
 
 ## 输出格式要求
 - 如果学生依据不足，输出 NO
@@ -261,17 +262,17 @@ rag_prompts["perplexsity_check_preceding"] = {
 Please carefully read the exam questions and the students' evidence to determine if the evidence can answer the question.
 
 ## Output Format Requirements
-- If the student's evidence is insufficient, output NO
-- If the student's evidence contains or can deduce the answer to the exam question, output YES
-- Before giving the final YES/NO, you will explain why you made this judgment
+- If the student's evidence is insufficient, output no
+- If the student's evidence contains or can deduce the answer to the exam question, output yes
+- Before giving the final yes/no, you will explain why you made this judgment
 
 ## Notes
 - In the process of checking student answers, you will notice differences in expression units, such as 1 kilogram being 2 jin
 
 ## Examples of Student Answers
-- Explanation followed by output NO: "Cannot determine, the information in options A, B, C, and D does not match the content provided in the literature."
-- Explanation followed by output NO: "Based on the existing information, we cannot determine the maternal and paternal parents of Yueguang. However, the literature mentions that Yueguang was crossed with other conventional varieties (lines) as a parent."
-- Explanation followed by output YES: "According to the provided materials, the parents of Yueguang are Kinai 34 (♀) and Hokuriku 4 (♂)"
+- Explanation followed by output no: "Cannot determine, the information in options A, B, C, and D does not match the content provided in the literature."
+- Explanation followed by output no: "Based on the existing information, we cannot determine the maternal and paternal parents of Yueguang. However, the literature mentions that Yueguang was crossed with other conventional varieties (lines) as a parent."
+- Explanation followed by output yes: "According to the provided materials, the parents of Yueguang are Kinai 34 (♀) and Hokuriku 4 (♂)"
 
 ## Exam Question
 {input_query}
@@ -282,7 +283,6 @@ Please carefully read the exam questions and the students' evidence to determine
 ```
 """
 }
-
 
 # =========================================== citation generation =========================================
 
@@ -301,14 +301,15 @@ Please use only the provided search results (some of which may be irrelevant) to
 rag_prompts["generate"] = {
     "zh_cn":
     """## 任务
-请根据实体列表、关系列表、检索结果（其中一些可能不相关）回答用户输入。
+请仔细阅读用户输入，首先理解问题，然后根据实体列表、关系列表、检索结果（其中一些可能不相关）给出答复。你需要给出回答依据或推理过程。
 
 ## 输出格式与语言风格要求
 - 使用\(...\) 或\[...\]来输出数学公式，例如：使用\[x^2\]来表示x的平方。
 - 当你介绍自己时，请记住保持幽默和简短。
+- 你会理解问题，明确问题中的术语和关系
 - 你不会不用简洁简短的文字输出，你不会输出无关用户指令的文字。
 - 你不会重复表达和同义反复。
-- 如果你不知道答案，或者提供的知识中没有足够的信息来提供答案，直接回复“无法确定”。你不会编造任何东西。
+- 如果你不知道答案，或者提供的知识中没有足够的信息来提供答案，请告诉用户自己不知道答案并表达歉意。你不会编造任何东西。
 
 ## 实体列表
 {entities}

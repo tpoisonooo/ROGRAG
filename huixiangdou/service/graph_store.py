@@ -645,6 +645,67 @@ class TuGraphStore(GraphStore):
             mg.append_edge(edge)
         return mg
 
+    # def stream_query(self, query: str) -> Generator[Graph, None, None]:
+    #     """Execute a stream query."""
+    #     from neo4j import graph
+
+    #     for record in self.conn.run_stream(query):
+    #         mg = MemoryGraph()
+    #         for key in record.keys():
+    #             value = record[key]
+    #             if isinstance(value, graph.Node):
+    #                 node_id = value._properties["id"]
+    #                 description = value._properties["description"]
+    #                 vertex = Vertex(node_id, name=node_id, description=description)
+    #                 mg.upsert_vertex(vertex)
+    #             elif isinstance(value, graph.Relationship):
+    #                 rel_nodes = value.nodes
+    #                 prop_id = value._properties["id"]
+    #                 src_id = rel_nodes[0]._properties["id"]
+    #                 dst_id = rel_nodes[1]._properties["id"]
+    #                 description = value._properties["description"]
+    #                 edge = Edge(src_id, dst_id, name=prop_id, description=description)
+    #                 mg.append_edge(edge)
+    #             elif isinstance(value, graph.Path):
+    #                 nodes = list(record["p"].nodes)
+    #                 rels = list(record["p"].relationships)
+    #                 formatted_path = []
+    #                 for i in range(len(nodes)):
+    #                     formatted_path.append(
+    #                         {
+    #                             "id": nodes[i]._properties["id"],
+    #                             "description": nodes[i]._properties["description"],
+    #                         }
+    #                     )
+    #                     if i < len(rels):
+    #                         formatted_path.append(
+    #                             {
+    #                                 "id": rels[i]._properties["id"],
+    #                                 "description": rels[i]._properties["description"],
+    #                             }
+    #                         )
+    #                 for i in range(0, len(formatted_path), 2):
+    #                     mg.upsert_vertex(
+    #                         Vertex(
+    #                             formatted_path[i]["id"],
+    #                             name=formatted_path[i]["id"],
+    #                             description=formatted_path[i]["description"],
+    #                         )
+    #                     )
+    #                     if i + 2 < len(formatted_path):
+    #                         mg.append_edge(
+    #                             Edge(
+    #                                 formatted_path[i]["id"],
+    #                                 formatted_path[i + 2]["id"],
+    #                                 name=formatted_path[i + 1]["id"],
+    #                                 description=formatted_path[i + 1]["description"],
+    #                             )
+    #                         )
+    #             else:
+    #                 vertex = Vertex("json_node", name="json_node", description=value)
+    #                 mg.upsert_vertex(vertex)
+    #         yield mg
+
 
 if __name__ == '__main__':
     import sys

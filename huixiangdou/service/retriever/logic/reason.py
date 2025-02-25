@@ -106,8 +106,14 @@ class ReasonRetriever(Retriever):
             _output_string = response.strip()
 
             json_forms = json.loads(_output_string)
+            last_sub_query = question
             for form in json_forms:
-                sub_query = form['step']
+                if 'step' in form:
+                    sub_query = form['step']
+                    last_sub_query = sub_query
+                else:
+                    sub_query = last_sub_query
+
                 input_str = form['action']
                 logic_node = self.parse_logic_form(input_str,
                                                    parsed_cached_map,

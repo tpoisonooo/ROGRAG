@@ -20,7 +20,7 @@ from loguru import logger
 #     assert is_float_regex("") == False
 #     assert is_float_regex("123a") == False
 #     assert is_float_regex(".a") == False
-    
+
 # def test_clean_str():
 #     assert clean_str("  Hello World  ") == "Hello World"
 #     assert clean_str("<b>Hello</b>") == "Hello"  # Assuming html.unescape works as expected
@@ -39,21 +39,24 @@ from loguru import logger
 #     assert messages[0]["role"] == "user" and messages[0]["content"] == "User: Hello"
 #     assert messages[1]["role"] == "assistant" and messages[1]["content"] == "Assistant: Hi"
 
+
 def always_get_an_event_loop() -> asyncio.AbstractEventLoop:
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
-        logger.info("Creating a new event loop in a sub-thread.")
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
     return loop
+
 
 def load_secret():
     with open('unittest/token.json') as f:
         json_obj = json.load(f)
         return json_obj
 
+
 class NLU:
+
     def setUp(self):
         secrets = load_secret()
         config_proto = 'config.ini'
@@ -63,20 +66,39 @@ class NLU:
             config['llm']['step']['api_key'] = secrets['step']
         config_path = '/tmp/config.ini'
         with open(config_path, 'w', encoding='utf8') as f:
-            pytoml.dump(config ,f)
+            pytoml.dump(config, f)
             f.flush()
         self.llm = LLM(config_path)
         self.memory_graph = MemoryGraph()
-        self.nodes_data = [
-            {"entity_name": "百草园", "entity_type": "地点", "description": "我家的后面有一个很大的园，相传叫作百草园", "source_id":"12"},
-            {"entity_name": "百草园", "entity_type": "菜园", "description": "现在是早已并1屋子一起卖给朱文公的子孙2了，连那最末次的相见也已经隔了七八年，其中似乎确凿3只有一些野草；但那时却是我的乐园。", "source_id":"14"}
-        ]
-        
-        self.edges_data = [
-            {"src_id": "12", "tgt_id": "13", "weight": 1, "description": "做不了瀍水的事情", "keywords": "掌柜，评价", "source_id": "22"},
-            {"src_id": "12", "tgt_id": "13", "weight": 2, "description": "掌柜评价我样貌太傻", "keywords": "评价", "source_id": "23"}
-        ]
-        
+        self.nodes_data = [{
+            "entity_name": "百草园",
+            "entity_type": "地点",
+            "description": "我家的后面有一个很大的园，相传叫作百草园",
+            "source_id": "12"
+        }, {
+            "entity_name": "百草园",
+            "entity_type": "菜园",
+            "description":
+            "现在是早已并1屋子一起卖给朱文公的子孙2了，连那最末次的相见也已经隔了七八年，其中似乎确凿3只有一些野草；但那时却是我的乐园。",
+            "source_id": "14"
+        }]
+
+        self.edges_data = [{
+            "src_id": "12",
+            "tgt_id": "13",
+            "weight": 1,
+            "description": "做不了瀍水的事情",
+            "keywords": "掌柜，评价",
+            "source_id": "22"
+        }, {
+            "src_id": "12",
+            "tgt_id": "13",
+            "weight": 2,
+            "description": "掌柜评价我样貌太傻",
+            "keywords": "评价",
+            "source_id": "23"
+        }]
+
         self.edge_data = {"input": "value"}
         self.entityDB = Faiss()
         self.relationDB = Faiss()
@@ -109,51 +131,67 @@ class NLU:
 
     async def test_handle_single_entity_extraction(self):
         # Test with valid entity record
-        entity = await _handle_single_entity_extraction(['"entity"', "EntityName", "EntityType", "EntitySummary"], "chunk_key")
+        entity = await _handle_single_entity_extraction(
+            ['"entity"', "EntityName", "EntityType", "EntitySummary"],
+            "chunk_key")
         assert entity["entity_name"] == "ENTITYNAME"
         assert entity["entity_type"] == "ENTITYTYPE"
         assert entity["description"] == "EntitySummary"
         # Test with invalid entity record
-        entity = await _handle_single_entity_extraction(['"invalid"', "EntityName"], "chunk_key")
+        entity = await _handle_single_entity_extraction(
+            ['"invalid"', "EntityName"], "chunk_key")
         assert entity is None
 
     async def test_handle_single_relationship_extraction(self):
         # Test with valid relationship record
-        relation = await _handle_single_relationship_extraction(['"relationship"', "Source", "Target", "EdgeSummary", "EdgeKeywords", "1.0"], "chunk_key")
+        relation = await _handle_single_relationship_extraction([
+            '"relationship"', "Source", "Target", "EdgeSummary",
+            "EdgeKeywords", "1.0"
+        ], "chunk_key")
         assert relation["src_id"] == "SOURCE"
         assert relation["tgt_id"] == "TARGET"
         assert relation["weight"] == 1.0
         # Test with invalid relationship record
-        relation = await _handle_single_relationship_extraction(['"invalid"', "Source", "Target"], "chunk_key")
+        relation = await _handle_single_relationship_extraction(
+            ['"invalid"', "Source", "Target"], "chunk_key")
         assert relation is None
 
     async def test_handle_entity_relation_summary(self):
-        summary = await _handle_entity_relation_summary("EntityName", self.content , self.llm)
-        assert len(summary) > 0 
+        summary = await _handle_entity_relation_summary(
+            "EntityName", self.content, self.llm)
+        assert len(summary) > 0
 
     async def test_merge_nodes_then_upsert(self):
         # Assuming knowledge_graph_inst is a mock instance
-        node_data = await _merge_nodes_then_upsert(self.nodes_data[0]['entity_name'], self.nodes_data, self.memory_graph, self.llm)
+        node_data = await _merge_nodes_then_upsert(
+            self.nodes_data[0]['entity_name'], self.nodes_data,
+            self.memory_graph, self.llm)
         assert node_data["entity_type"] == "地点"
 
     async def test_merge_edges_then_upsert(self):
         # Assuming knowledge_graph_inst is a mock instance
-        edge_data = await _merge_edges_then_upsert(self.edges_data[0]["src_id"], self.edges_data[0]["tgt_id"], self.edges_data, self.memory_graph, self.llm)
+        edge_data = await _merge_edges_then_upsert(
+            self.edges_data[0]["src_id"], self.edges_data[0]["tgt_id"],
+            self.edges_data, self.memory_graph, self.llm)
         assert self.edges_data[0]["description"] in edge_data["description"]
         assert self.edges_data[-1]["description"] in edge_data["description"]
 
     async def test_parse_chunk_to_knowledge(self):
         # Assuming chunks, llm, graph, entityDB, and relationDB are mock instances
-        await parse_chunk_to_knowledge(self.chunks, self.llm, self.memory_graph, self.entityDB, self.relationDB)
+        await parse_chunk_to_knowledge(self.chunks, self.llm,
+                                       self.memory_graph, self.entityDB,
+                                       self.relationDB)
 
     async def test_truncate_list_by_token_size(self):
         list_data = [{"content": "hello world"}]
         key = lambda x: x["content"]
         assert truncate_list_by_token_size(list_data, key, 5) == []
         assert truncate_list_by_token_size(list_data, key, 11) == list_data
+
     async def asyncTearDown(self):
         # 清理测试环境
         self.memory_graph.drop()
+
 
 def test_async_funcs():
     inst = NLU()

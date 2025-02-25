@@ -90,19 +90,33 @@ class ReduceGenerate:
             sess.fused_reply = Retriever.fuse(replies=sess.retrieve_replies,
                                               query=sess.query,
                                               resource=self.resource)
+
             prompt = sess.fused_reply.format_prompt(query=real_question,
-                                             language=sess.language)
+                                                    language=sess.language)
 
         sess.stage = "3_generate"
         yield sess
 
         response = ""
-        async for delta in self.resource.llm.chat_stream(prompt=prompt, history=sess.history):
-            sess.delta = delta
-            response += delta
+        if sess.response_type == 'stream':
+            async for delta in self.resource.llm.chat_stream(
+                    prompt=prompt,
+                    history=sess.history,
+                    system_prompt=sess.response_system):
+                sess.delta = delta
+                response += delta
+                yield sess
+            sess.response = response
+            sess.delta = ''
             yield sess
-        sess.response = response
-        yield sess
+        else:
+            sess.response = await self.resource.llm.chat(prompt=prompt,
+                                                         history=sess.history,
+                                                         max_tokens=1024)
+            yield sess
+        print(real_question)
+        print(response)
+
 
 class ParallelPipeline:
 
@@ -111,14 +125,13 @@ class ParallelPipeline:
                  config_path: str = 'config.ini'):
         self.resource = RetrieveResource(config_path)
         self.pool = SharedRetrieverPool(resource=self.resource)
+        # self.retriever_reason = self.pool.get(work_dir=work_dir, method=RetrieveMethod.REASON)
         self.retriever_knowledge = self.pool.get(
             work_dir=work_dir, method=RetrieveMethod.KNOWLEDGE)
         self.retriever_web = self.pool.get(work_dir=work_dir,
                                            method=RetrieveMethod.WEB)
-        self.retriever_bm25 = self.pool.get(work_dir=work_dir,
-                                            method=RetrieveMethod.BM25)
-        self.retriever_inverted = self.pool.get(work_dir=work_dir,
-                                                method=RetrieveMethod.INVERTED)
+        # self.retriever_bm25 = self.pool.get(work_dir=work_dir, method=RetrieveMethod.BM25)
+        # self.retriever_inverted = self.pool.get(work_dir=work_dir, method=RetrieveMethod.INVERTED)
 
         self.config_path = config_path
         self.work_dir = work_dir
@@ -127,9 +140,7 @@ class ParallelPipeline:
                        query: Union[Query, str],
                        history: List[Pair] = [],
                        request_id: str = 'default',
-                       language: str = 'zh_cn',
-                       enable_web_search: bool = False,
-                       enable_code_search: bool = False):
+                       language: str = 'zh_cn'):
         if type(query) is str:
             query = Query(text=query)
 
@@ -137,9 +148,7 @@ class ParallelPipeline:
         sess = Session(query=query,
                        history=history,
                        request_id=request_id,
-                       language=language,
-                       enable_web_search=enable_web_search,
-                       enable_code_search=enable_code_search)
+                       language=language)
         sess.stage = "0_parse"
         yield sess
 
@@ -152,24 +161,26 @@ class ParallelPipeline:
         ]
 
         # if not a good question, return
+        # try:
         async for sess in preproc.process(sess):
             if sess.code in direct_chat_states:
                 async for resp in reduce.process(sess):
                     yield resp
                 return
 
-        try:
-            sess.stage = "1_search"
+        sess.stage = "1_search"
+        yield sess
+
+        # parallel run text2vec, websearch and codesearch
+        tasks = [self.retriever_knowledge.explore(query=sess.query)]
+        if query.enable_web_search:
+            tasks.append(self.retriever_web.explore(query=sess.query))
+
+        sess.retrieve_replies = await asyncio.gather(*tasks,
+                                                     return_exceptions=True)
+        async for sess in reduce.process(sess):
             yield sess
-
-            # run retrieval
-            tasks = [self.retriever_knowledge.explore(query=sess.query)]
-            sess.retrieve_replies = await asyncio.gather(
-                *tasks, return_exceptions=True)
-            async for sess in reduce.process(sess):
-                yield sess
-
-        except Exception as e:
-            pdb.set_trace()
-            logger.error(str(e))
-        return
+        # except Exception as e:
+        #     pdb.set_trace()
+        #     logger.error(str(e))
+        # return

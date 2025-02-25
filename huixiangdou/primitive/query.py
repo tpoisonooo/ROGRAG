@@ -44,8 +44,8 @@ class Query():
     generation_question: str = None
 
     language: str = 'en'
-    enable_code_search: bool = True
-    enable_web_search: bool = True
+    enable_code_search: bool = False
+    enable_web_search: bool = False
 
     # Number of tokens for the original chunks.
     max_token_for_text_unit: int = 12000

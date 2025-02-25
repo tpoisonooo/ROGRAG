@@ -1,5 +1,4 @@
 """Web search utils."""
-import asyncio
 import aiohttp
 import json
 import types
@@ -71,13 +70,15 @@ class WebRetriever(Retriever):
             logger.error(f"{__file__} input text is None")
             return r
 
-        prompt = PROMPT['web_keywords'].format(input_text=query.text)
+        prompt = PROMPT['web_keywords'][query.language].format(
+            input_text=query.text)
         web_keywords = await self.llm.chat(prompt)
 
         async with aiohttp.ClientSession() as session:
             # 发送POST请求
             url = 'https://google.serper.dev/search'
-            payload = json.dumps({'q': f'{web_keywords}', 'hl': 'zh-cn'})
+            hl = 'zh-cn' if 'zh' in query.language else 'en'
+            payload = json.dumps({'q': f'{web_keywords}', 'hl': hl})
             headers = {
                 'X-API-KEY': self.search_config.serper_x_api_key,
                 'Content-Type': 'application/json'
@@ -87,48 +88,14 @@ class WebRetriever(Retriever):
                 # 确保请求成功
                 response.raise_for_status()
                 # 返回响应的文本内容
-                json_obj = response.json()
-
+                json_obj = await response.json()
                 logger.debug(json_obj)
-                keys = self.search_config.domain_partial_order
-                urls = {}
-                normal_urls = []
 
                 for organic in json_obj['organic']:
-                    link = ''
-                    if 'link' in organic:
-                        link = organic['link']
-                    else:
-                        link = organic['sitelinks'][0]['link']
-                    if any(key in link for key in keys):
-                        for key in keys:
-                            if key in link:
-                                urls.setdefault(key, []).append(link)
-                                break
-                    else:
-                        normal_urls.append(link)
-
-                logger.debug(f'gather urls: {urls}, normal {normal_urls}')
-
-                targets = []
-
-                for key in keys:
-                    if key not in urls:
-                        continue
-                    for link in urls[key]:
-                        if link.lower().endswith(
-                                'pdf') or link.lower().endswith('docx'):
-                            continue
-                        targets.append(link)
-
-                tasks = [
-                    self.analyze_url(target_link=target_link)
-                    for target_link in targets[0:self.max_url_count]
-                ]
-                units = await asyncio.gather(*tasks, return_exceptions=False)
-                for unit in units:
-                    if unit is not None:
-                        c = Chunk(content_or_path=unit[1],
-                                  metadata={"source": unit[0]})
-                        r.add_source(c)
+                    print(organic)
+                    content = '{},{}'.format(organic['title'],
+                                             organic['snippet'])
+                    c = Chunk(content_or_path=content,
+                              metadata={"source": organic['link']})
+                    r.add_source(c)
                 return r

@@ -2,6 +2,7 @@ import pytest
 from huixiangdou.primitive import MemoryGraph, Vertex, Edge, Direction
 from huixiangdou.service import TuGraphStore
 
+
 def test_graph_search():
     """测试图谱搜索"""
     g = MemoryGraph()
@@ -15,7 +16,7 @@ def test_graph_search():
     e2 = Edge("2", "3", "LIKES")
     g.append_edge(e1)
     g.append_edge(e2)
-    
+
     store = TuGraphStore(config_path='config.ini')
     store.insert_graph(g)
     store.drop()

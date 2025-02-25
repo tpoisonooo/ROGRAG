@@ -282,7 +282,7 @@ class FeatureStore:
                                              '{}.code'.format(md5))
                 read_and_save(file)
 
-            elif file._type in ['md', 'text']:
+            elif file._type in ['md', 'text', 'json']:
                 # rename text files to new dir
                 md5 = self.file_opr.md5(file.origin)
                 file.copypath = os.path.join(
@@ -326,22 +326,21 @@ class FeatureStore:
 
         await self.build_knowledge(files=documents)
         return
-        tasks = []
-        if 'bm25' in args.method:
-            tasks.append(self.build_bm25(files=code))
+        # tasks = []
+        # if 'bm25' in args.method:
+        #     tasks.append(self.build_bm25(files=code))
 
-        if 'knowledge' in args.method:
-            tasks.append(self.build_knowledge(files=documents))
+        # if 'knowledge' in args.method:
+        #     tasks.append(self.build_knowledge(files=documents))
 
-        if 'inverted' in args.method:
-            fasta = Fasta(work_dir=self.work_dir, embedder=self.embedder)
-            tasks.append(
-                fasta.init(ner_path=args.fasta_ner, file_dir=args.fasta_file))
+        # if 'inverted' in args.method:
+        #     fasta = Fasta(work_dir=self.work_dir, embedder=self.embedder)
+        #     tasks.append(fasta.init(ner_path=args.fasta_ner, file_dir=args.fasta_file))
 
-        if 'dense' in args.method:
-            tasks.append(self.build_dense(files=documents))
+        # if 'dense' in args.method:
+        #     tasks.append(self.build_dense(files=documents))
 
-        await asyncio.gather(*tasks, return_exceptions=True)
+        # await asyncio.gather(*tasks, return_exceptions=True)
 
 
 def parse_args():
@@ -438,7 +437,6 @@ if __name__ == '__main__':
 
     before_cost = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(
     )
-
     loop.run_until_complete(store.init(files=files, args=args))
     store.file_opr.summarize(files)
 

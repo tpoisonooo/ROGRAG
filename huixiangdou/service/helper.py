@@ -33,7 +33,7 @@ class ErrorCode(Enum):
     the description provides a human-readable explanation of the error.
     """
     SUCCESS = 0, 'success'
-    NOT_A_QUESTION = 0, 'query is not a question'
+    NOT_A_QUESTION = 1, 'query is not a question'
     NO_TOPIC = 2, 'The question does not have a topic. It might be a meaningless sentence.'  # noqa E501
     UNRELATED = 3, 'Topics unrelated to the knowledge base. Updating good_questions and bad_questions can improve accuracy.'  # noqa E501
     NO_SEARCH_KEYWORDS = 4, 'Cannot extract keywords.'
@@ -52,7 +52,7 @@ class ErrorCode(Enum):
     WEB_SEARCH_FAIL = 15, 'Web search fail, please check network, TOKEN and quota'
     SG_SEARCH_FAIL = 16, 'SourceGraph not result, please check token or input query'
     LLM_NOT_RESPONSE_SG = 17, 'LLM not response query with sg search'
-    QUESTION_TOO_SHORT = 0, 'Query length too short'
+    QUESTION_TOO_SHORT = 18, 'Query length too short'
     INIT = 19, 'Init state'
 
     def __new__(cls, value, description):
