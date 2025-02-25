@@ -1,9 +1,9 @@
 import requests
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # 基础 URL
 BASE_URL = "http://127.0.0.1:23334"
-
 
 # 测试 /v2/chat 接口
 def test_chat_coref():
@@ -34,7 +34,6 @@ def test_chat_coref():
             decoded_line = line.decode("utf-8")
             print(decoded_line)
 
-
 # 测试 /v2/chat 接口
 def test_chat_zh():
     url = f"{BASE_URL}/v2/chat"
@@ -62,7 +61,6 @@ def test_chat_zh():
         if line:
             decoded_line = line.decode("utf-8")
             print(decoded_line)
-
 
 # 测试 /v2/chat 接口
 def test_chat_en():
@@ -92,7 +90,6 @@ def test_chat_en():
             decoded_line = line.decode("utf-8")
             print(decoded_line)
 
-
 # 测试 /v2/exemplify 接口
 def test_exemplify():
     url = f"{BASE_URL}/v2/exemplify"
@@ -113,6 +110,21 @@ def test_exemplify():
     print(f"Response Body: {response.json()}")
 
 
+# 并行化测试函数
+def parallel_test_chat_coref(num_requests):
+    with ThreadPoolExecutor(max_workers=num_requests) as executor:
+        futures = [executor.submit(test_chat_coref) for _ in range(num_requests)]
+        for future in as_completed(futures):
+            try:
+                response = future.result()
+                for line in response.iter_lines():
+                    if line:
+                        decoded_line = line.decode("utf-8")
+                        print(decoded_line)
+            except Exception as e:
+                print(f"Request failed: {e}")
+
+
 # 主函数，运行测试
 if __name__ == "__main__":
     test_chat_coref()
@@ -123,5 +135,8 @@ if __name__ == "__main__":
     # print("Testing /v2/chat endpoint...")
     # test_chat_en()
 
-    print("\nTesting /v2/exemplify endpoint...")
-    test_exemplify()
+    # print("\nTesting /v2/exemplify endpoint...")
+    # test_exemplify()
+
+    # 示例：并行发送 5 个请求
+    parallel_test_chat_coref(5)
