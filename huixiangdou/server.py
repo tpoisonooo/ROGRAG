@@ -21,8 +21,10 @@ assistant = None
 analogy = None
 app = FastAPI(docs_url='/')
 
+
 def get_req_uuid():
     return str(uuid.uuid4())[0:6]
+
 
 class TextSimilarity:
 
@@ -56,6 +58,7 @@ class TextSimilarity:
 
 
 class ExampleAnalogy:
+
     def __init__(self,
                  resource,
                  api_data_dir: str,
@@ -72,8 +75,8 @@ class ExampleAnalogy:
             api_data_dir, 'gene/rice_reference_genome_annotation_20240903.csv')
         variety_template_path = os.path.join(
             api_data_dir, 'variety/variety_question_template.csv')
-        gene_template_path = os.path.join(
-            api_data_dir, 'gene/gene_question_template.csv')
+        gene_template_path = os.path.join(api_data_dir,
+                                          'gene/gene_question_template.csv')
 
         # init jieba
         jieba_variety_path = os.path.join(api_data_dir,
@@ -269,7 +272,7 @@ class ExampleAnalogy:
             response_body['data']['_id'] = get_req_uuid()
             response_body['data']['cases'] = similar_questions
             return response_body
-        
+
         # 如果问指定物种但问题无关，使用大模型生成新问题
         prompt = self.EXAMPLIFY_TEMPLATE.format(query=query)
         response = await self.llm.chat(prompt=prompt)
@@ -284,15 +287,18 @@ class ExampleAnalogy:
         response_body['data']['cases'] = similar_questions
         return response_body
 
+
 class Talk(BaseModel):
     text: str
     image: str = ''
+
 
 class Talk_seed(BaseModel):
     language: str
     enable_web_search: bool
     user: str
     history: list[Pair]
+
 
 def format_refs(refs: List[str]):
     refs_filter = list(set(refs))
@@ -305,6 +311,7 @@ def format_refs(refs: List[str]):
     text += '\r\n'
     return text
 
+
 def extract_history(talk_seed):
     history = []
     for item in talk_seed.history:
@@ -312,11 +319,15 @@ def extract_history(talk_seed):
         history.append({"role": "assistant", "content": item.assistant})
     return history
 
+
 async def coreference_resolution(query: str, history: List, language: str):
     if not history:
         return query
     global assistant
-    pronouns = ['it', 'he', 'she', 'their', 'they', 'him', 'her', 'this', 'that', '它', '他', '她', '这', '那']
+    pronouns = [
+        'it', 'he', 'she', 'their', 'they', 'him', 'her', 'this', 'that', '它',
+        '他', '她', '这', '那'
+    ]
     for p in pronouns:
         if p in query:
             template = server_prompts['corefence_resolution'][language]
@@ -328,6 +339,7 @@ async def coreference_resolution(query: str, history: List, language: str):
             return response
     return query
 
+
 @app.post("/v2/chat")
 async def chat(talk_seed: Talk_seed):
     global assistant
@@ -336,11 +348,12 @@ async def chat(talk_seed: Talk_seed):
     pipeline = {}
     language = 'zh_cn' if 'zh' in talk_seed.language else 'en'
     history = extract_history(talk_seed)
-    
+
     # disable coreference resolution
     # coref_input = await coreference_resolution(query=talk_seed.user, history=history, language=language)
     coref_input = talk_seed.user
-    logger.info('talk_seed.user {}, coref_input {}'.format(talk_seed.user, coref_input))
+    logger.info('talk_seed.user {}, coref_input {}'.format(
+        talk_seed.user, coref_input))
 
     query = Query(text=coref_input,
                   generation_question=coref_input,
@@ -424,12 +437,7 @@ def parse_args():
         help=
         'Select pipeline type for difference scenario, default value is `parallel`'
     )
-    parser.add_argument(
-        '--port',
-        type=int,
-        default=23333,
-        help='bind port'
-    )
+    parser.add_argument('--port', type=int, default=23333, help='bind port')
     args = parser.parse_args()
     return args
 

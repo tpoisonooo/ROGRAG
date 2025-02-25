@@ -1,31 +1,52 @@
-[English](README.md) | 简体中文
+English | [Simplified Chinese](./README_zh_cn.md)
+
+# HuixiangDou2: A Robustly Optimized GraphRAG Approach
+
+## Introduction
+
+GraphRAG has many tuning spots, making it hard to discern whether performance gains stem from parameter adjustments or pipeline optimizations. Moreover, RAG test data is embedded in LLM training sets. LLM input tokens impact generation probabilities (background: phi-4 technical report). It's unclear if precision improvements originate from key token searches or retrievals.
+
+Thus, HuixiangDou2 didn't introduce new methods but integrated multiple open-source projects (HuixiangDou, KAG, LightRAG, and DB-GPT, totaling 18k lines of code) and conducted comparative experiments on a test set where Qwen2.5-7B-Instruct underperformed. The score rose from 60 to 74.5. Ultimately, a GraphRAG implementation with performance recognized by human domain experts was developed. [Here is the report](https://github.com/tpoisonooo/HuixiangDou2/blob/main/docs/huixiangdou2_github.pdf).
+
+> **Note**: The impact of open-source on different fields/industries varies. Since licensing restriction, we can **only give the code and test conclusions, and the test data cannot be provided**.
 
 <div align="center">
-<img src="resource/logo_black.svg" width="555px"/>
+<img src="https://github.com/user-attachments/assets/19558f67-9a3a-48a1-a1c1-7b0a0654602f" width=400>
 </div>
 
-HuixiangDou2 是一套 KG-LLM Retrieval 实现。
+## Version Description
 
-在 [HuixiangDou](https://github.com/internlm/huixiangdou) 基础上做了精度提升和 `async` 改造：
-1. **图谱方案**。稠密计算仅用于查询近似实体和关系
-2. 移植/合并多个开源实现，代码差异近 10k 行
-  - **数据**。整理一套 LLM 未完全见过的、真实领域知识作测试（gpt 准确度 0.53）
-  - **消融**。确认不同环节和参数对精度的影响
-  - **改进**。相对于无检索方法直接使用 LLM，精度提升 0.22；对比基线实现，提升 0.1
-3. API 保持兼容
+Compared to [HuixiangDou1](https://github.com/internlm/huixiangdou), this repo improves accuracy and `async` refactor:
+1. **Graph Schema**. Dense retrieval is only for querying similar entities and relationships.
+2. Ported/merged multiple open-source implementations, with code differences of nearly 18k lines:
+   - **Data**. Organized a set of real domain knowledge that LLM has not fully seen for testing (gpt accuracy < 0.6)
+   - **Ablation**. Confirmed the impact of different stages and parameters on accuracy
+   - **Improvement**. As shown below.
+      <div>
+      <img src="https://github.com/user-attachments/assets/c3453bc8-85d5-47e1-8160-7ba28a467a70" width=300>
+      </div>
+     
+3. API remains compatible
 
-> **注意**：开源对不同领域/行业的影响不同，我们仅能提供代码实现和测试结论，测试数据无法给出。
+If it is useful to you, please star it ⭐
 
-如果对你有用，麻烦 star 一下⭐
+## Documentation
+- [1. How to Run (CMD / Swagger API / Gradio mode](docs/en/doc_how_to_run.md)
+- [2. Directory Structure and Function](docs/en/doc_architecture.md)
+- [**FAQ** about environment and error](https://github.com/tpoisonooo/HuixiangDou2/issues/8) 
 
-## 文档
+## Acknowledgements
+- [SiliconCloud](https://siliconflow.cn) Abundant LLM API, some models are free
+- [KAG](https://github.com/OpenSPG/KAG) Graph retrieval based on reasoning
+- [DB-GPT](https://github.com/eosphoros-ai/DB-GPT) LLM tool collection
+- [LightRAG](https://github.com/HKUDS/LightRAG) Simple and efficient graph retrieval solution
 
-- [1. 如何运行](docs/zh/doc_how_to_run.md)
-- [2. 配置文件说明](docs/zh/doc_config.md)
-- [3. 目录结构功能](docs/zh/doc_architecture.md)
-
-## 致谢
-- [SiliconCloud](https://siliconflow.cn/zh-cn/siliconcloud) 海量 LLM API，部分模型免费
-- [KAG](https://github.com/OpenSPG/KAG) 基于推理的图谱检索
-- [DB-GPT](https://github.com/eosphoros-ai/DB-GPT) LLM 工具集合体
-- [LightRAG](https://github.com/HKUDS/LightRAG) 简单高效的图谱检索方案
+## Citation
+```text
+@misc{huixiangdou2,
+  author = {Huanjun Kong},
+  title = {HuixiangDou2: A Graph-based Augmented Generation Approach},
+  howpublished = {\url{https://github.com/tpoisonooo/HuixiangDou2}},
+  year = {2025}
+}
+```

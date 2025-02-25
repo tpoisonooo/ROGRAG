@@ -14,8 +14,9 @@ import re
 import jieba
 from rouge_chinese import Rouge
 
+
 def rouge_score_func(hyps, refs):
-    assert(len(hyps) == len(refs))
+    assert (len(hyps) == len(refs))
     hyps = [' '.join(jieba.cut(h)) for h in hyps]
     hyps = [h if h.strip() != "" else "无内容" for h in hyps]
     refs = [' '.join(jieba.cut(r)) for r in refs]
@@ -23,6 +24,7 @@ def rouge_score_func(hyps, refs):
     rouge_ls = [score["rouge-l"]["f"] for score in rouge_scores]
     average_rouge_l = sum(rouge_ls) / len(rouge_ls)
     return average_rouge_l
+
 
 def extract_score(text):
     """
@@ -32,34 +34,35 @@ def extract_score(text):
     """
     # 定义匹配模式
     pattern = r"<\|>(.*?)<\|>"
-    
+
     # 使用re.search查找匹配项
     match = re.search(pattern, text)
-    
+
     # 如果找到匹配项，返回得分
     if match:
         return float(match.group(1))
     else:
         raise Exception('score not exist')
 
-def kimi(prompt:str, n:int=5):
-    messages = [
-        {
-            'role': 'system',
-            'content': 'You are a helpful assistant.'
-        },
-        {
-            'role': 'user',
-            'content': prompt
-        }
-    ]
+
+def kimi(prompt: str, n: int = 5):
+    messages = [{
+        'role': 'system',
+        'content': 'You are a helpful assistant.'
+    }, {
+        'role': 'user',
+        'content': prompt
+    }]
 
     client = OpenAI(
         api_key=os.getenv('MOONSHOT_API_KEY'),
         base_url='https://api.moonshot.cn/v1',
     )
 
-    completion = client.chat.completions.create(model='moonshot-v1-32k', messages=messages, n=n, temperature=1.0)
+    completion = client.chat.completions.create(model='moonshot-v1-32k',
+                                                messages=messages,
+                                                n=n,
+                                                temperature=1.0)
     contents = [choice.message.content for choice in completion.choices]
 
     scores = []
@@ -74,6 +77,7 @@ def kimi(prompt:str, n:int=5):
         pass
     avg_score = sum(scores) / len(scores)
     return contents, avg_score
+
 
 def parse_args():
     """Parse command-line arguments."""
@@ -91,6 +95,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
 if __name__ == '__main__':
     args = parse_args()
 
@@ -103,7 +108,7 @@ if __name__ == '__main__':
             if not file.endswith('.csv'):
                 continue
             csv_files.append(os.path.join(root, file))
-        
+
         # 打开并读取 csv
         data = {}
         # 打开 csv 文件
@@ -114,7 +119,7 @@ if __name__ == '__main__':
                 print(file)
                 csv_reader = csv.reader(file)
                 # 逐行读取 csv 文件的内容
-                
+
                 list_of_row = []
                 llm_score_list = []
                 rouge_score_list = []
@@ -172,9 +177,16 @@ if __name__ == '__main__':
                     list_of_row.append(row)
 
                 list_of_row.append({
-                    "meta_avg_llm": sum(llm_score_list) / len(llm_score_list),
-                    "meta_avg_rouge": sum(rouge_score_list) / len(rouge_score_list)
+                    "meta_avg_llm":
+                    sum(llm_score_list) / len(llm_score_list),
+                    "meta_avg_rouge":
+                    sum(rouge_score_list) / len(rouge_score_list)
                 })
-                with open(os.path.join(args.datadir, os.path.basename(csv_file_path) + '.json'), 'w') as f:
-                    json_str = json.dumps(list_of_row, ensure_ascii=False, indent=2)
+                with open(
+                        os.path.join(args.datadir,
+                                     os.path.basename(csv_file_path) +
+                                     '.json'), 'w') as f:
+                    json_str = json.dumps(list_of_row,
+                                          ensure_ascii=False,
+                                          indent=2)
                     f.write(json_str)

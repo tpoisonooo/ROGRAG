@@ -13,26 +13,29 @@ from ..service import SharedRetrieverPool, Retriever, RetrieveResource, ErrorCod
 from ..service.retriever import RetrieveMethod
 from ..service.prompt import rag_prompts as PROMPTS
 
+
 class PreprocNode:
+
     def __init__(self, resource: RetrieveResource):
         self.resource = resource
-        
+
     async def process(self, sess: Session) -> AsyncGenerator[Session, Session]:
 
         assert isinstance(sess.history, list), "sess.history 数据结构错误"
-        
-        if len(sess.history) > 0 :
+
+        if len(sess.history) > 0:
             yield sess
             return
-        
+
         # check input
         if sess.query.text is None or len(sess.query.text) < 2:
             sess.code = ErrorCode.QUESTION_TOO_SHORT
             yield sess
             return
-        
+
         #intention && topic analysis
-        prompt = PROMPTS['extract_topic_intention'][sess.language].format(input_text=sess.query.text)
+        prompt = PROMPTS['extract_topic_intention'][sess.language].format(
+            input_text=sess.query.text)
         json_str = await self.resource.llm.chat(prompt=prompt)
         sess.logger.info(f'{__file__} {json_str}')
         try:
@@ -41,7 +44,7 @@ class PreprocNode:
 
             if json_str.endswith('```'):
                 json_str = json_str[0:-3]
-            
+
             json_obj = json.loads(json_str)
             intention = json_obj['intention']
             if intention is not None:
@@ -53,7 +56,7 @@ class PreprocNode:
                 topic = topic.lower()
             else:
                 topic = 'undefine'
-            
+
             for block_intention in ['问候', 'greeting', 'undefine']:
                 if block_intention in intention:
                     sess.code = ErrorCode.NOT_A_QUESTION
@@ -68,7 +71,9 @@ class PreprocNode:
         except Exception as e:
             sess.logger.error(str(e))
 
+
 class ReduceGenerate:
+
     def __init__(self, resource: RetrieveResource):
         self.resource = resource
 
@@ -82,16 +87,22 @@ class ReduceGenerate:
         else:
             sess.stage = "2_rerank"
             yield sess
-            sess.fused_reply = Retriever.fuse(replies=sess.retrieve_replies, query=sess.query, resource=self.resource)
-            
-            prompt = sess.fused_reply.format_prompt(query=real_question, language=sess.language)
+            sess.fused_reply = Retriever.fuse(replies=sess.retrieve_replies,
+                                              query=sess.query,
+                                              resource=self.resource)
+
+            prompt = sess.fused_reply.format_prompt(query=real_question,
+                                                    language=sess.language)
 
         sess.stage = "3_generate"
         yield sess
 
         response = ""
         if sess.response_type == 'stream':
-            async for delta in self.resource.llm.chat_stream(prompt=prompt, history=sess.history, system_prompt=sess.response_system):
+            async for delta in self.resource.llm.chat_stream(
+                    prompt=prompt,
+                    history=sess.history,
+                    system_prompt=sess.response_system):
                 sess.delta = delta
                 response += delta
                 yield sess
@@ -99,30 +110,37 @@ class ReduceGenerate:
             sess.delta = ''
             yield sess
         else:
-            sess.response = await self.resource.llm.chat(prompt=prompt, history=sess.history, max_tokens=1024)
+            sess.response = await self.resource.llm.chat(prompt=prompt,
+                                                         history=sess.history,
+                                                         max_tokens=1024)
             yield sess
         print(real_question)
         print(response)
 
+
 class ParallelPipeline:
 
-    def __init__(self, work_dir: str='workdir', config_path: str='config.ini'):
+    def __init__(self,
+                 work_dir: str = 'workdir',
+                 config_path: str = 'config.ini'):
         self.resource = RetrieveResource(config_path)
         self.pool = SharedRetrieverPool(resource=self.resource)
         # self.retriever_reason = self.pool.get(work_dir=work_dir, method=RetrieveMethod.REASON)
-        self.retriever_knowledge = self.pool.get(work_dir=work_dir, method=RetrieveMethod.KNOWLEDGE)
-        self.retriever_web = self.pool.get(work_dir=work_dir, method=RetrieveMethod.WEB)
+        self.retriever_knowledge = self.pool.get(
+            work_dir=work_dir, method=RetrieveMethod.KNOWLEDGE)
+        self.retriever_web = self.pool.get(work_dir=work_dir,
+                                           method=RetrieveMethod.WEB)
         # self.retriever_bm25 = self.pool.get(work_dir=work_dir, method=RetrieveMethod.BM25)
         # self.retriever_inverted = self.pool.get(work_dir=work_dir, method=RetrieveMethod.INVERTED)
-        
+
         self.config_path = config_path
         self.work_dir = work_dir
 
     async def generate(self,
-                 query: Union[Query, str],
-                 history: List[Pair]=[],
-                 request_id: str='default',
-                 language: str='zh_cn'):
+                       query: Union[Query, str],
+                       history: List[Pair] = [],
+                       request_id: str = 'default',
+                       language: str = 'zh_cn'):
         if type(query) is str:
             query = Query(text=query)
 
@@ -158,7 +176,8 @@ class ParallelPipeline:
         if query.enable_web_search:
             tasks.append(self.retriever_web.explore(query=sess.query))
 
-        sess.retrieve_replies = await asyncio.gather(*tasks, return_exceptions=True)
+        sess.retrieve_replies = await asyncio.gather(*tasks,
+                                                     return_exceptions=True)
         async for sess in reduce.process(sess):
             yield sess
         # except Exception as e:

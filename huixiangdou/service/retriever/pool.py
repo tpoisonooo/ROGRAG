@@ -11,6 +11,7 @@ from .dense import DenseRetriever
 from .base import RetrieveResource
 from enum import Enum
 
+
 class RetrieveMethod(str, Enum):
     """Enumerator of the Distance strategies for calculating distances
     between vectors."""
@@ -20,11 +21,11 @@ class RetrieveMethod(str, Enum):
     WEB = "WEB"
     INVERTED = "INVERTED"
 
+
 class SharedRetrieverPool:
     """A resource pool consist of shared resource: (unique LLM, embedder and reranker) and Retriever instances."""
-    def __init__(self,
-                 resource: RetrieveResource,
-                 cache_size: int = 4):
+
+    def __init__(self, resource: RetrieveResource, cache_size: int = 4):
         self.cache = dict()
         self.cache_size = cache_size
         self.resource = resource
@@ -39,7 +40,7 @@ class SharedRetrieverPool:
     def get(self,
             fs_id: str = 'default',
             work_dir='workdir',
-            method:RetrieveMethod=RetrieveMethod.KNOWLEDGE) -> Retriever:
+            method: RetrieveMethod = RetrieveMethod.KNOWLEDGE) -> Retriever:
         """Get database by id."""
 
         newkey = f'{fs_id}-{str(method)}'
@@ -63,7 +64,8 @@ class SharedRetrieverPool:
                 self.cache.pop(del_key)
                 del del_value['retriever']
 
-        instance = self.classes[method](resource=self.resource, work_dir=work_dir)
+        instance = self.classes[method](resource=self.resource,
+                                        work_dir=work_dir)
         self.cache[newkey] = {'retriever': instance, 'time': time.time()}
         return instance
 
@@ -74,7 +76,7 @@ class SharedRetrieverPool:
         for k, v in self.cache.items():
             if fs_id in k:
                 del_keys.append(k)
-                
+
         for del_key in del_keys:
             del_value = self.cache[del_key]
             self.cache.pop(del_key)

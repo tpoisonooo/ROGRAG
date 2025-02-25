@@ -8,26 +8,30 @@ from loguru import logger
 from typing import List, Dict
 from texttable import Texttable
 
+
 class Session:
-    
+
     def create_logger(self, module):
         log_file = f"logs/{module}.log"
         os.makedirs(os.path.dirname(log_file), exist_ok=True)
-        return logger.add(log_file, format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}", filter=lambda record: record["extra"].get("module") == module)
-    
+        return logger.add(
+            log_file,
+            format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
+            filter=lambda record: record["extra"].get("module") == module)
+
     def __init__(self,
                  query: Query,
                  history: List[Dict],
                  request_id: str = 'default',
                  group_chats: Dict = {},
-                 language: str = 'zh_cn', 
+                 language: str = 'zh_cn',
                  response_type: str = 'stream'):
         # retriever inputs
         self.query = query
         self.history = history
         self.group_chats = group_chats
         self.language = language
-        
+
         # retriever outputs
         self.retrieve_replies = []
         self.fused_reply: RetrieveReply = None
@@ -53,16 +57,34 @@ class Session:
     def visible_str(self, txt):
         return txt.replace('\n', '\\n').replace('\t', '\\t')
 
-    def format(self, max_len:int=-1):
-        refs = list(set([c.metadata["source"] for c in self.fused_reply.sources] if self.fused_reply is not None else []))
-        
+    def references(self):
+        if not self.fused_reply:
+            return []
+        refs = list(
+            set([
+                os.path.basename(c.metadata["source"])
+                for c in self.fused_reply.sources
+            ] if self.fused_reply is not None else []))
+        return refs
+
+    def format(self, max_len: int = -1):
+        refs = self.references()
         table = Texttable()
         table.set_cols_valign(['t', 't', 't', 't'])
         table.header(['Query', 'State', 'Response', 'References'])
         if max_len > 0:
-            table.add_row([self.visible_str(self.query.text), str(self.code), self.visible_str(self.response[0:max_len] + '..'), ','.join(refs)])
+            table.add_row([
+                self.visible_str(self.query.text),
+                str(self.code),
+                self.visible_str(self.response[0:max_len] + '..'),
+                ','.join(refs)
+            ])
         else:
-            table.add_row([self.visible_str(self.query.text), str(self.code), self.visible_str(self.response), ','.join(refs)])
+            table.add_row([
+                self.visible_str(self.query.text),
+                str(self.code),
+                self.visible_str(self.response), ','.join(refs)
+            ])
         return table.draw()
 
     def __del__(self):

@@ -3,6 +3,7 @@ import pdb
 import sys
 from loguru import logger
 
+
 def calc(path):
     true_cnt = 0
     false_cnt = 0
@@ -30,6 +31,7 @@ def calc(path):
 
     rate = true_cnt / (false_cnt + true_cnt)
     logger.info((rate, true_cnt, false_cnt + true_cnt))
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

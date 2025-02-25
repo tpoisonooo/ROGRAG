@@ -4,10 +4,11 @@ from huixiangdou.primitive import Reranker
 
 
 def test_reranker():
-    model = Reranker({'reranker_model_path':'/data2/khj/bce-reranker-base_v1'})
+    model = Reranker(
+        {'reranker_model_path': '/data2/khj/bce-reranker-base_v1'})
 
     query = 'apple'
-    texts = [ 'roast banana', 'ice juice', 'red orange', 'apple pie']
+    texts = ['roast banana', 'ice juice', 'red orange', 'apple pie']
     scores = model._sort(texts=texts, query=query)
 
     assert scores[0] == len(texts) - 1

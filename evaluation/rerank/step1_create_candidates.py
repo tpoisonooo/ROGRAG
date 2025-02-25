@@ -12,8 +12,8 @@ from sklearn.metrics import (f1_score, precision_recall_curve, precision_score,
                              recall_score)
 from tqdm import tqdm
 
-from huixiangdou.service import (SharedRetrieverPool, FeatureStore, FileOperation,
-                                 Retriever)
+from huixiangdou.service import (SharedRetrieverPool, FeatureStore,
+                                 FileOperation, Retriever)
 
 
 class NoDaemonProcess(multiprocessing.Process):
@@ -129,7 +129,8 @@ def process(param: tuple):
             json_str = json.dumps({
                 'query': query,
                 'candidates': candidates
-            },ensure_ascii=False)
+            },
+                                  ensure_ascii=False)
 
             with open(os.path.join('candidates', fsid + '.jsonl'), 'a') as f:
                 f.write(json_str)

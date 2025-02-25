@@ -6,16 +6,17 @@ from huixiangdou.primitive import Chunk, Embedder, Faiss, Query
 
 def test_faiss():
     a = Chunk(content_or_path='hello world', metadata={'source': 'unittest'})
-    b = Chunk(content_or_path='resource/figures/inside-mmpose.jpg',  metadata={'source': 'unittest'},
+    b = Chunk(content_or_path='resource/figures/inside-mmpose.jpg',
+              metadata={'source': 'unittest'},
               modal='image')
-    c = Chunk(content_or_path='resource/figures/wechat.jpg',  metadata={'source': 'test image'},modal='image')
+    c = Chunk(content_or_path='resource/figures/wechat.jpg',
+              metadata={'source': 'test image'},
+              modal='image')
     chunks = [a, b, c]
 
     save_path = '/tmp/faiss'
 
-    model_config = {
-        'embedding_model_path': '/data2/khj/bge-m3'
-    }
+    model_config = {'embedding_model_path': '/data2/khj/bge-m3'}
     embedder = Embedder(model_config)
 
     Faiss.save_local(folder_path=save_path, chunks=chunks, embedder=embedder)

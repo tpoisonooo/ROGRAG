@@ -1,4 +1,3 @@
-
 import argparse
 import hashlib
 import json
@@ -803,11 +802,10 @@ class WkteamManager:
                         tuple_history = convert_history_to_tuple(
                             user.history[0:-1])
 
-                        for sess in worker.generate(
-                            query=query,
-                            history=tuple_history,
-                            groupname=groupname,
-                            groupchats=groupchats):
+                        for sess in worker.generate(query=query,
+                                                    history=tuple_history,
+                                                    groupname=groupname,
+                                                    groupchats=groupchats):
                             code, resp, refs = sess.code, sess.response, sess.references
 
                     # user history may affect normal conversation, so delete last query

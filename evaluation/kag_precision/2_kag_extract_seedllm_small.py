@@ -29,7 +29,7 @@ for file in files:
     # 检查文件扩展名是否为.json
     if file.endswith('.json'):
         file_path = file
-        
+
         # 打开并读取JSON文件
         data = {}
         with open(file_path, 'r', encoding='utf-8') as fin:
@@ -37,20 +37,32 @@ for file in files:
 
             for data in datas:
                 question = data['question']
-                generation_question = data['instruction'] + '\n' + data['question']
+                generation_question = data['instruction'] + '\n' + data[
+                    'question']
                 answer = data['answer']
                 task = data['task_type']
 
                 async def wrap_async_run(q: Query):
                     response = ''
-                    async for sess in assistant.generate(query=q, history=[], language='zh_cn'):
+                    async for sess in assistant.generate(query=q,
+                                                         history=[],
+                                                         language='zh_cn'):
                         response = sess.response
                         logger.info(sess.stage, response)
                     return response
-                
-                q = Query(text=question, generation_question=generation_question)
+
+                q = Query(text=question,
+                          generation_question=generation_question)
                 output = loop.run_until_complete(wrap_async_run(q=q))
-                json_str = json.dumps({"input":generation_question, "output": output, "gt": answer, "task": task, "source": file}, ensure_ascii=False)
+                json_str = json.dumps(
+                    {
+                        "input": generation_question,
+                        "output": output,
+                        "gt": answer,
+                        "task": task,
+                        "source": file
+                    },
+                    ensure_ascii=False)
 
                 with open(output_file, 'a') as fout:
                     fout.write(json_str)

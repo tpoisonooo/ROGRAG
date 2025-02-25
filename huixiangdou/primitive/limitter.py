@@ -3,7 +3,9 @@ from datetime import datetime, timedelta
 from loguru import logger
 import asyncio
 
+
 class RPM:
+
     def __init__(self, rpm: int = 1000):
         self.rpm = rpm
         self.record = {'rpm_slot': self.get_minute_slot(), 'counter': 0}
@@ -31,13 +33,17 @@ class RPM:
                     logger.info(f'RPM sleep {sleep_time}')
                 await asyncio.sleep(sleep_time)
 
-                self.record = {'rpm_slot': self.get_minute_slot(), 'counter': 0}
+                self.record = {
+                    'rpm_slot': self.get_minute_slot(),
+                    'counter': 0
+                }
         else:
             self.record = {'rpm_slot': self.get_minute_slot(), 'counter': 0}
         self.record['counter'] += 1
 
         if not silent:
             logger.debug(self.record)
+
 
 class TPM:
 
@@ -55,12 +61,12 @@ class TPM:
         current = time.time()
         dt_object = datetime.fromtimestamp(current)
         minute_slot = self.get_minute_slot()
-        
+
         # get next slot, skip
         if self.record['tpm_slot'] != minute_slot:
             self.record = {'tpm_slot': minute_slot, 'counter': token_count}
             return
-        
+
         # check RPM exceed
         self.record['counter'] += token_count
         if self.record['counter'] > self.tpm:
@@ -72,7 +78,10 @@ class TPM:
             logger.info(f'TPM sleep {sleep_time}')
             await asyncio.sleep(sleep_time)
 
-            self.record = {'tpm_slot': self.get_minute_slot(), 'counter': token_count}
+            self.record = {
+                'tpm_slot': self.get_minute_slot(),
+                'counter': token_count
+            }
 
         if not silent:
             logger.debug(self.record)

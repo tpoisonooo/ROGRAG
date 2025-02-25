@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from huixiangdou.service import SharedRetrieverPool, FeatureStore
 from huixiangdou.primitive import FileOperation
+
 save_hardcase = False
 
 
@@ -268,8 +269,9 @@ def calculate(chunk_size: int):
 
             retriever.reject_throttle = throttle
             _, score = retriever.is_relative(query=question,
-                                            enable_kg=False, enable_threshold=False)
-            
+                                             enable_kg=False,
+                                             enable_threshold=False)
+
             if score >= throttle:
                 dts.append(True)
             else:
@@ -294,9 +296,8 @@ def calculate(chunk_size: int):
         }
         json_str = json.dumps(data)
         with open(
-                osp.join(
-                    osp.dirname(__file__),
-                    'chunk{}.jsonl'.format(chunk_size)), 'a') as f:
+                osp.join(osp.dirname(__file__),
+                         'chunk{}.jsonl'.format(chunk_size)), 'a') as f:
             f.write(json_str)
             f.write('\n')
 
@@ -304,6 +305,7 @@ def calculate(chunk_size: int):
             best_chunk_f1 = f1
     print(best_chunk_f1)
     return best_chunk_f1
+
 
 def main():
     args = parse_args()

@@ -1,4 +1,3 @@
-
 #
 import os
 import pdb
@@ -13,6 +12,7 @@ from .query import DistanceStrategy
 from .limitter import RPM, TPM
 from .chunk import Chunk
 
+
 class Embedder:
     """Wrap text2vec (multimodal) model."""
     client: Any
@@ -22,12 +22,13 @@ class Embedder:
         self.support_image = False
         # bce also use euclidean distance.
         self.distance_strategy = DistanceStrategy.EUCLIDEAN_DISTANCE
-        
+
         model_path = model_config['embedding_model_path']
         self._type = self.model_type(model_path=model_path)
         if 'bce' in self._type:
             from sentence_transformers import SentenceTransformer
-            self.client = SentenceTransformer(model_name_or_path=model_path).half()
+            self.client = SentenceTransformer(
+                model_name_or_path=model_path).half()
         elif 'bge' in self._type:
             from FlagEmbedding.visual.modeling import Visualized_BGE
             self.support_image = True
@@ -40,7 +41,8 @@ class Embedder:
             if len(api_token) < 1:
                 api_token = os.getenv('SILICONCLOUD_TOKEN')
                 if api_token is None or len(api_token) < 1:
-                    raise ValueError('siliconclud remote embedder api token is None')
+                    raise ValueError(
+                        'siliconclud remote embedder api token is None')
 
             if 'Bearer' not in api_token:
                 api_token = 'Bearer ' + api_token
@@ -74,11 +76,13 @@ class Embedder:
 
     def token_length(self, text: str) -> int:
         if 'bge' in self._type or 'bce' in self._type:
-            return len(self.client.tokenizer(text, padding=False, truncation=False)['input_ids'])
+            return len(
+                self.client.tokenizer(text, padding=False,
+                                      truncation=False)['input_ids'])
         else:
             return len(text) // 2
 
-    def distance(self, text1:str, text2:str) -> float:
+    def distance(self, text1: str, text2: str) -> float:
         emb1 = self.embed_query(text=text1)
         emb2 = self.embed_query(text=text2)
 
@@ -97,7 +101,9 @@ class Embedder:
         elif 'bce' in self._type:
             if text is None:
                 raise ValueError('This model only support text')
-            emb = self.client.encode([text], show_progress_bar=False, normalize_embeddings=True)
+            emb = self.client.encode([text],
+                                     show_progress_bar=False,
+                                     normalize_embeddings=True)
             emb = emb.astype(np.float32)
             # for norm in np.linalg.norm(emb, axis=1):
             #     assert abs(norm - 1) < 0.001
@@ -109,7 +115,7 @@ class Embedder:
             # siliconcloud bce API
             if text is None:
                 raise ValueError('This api only support text')
-            
+
             url = "https://api.siliconflow.cn/v1/embeddings"
 
             payload = {
@@ -139,13 +145,16 @@ class Embedder:
                 for c in chunks:
                     feature = self.client.encode(text=c.content_or_path)
                     features.append(feature.cpu().numpy())
-                return np.concatenate(features).reshape(len(chunks), -1).astype(np.float32)
+                return np.concatenate(features).reshape(len(chunks),
+                                                        -1).astype(np.float32)
 
         elif 'bce' in self._type:
             texts = []
             for c in chunks:
                 texts.append(c.content_or_path)
-            emb = self.client.encode(texts, show_progress_bar=False, normalize_embeddings=True)
+            emb = self.client.encode(texts,
+                                     show_progress_bar=False,
+                                     normalize_embeddings=True)
             return emb.astype(np.float32)
 
         else:
@@ -153,4 +162,5 @@ class Embedder:
             for c in chunks:
                 feature = self.embed_query(text=c.content_or_path)
                 features.append(feature)
-            return np.concatenate(features).reshape(len(chunks), -1).astype(np.float32)
+            return np.concatenate(features).reshape(len(chunks),
+                                                    -1).astype(np.float32)
