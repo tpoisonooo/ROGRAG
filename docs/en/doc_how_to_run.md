@@ -42,6 +42,12 @@ The tools used in this document are as follows:
    python3 -m pip install -r requirements.txt
    ```
 
+   We also support cpu-only
+   ```bash
+   # CPU only
+   python3 -m pip install -r requirements/cpu.txt
+   ```
+
 4. **Download the embedding model**. HuixiangDou2 supports bce/bge text and image-text models. For example, using bce [embedding](https://huggingface.co/InfiniFlow/bce-embedding-base_v1) and [reranker](https://huggingface.co/InfiniFlow/bce-reranker-base_v1), assume the models are downloaded to the following two locations on your machine:
    * `/home/data/share/bce-embedding-base_v1`
    * `/home/data/share/bce-reranker-base_v1`

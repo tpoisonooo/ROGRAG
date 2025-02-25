@@ -118,7 +118,7 @@ python3 -m huixiangdou.gradio_ui
 python3 -m huixiangdou.server --port 23334
 ```
 
-执行 client 测试
+浏览器打开 23334 号端口查看 SwaggerUI。执行 client 测试
 
 ```bash
 python3 huixiangdou/client.py
