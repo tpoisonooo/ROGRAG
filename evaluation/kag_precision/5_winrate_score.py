@@ -69,14 +69,16 @@ Output your evaluation in the following JSON format:
 
 count_left = 0
 count_right = 0
-def extract_winner(text : str):
+
+
+def extract_winner(text: str):
     global count_left
     global count_right
     text = text.lower()
     if text.startswith('```json'):
         text = text[7:]
         text = text[0:-3]
-    
+
     logger.info(text)
     try:
         jsono = json.loads(text)
@@ -126,7 +128,7 @@ for input_file in input_files:
                 pairs[question].append(jsono['output'])
 
 resource = RetrieveResource(config_path=config_path)
-for k,v in pairs.items():
+for k, v in pairs.items():
     if len(v) < 2:
         pdb.set_trace()
         continue

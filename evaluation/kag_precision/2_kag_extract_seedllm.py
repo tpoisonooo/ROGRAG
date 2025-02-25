@@ -8,6 +8,7 @@ import pdb
 work_dir = 'workdir'
 config_path = 'config.ini'
 
+
 def parse_args():
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
@@ -16,20 +17,18 @@ def parse_args():
                         type=str,
                         default='workdir',
                         help='Working directory.')
-    parser.add_argument(
-        '--config_path',
-        default='config.ini',
-        help='Configuration path. Default value is config.ini')
-    parser.add_argument(
-        '--dataset',
-        default=None,
-        help='Small dataset for dev.')
-    parser.add_argument(
-        '--pipeline',
-        default=None,
-        help='Small dataset for dev.')
+    parser.add_argument('--config_path',
+                        default='config.ini',
+                        help='Configuration path. Default value is config.ini')
+    parser.add_argument('--dataset',
+                        default=None,
+                        help='Small dataset for dev.')
+    parser.add_argument('--pipeline',
+                        default=None,
+                        help='Small dataset for dev.')
     args = parser.parse_args()
     return args
+
 
 # 指定你的base目录
 base_dir = '/data/khj/workspace/SeedBench/data/zero-shot'
@@ -48,7 +47,7 @@ for root, dirs, files in os.walk(base_dir):
         # 检查文件扩展名是否为.json
         if file.endswith('.json'):
             file_path = os.path.join(root, file)
-            
+
             # 打开并读取JSON文件
             data = {}
             with open(file_path, 'r', encoding='utf-8') as fin:
@@ -56,20 +55,32 @@ for root, dirs, files in os.walk(base_dir):
 
                 for data in datas:
                     question = data['question']
-                    generation_question = data['instruction'] + '\n' + data['question']
+                    generation_question = data['instruction'] + '\n' + data[
+                        'question']
                     answer = data['answer']
                     task = data['task_type']
 
                     async def wrap_async_run(query):
                         response = ''
-                        async for sess in assistant.generate(query=query, history=[], language='zh_cn'):
+                        async for sess in assistant.generate(query=query,
+                                                             history=[],
+                                                             language='zh_cn'):
                             response = sess.response
                             logger.info(sess.stage, response)
                         return response
 
-                    q = Query(text=question, generation_question=generation_question)
+                    q = Query(text=question,
+                              generation_question=generation_question)
                     output = loop.run_until_complete(wrap_async_run(query=q))
-                    json_str = json.dumps({"input":generation_question, "output": output, "gt": answer, "task": task, "source": file}, ensure_ascii=False)
+                    json_str = json.dumps(
+                        {
+                            "input": generation_question,
+                            "output": output,
+                            "gt": answer,
+                            "task": task,
+                            "source": file
+                        },
+                        ensure_ascii=False)
 
                     with open(output_file, 'a') as fout:
                         fout.write(json_str)

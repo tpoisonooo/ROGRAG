@@ -1,11 +1,13 @@
 import pytest
 from huixiangdou.primitive import MemoryGraph, Vertex, Edge, Direction
 
+
 def test_vertex_creation():
     """测试顶点创建"""
     v = Vertex("1", name="TestVertex")
     assert v.vid == "1"
     assert v.name == "TestVertex"
+
 
 def test_edge_creation():
     """测试边创建"""
@@ -14,12 +16,14 @@ def test_edge_creation():
     assert e.tid == "2"
     assert e.name == "LIKES"
 
+
 def test_graph_upsert_vertex():
     """测试图谱添加顶点"""
     g = MemoryGraph()
     v = Vertex("1", name="TestVertex")
     g.upsert_vertex(v)
     assert g.has_vertex("1") is True
+
 
 def test_graph_append_edge():
     """测试图谱添加边"""
@@ -32,6 +36,7 @@ def test_graph_append_edge():
     assert g.append_edge(e) is True
     assert g.get_neighbor_edges("1") is not None
 
+
 def test_graph_get_vertex():
     """测试获取顶点"""
     g = MemoryGraph()
@@ -41,6 +46,7 @@ def test_graph_get_vertex():
     assert retrieved_v.vid == "1"
     assert retrieved_v.name == "TestVertex"
 
+
 def test_graph_del_vertices():
     """测试删除顶点"""
     g = MemoryGraph()
@@ -48,6 +54,7 @@ def test_graph_del_vertices():
     g.upsert_vertex(v)
     g.del_vertices("1")
     assert g.has_vertex("1") is False
+
 
 async def test_graph_del_edges():
     """测试删除边"""
@@ -60,6 +67,7 @@ async def test_graph_del_edges():
     g.append_edge(e)
     g.del_edges("1", "2", "LIKES")
     assert list(await g.get_neighbor_edges("1")) == []
+
 
 async def test_graph_search():
     """测试图谱搜索"""
@@ -78,6 +86,7 @@ async def test_graph_search():
     assert subgraph.vertex_count == 3
     assert subgraph.edge_count == 2
 
+
 def test_graph_viz():
     g = MemoryGraph()
     v1 = Vertex("1", name="TestVertex1")
@@ -93,6 +102,7 @@ def test_graph_viz():
     vis_content = g.graphviz()
     with open('/tmp/graph', 'w') as f:
         f.write(vis_content)
+
 
 # 运行 pytest 测试
 if __name__ == "__main__":

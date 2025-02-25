@@ -20,7 +20,6 @@ input_files = [
 
     # 'gold/0_direct_chat_public_data_Qwen2.5-7B-Instruct.jsonl',
     # 'gold/2_public_data_kag_Qwen2.5-7B-Instruct.jsonl',
-
     '3_chat_context_Qwen2.5-7B-Instruct.jsonl'
 ]
 # ['2_public_data_kag_Qwen2.5-7B-Instruct.jsonl', '0_direct_chat_public_data_context_Qwen2.5-72B-Instruct.jsonl']
@@ -58,7 +57,8 @@ template = """你是一位问答考试阅卷人，擅长根据标准答案，给
 {output}
 """
 
-def extract_score(text : str):
+
+def extract_score(text: str):
     text = text.replace(' ', '')
     # 正则表达式模式，用于匹配 '(score:数字)' 格式
     pattern1 = r'\(score:(\d+)\)'
@@ -74,6 +74,7 @@ def extract_score(text : str):
         return 0
     return int(score)
 
+
 resource = RetrieveResource(config_path=config_path)
 loop = always_get_an_event_loop()
 csv_file_name = 'output.csv'
@@ -86,7 +87,7 @@ for input_file in input_files:
             cls = jsono['source']
             if cls not in results:
                 results[cls] = {}
-            
+
             input = jsono['input']
             text1 = jsono['output']
             text2 = jsono['gt'][0]
@@ -100,15 +101,19 @@ for input_file in input_files:
             response = loop.run_until_complete(resource.llm.chat(prompt))
 
             rouge = Rouge()
-            dt_jb = ' '.join(jieba.cut(text1)) 
-            gt_jb = ' '.join(jieba.cut(text2)) 
+            dt_jb = ' '.join(jieba.cut(text1))
+            gt_jb = ' '.join(jieba.cut(text2))
             scores = rouge.get_scores(dt_jb, gt_jb)
             rouge_score = scores[0]['rouge-1']['r']
             llm_score = extract_score(response)
 
             basename = os.path.basename(input_file)
             csv_file_name = f'csv/{basename}_{source}.csv'
-            with open(csv_file_name, mode='a', newline='', encoding='utf-8') as fout:
+            with open(csv_file_name, mode='a', newline='',
+                      encoding='utf-8') as fout:
                 writer = csv.writer(fout)
-                writer.writerow([input, text1, text2, rouge_score, response, llm_score, input_file])
+                writer.writerow([
+                    input, text1, text2, rouge_score, response, llm_score,
+                    input_file
+                ])
                 # results[cls].append({"rouge": float(score), "llm": response})

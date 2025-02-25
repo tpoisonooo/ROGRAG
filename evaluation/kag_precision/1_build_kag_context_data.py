@@ -9,7 +9,7 @@ filenames = os.listdir(input_dir)
 
 for filename in filenames:
     cls = filename.split('_')[0]
-    
+
     filepath = os.path.join(input_dir, filename)
     with open(filepath) as fin:
         json_str = fin.read()

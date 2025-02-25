@@ -7,6 +7,7 @@ import pdb
 import argparse
 import datetime
 
+
 def newdir():
     now = datetime.datetime.now()
     # 格式化日期和时间字符串
@@ -18,6 +19,7 @@ def newdir():
     os.makedirs(dir_path, exist_ok=True)
     return dir_path
 
+
 def parse_args():
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
@@ -26,31 +28,24 @@ def parse_args():
                         type=str,
                         default='workdir',
                         help='Working directory.')
-    parser.add_argument(
-        '--config_path',
-        default='config.ini',
-        help='Configuration path. Default value is config.ini')
-    parser.add_argument(
-        '--small',
-        type=str,
-        default=None,
-        help='Small dataset for dev.')
-    parser.add_argument(
-        '--datadir',
-        type=str,
-        default='/data/khj/workspace/SeedBench/data/zero-shot',
-        help='SeedBench datadir for test.')
-    parser.add_argument(
-        '--outdir',
-        type=str,
-        default=None
-    )
-    parser.add_argument(
-        '--pipeline',
-        default='parallel',
-        help='Worker pipeline.')
+    parser.add_argument('--config_path',
+                        default='config.ini',
+                        help='Configuration path. Default value is config.ini')
+    parser.add_argument('--small',
+                        type=str,
+                        default=None,
+                        help='Small dataset for dev.')
+    parser.add_argument('--datadir',
+                        type=str,
+                        default='/data/khj/workspace/SeedBench/data/zero-shot',
+                        help='SeedBench datadir for test.')
+    parser.add_argument('--outdir', type=str, default=None)
+    parser.add_argument('--pipeline',
+                        default='parallel',
+                        help='Worker pipeline.')
     args = parser.parse_args()
     return args
+
 
 if __name__ == '__main__':
     args = parse_args()
@@ -68,7 +63,9 @@ if __name__ == '__main__':
 
     if not args.outdir:
         args.outdir = newdir()
-    output_file = os.path.join(args.outdir, '2_hybrid_zero_shot_kag_seedllm_{}.jsonl'.format(modelname))
+    output_file = os.path.join(
+        args.outdir,
+        '2_hybrid_zero_shot_kag_seedllm_{}.jsonl'.format(modelname))
     if os.path.exists(output_file):
         raise Exception(f'{output_file} already exists')
 
@@ -87,7 +84,7 @@ if __name__ == '__main__':
                     continue
 
             file_path = os.path.join(root, file)
-            
+
             # 打开并读取JSON文件
             data = {}
             with open(file_path, 'r', encoding='utf-8') as fin:
@@ -95,14 +92,17 @@ if __name__ == '__main__':
 
                 for data in datas:
                     question = data['question']
-                    generation_question = data['instruction'] + '\n' + data['question']
+                    generation_question = data['instruction'] + '\n' + data[
+                        'question']
                     answer = data['answer']
                     task = data['task_type']
 
                     async def wrap_async_run(query):
                         response = ''
                         node = ''
-                        async for sess in assistant.generate(query=query, history=[], language='zh_cn'):
+                        async for sess in assistant.generate(query=query,
+                                                             history=[],
+                                                             language='zh_cn'):
                             response = sess.response
                             node = sess.node
                             logger.info(sess.stage, response)
@@ -112,14 +112,26 @@ if __name__ == '__main__':
                         sess.debug['input'] = generation_question
                         print(sess.debug.keys())
                         with open(debugfile, 'a') as f:
-                            jsonstr = json.dumps(sess.debug, ensure_ascii=False)
+                            jsonstr = json.dumps(sess.debug,
+                                                 ensure_ascii=False)
                             f.write(jsonstr)
                             f.write('\n')
                         return response, node
 
-                    q = Query(text=question, generation_question=generation_question)
-                    output, node = loop.run_until_complete(wrap_async_run(query=q))
-                    json_str = json.dumps({"input":generation_question, "output": output, "gt": answer, "task": task, "source": file, "node":node}, ensure_ascii=False)
+                    q = Query(text=question,
+                              generation_question=generation_question)
+                    output, node = loop.run_until_complete(
+                        wrap_async_run(query=q))
+                    json_str = json.dumps(
+                        {
+                            "input": generation_question,
+                            "output": output,
+                            "gt": answer,
+                            "task": task,
+                            "source": file,
+                            "node": node
+                        },
+                        ensure_ascii=False)
                     with open(output_file, 'a') as fout:
                         fout.write(json_str)
                         fout.write('\n')

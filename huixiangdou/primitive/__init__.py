@@ -1,4 +1,3 @@
-
 """primitive module."""
 from .chunk import Chunk  # noqa E401
 from .embedder import Embedder  # noqa E401
@@ -12,7 +11,8 @@ from .splitter import (
     MarkdownHeaderTextSplitter,
     MarkdownTextRefSplitter,
     RecursiveCharacterTextSplitter,
-    nested_split_markdown, split_python_code)
+    nested_split_markdown,
+    split_python_code)
 from .limitter import RPM, TPM
 from .bm250kapi import BM25Okapi
 from .knowledge import MemoryGraph, Direction, Edge, MemoryGraph, Graph, Vertex

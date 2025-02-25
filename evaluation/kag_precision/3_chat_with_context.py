@@ -3,6 +3,7 @@ from huixiangdou.service.retriever import DenseRetriever
 import os
 import json
 from loguru import logger
+
 llm = LLM(config_path='config-20241125.ini')
 
 files = os.listdir('/home/khj/workspace/UltraDomain/')
@@ -45,7 +46,7 @@ with open(output, 'a') as fout:
                 if q in processed_keys:
                     logger.info('skip')
                     continue
-                
+
                 format = """## Task
 Please read context to answer user input.
 
@@ -55,14 +56,23 @@ Please read context to answer user input.
 ## context
 {context}
 """
-                context_str= jsono['context']
+                context_str = jsono['context']
                 logger.info(f'context str len {len(context_str)}')
-                prompt = format.format(context=context_str, question=jsono['input'])
-                
-                # print(loop.run_until_complete(llm.chat('你好')))
-                resp = loop.run_until_complete(llm.chat(prompt=prompt, allow_truncate=True))
+                prompt = format.format(context=context_str,
+                                       question=jsono['input'])
 
-                json_str = json.dumps({"input":q, "output": resp, "source": str(jsonl), "gt": jsono['answers']}, ensure_ascii=False)
+                # print(loop.run_until_complete(llm.chat('你好')))
+                resp = loop.run_until_complete(
+                    llm.chat(prompt=prompt, allow_truncate=True))
+
+                json_str = json.dumps(
+                    {
+                        "input": q,
+                        "output": resp,
+                        "source": str(jsonl),
+                        "gt": jsono['answers']
+                    },
+                    ensure_ascii=False)
                 fout.write(json_str)
                 fout.write('\n')
                 fout.flush()

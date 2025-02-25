@@ -1,7 +1,8 @@
 # PreprocNode
 server_prompts = {}
 server_prompts['examplify'] = {
-    "zh_cn": '''
+    "zh_cn":
+    '''
 请生成三个与该问题尽可能相似的问题，返回格式为 json list
 
 ## 样例返回
@@ -12,7 +13,8 @@ server_prompts['examplify'] = {
 {query}
 ```
 ''',
-    "en": '''
+    "en":
+    '''
 Please generate three questions that are as similar as possible to the problem, return format is json list
 
 ## example output
@@ -25,10 +27,10 @@ Please generate three questions that are as similar as possible to the problem, 
 '''
 }
 
-
 # =========================================== coreference resolution =========================================
 server_prompts['corefence_resolution'] = {
-    "zh_cn":"""你是个文本专家，擅长做指代消歧任务。请阅读输入input和历史消息，消歧后输出语句。如果不需要消除歧义，请输出 "NO"
+    "zh_cn":
+    """你是个文本专家，擅长做指代消歧任务。请阅读输入input和历史消息，消歧后输出语句。如果不需要消除歧义，请输出 "NO"
 
 ## 输入说明
 输入语句和历史消息是 json 格式，使用 ChatML format。其中 "user" 是用户输入；"assistant" 是助手回复。
@@ -58,7 +60,8 @@ server_prompts['corefence_resolution'] = {
 ```
 输出：
 """,
-    "en": """
+    "en":
+    """
 You are a text expert, proficient in performing coreference resolution tasks. Please read the input and historical messages, resolve the ambiguity, and output the sentence. If there is no ambiguity to resolve, output "NO".
 
 ## Input Description

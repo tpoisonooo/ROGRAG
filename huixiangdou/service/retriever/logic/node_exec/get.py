@@ -4,10 +4,12 @@ from ..node_param import GetNode
 from loguru import logger
 import pdb
 
+
 class GetExecutor(OpExecutor):
+
     def __init__(self, resource: RetrieveResource):
         super().__init__(resource)
-        
+
     def is_this_op(self, logic_node: LogicNode) -> bool:
         return isinstance(logic_node, GetNode)
 

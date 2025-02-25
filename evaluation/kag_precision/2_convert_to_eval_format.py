@@ -20,7 +20,11 @@ with open('2_zero_shot_kag_seedllm_Qwen2.5-7B-Instruct.jsonl') as f:
 
         if source not in outputs:
             outputs[source] = []
-        outputs[source].append({'question':question, 'predict':predict, 'answer':answer})    
+        outputs[source].append({
+            'question': question,
+            'predict': predict,
+            'answer': answer
+        })
 
 for filename, result in outputs.items():
     output_filename = os.path.join(output_dir, filename)

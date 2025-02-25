@@ -1,6 +1,7 @@
 # PreprocNode
 from typing import List
 import re
+
 rag_prompts = {}
 
 # =========================================== extract topic intention =========================================
@@ -283,7 +284,6 @@ Please carefully read the exam questions and the students' evidence to determine
 """
 }
 
-
 # =========================================== citation generation =========================================
 
 rag_prompts["citation_generate_head"] = {
@@ -389,4 +389,3 @@ class CitationGeneratePrompt:
 
         prompt = head + context_prompt + question_prompt
         return prompt
-    

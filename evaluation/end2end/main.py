@@ -5,12 +5,13 @@ import asyncio
 import pdb
 import os
 from typing import List
-from rouge import Rouge 
+from rouge import Rouge
 from loguru import logger
 import jieba
 
 config_path = 'config.ini'
 assistant = ParallelPipeline(work_dir='workdir', config_path=config_path)
+
 
 def format_refs(refs: List[str]):
     refs_filter = list(set(refs))
@@ -22,6 +23,7 @@ def format_refs(refs: List[str]):
         text += '* {}\r\n'.format(file_or_url)
     text += '\r\n'
     return text
+
 
 async def run(query_text: str):
     query = Query(query_text)
@@ -40,7 +42,6 @@ if __name__ == "__main__":
     dts = []
     start_llm_server(config_path=config_path)
 
-    
     # hybrid llm serve
     output_filepath = 'out.jsonl'
 
@@ -50,7 +51,7 @@ if __name__ == "__main__":
             json_str = ""
             for line in fin:
                 json_str += line
-            
+
                 if '}\n' == line:
                     print(json_str)
                     json_obj = json.loads(json_str)
@@ -63,7 +64,7 @@ if __name__ == "__main__":
             query = json_obj['query'].strip()
             if query in finished_query:
                 continue
-            
+
             gt = json_obj['resp']
             gts.append(gt)
 
@@ -71,11 +72,12 @@ if __name__ == "__main__":
             dt, refs = loop.run_until_complete(run(query_text=query))
             dts.append(dt)
 
-            distance = assistant.retriever.embedder.distance(text1=gt, text2=dt).tolist()
+            distance = assistant.retriever.embedder.distance(
+                text1=gt, text2=dt).tolist()
 
             rouge = Rouge()
-            dt_jb = ' '.join(jieba.cut(dt)) 
-            gt_jb = ' '.join(jieba.cut(gt)) 
+            dt_jb = ' '.join(jieba.cut(dt))
+            gt_jb = ' '.join(jieba.cut(gt))
             scores = rouge.get_scores(dt_jb, gt_jb)
             json_obj['distance'] = distance
             json_obj['rouge_scores'] = scores

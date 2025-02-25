@@ -32,6 +32,7 @@ from loguru import logger
 # 2025-01-08 17:40:59.301 | INFO     | __main__:join_precision:108 - (74, 0, 10, 0)
 # 2025-01-08 17:40:59.301 | INFO     | __main__:join_precision:123 - ('join', 0.405, 81, 84, 200)
 
+
 def precision_verifier(name, ppls, dts, gts, knowledges):
     assert len(dts) == len(gts)
     true_cnt = 0
@@ -60,6 +61,7 @@ def precision_verifier(name, ppls, dts, gts, knowledges):
     logger.info((name, rate, true_cnt, false_cnt + true_cnt))
     logger.info((name, 'knowledge', knowledge_true, knowledge_false))
 
+
 def precision(name, dts, gts):
     assert len(dts) == len(gts)
     true_cnt = 0
@@ -67,17 +69,18 @@ def precision(name, dts, gts):
     for i, dt in enumerate(dts):
         resp = dt['response']
         if gts[i] in resp.lower():
-            true_cnt +=1
+            true_cnt += 1
         else:
             false_cnt += 1
-            
+
     rate = true_cnt / 200
     logger.info((name, rate, true_cnt, false_cnt + true_cnt))
+
 
 def join_precision(name, ppls, reasons, knowledges, gts):
     assert len(reasons) == len(gts)
     assert len(knowledges) == len(gts)
-    
+
     true_cnt = 0
     false_cnt = 0
     ppl_tp = 0
@@ -101,18 +104,19 @@ def join_precision(name, ppls, reasons, knowledges, gts):
                 ppl_fp += 1
             else:
                 ppl_tn += 1
-        
+
         if 'YES' in ppl:
             dt = reason_resp.lower()
         else:
             dt = knowledge_resp.lower()
 
-        if gts[i].lower() in reason_resp.lower() or gts[i].lower() in knowledge_resp.lower():
-        # if gts[i] in dt:
+        if gts[i].lower() in reason_resp.lower() or gts[i].lower(
+        ) in knowledge_resp.lower():
+            # if gts[i] in dt:
             true_cnt += 1
         else:
             false_cnt += 1
-    
+
     logger.info((ppl_tp, ppl_fn, ppl_fp, ppl_tn))
     # T=(dt=gt)   P=yes
     # precision = TP / (TP + FP)
@@ -130,6 +134,7 @@ def join_precision(name, ppls, reasons, knowledges, gts):
     rate = true_cnt / 200
     logger.info((name, rate, true_cnt, false_cnt + true_cnt, 200))
 
+
 def token_avg(name, dts):
     _sum = 0
     for i, dt in enumerate(dts):
@@ -137,22 +142,23 @@ def token_avg(name, dts):
         _sum += length
     logger.info((name, 'avg token length', _sum / len(dts)))
 
+
 def calc(path):
     true_cnt = 0
     false_cnt = 0
-    
+
     reasons = []
     knowledges = []
     gts = []
     ppls = []
     with open(path) as f:
         for line in f:
-      
+
             jsono = json.loads(line)
             if 'retriever_reason' not in jsono:
                 print(jsono.keys())
                 continue
-            
+
             ppls.append(jsono['ppl'])
 
             if 'YES' not in jsono['ppl']:
@@ -166,16 +172,16 @@ def calc(path):
             gt = jsono['gt'].lower()
             gts.append(gt)
             question = jsono['input']
-    
+
     pdb.set_trace()
     # avg_token
     precision_verifier('reason', ppls, reasons, gts, knowledges)
     precision('reason', reasons, gts)
     token_avg('reason', reasons)
     precision('knowledge', knowledges, gts)
-    token_avg('knowledge', knowledges) 
+    token_avg('knowledge', knowledges)
     join_precision('join', ppls, reasons, knowledges, gts)
-    
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

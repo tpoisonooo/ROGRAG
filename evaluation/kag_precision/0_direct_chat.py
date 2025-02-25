@@ -2,6 +2,7 @@ from huixiangdou.primitive import LLM, always_get_an_event_loop
 import os
 import json
 from loguru import logger
+
 llm = LLM(config_path='config-20241118.ini')
 
 files = os.listdir('/home/khj/workspace/UltraDomain/')
@@ -33,10 +34,17 @@ with open(output, 'a') as fout:
                 if q in processed_keys:
                     logger.info('skip')
                     continue
-                    
+
                 resp = loop.run_until_complete(llm.chat(prompt=q))
 
-                json_str = json.dumps({"input":q, "output": resp, "source": str(jsonl), "gt": jsono['answers']}, ensure_ascii=False)
+                json_str = json.dumps(
+                    {
+                        "input": q,
+                        "output": resp,
+                        "source": str(jsonl),
+                        "gt": jsono['answers']
+                    },
+                    ensure_ascii=False)
                 fout.write(json_str)
                 fout.write('\n')
                 fout.flush()

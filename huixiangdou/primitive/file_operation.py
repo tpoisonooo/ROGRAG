@@ -1,4 +1,3 @@
-
 import hashlib
 import os
 import shutil
@@ -26,8 +25,8 @@ class FileName:
         self.reason = ''
 
     def __str__(self):
-        return '{}, {}, {}, {}\n'.format(self.basename, self.copypath, self.state,
-                                      self.reason)
+        return '{}, {}, {}, {}\n'.format(self.basename, self.copypath,
+                                         self.state, self.reason)
 
 
 class FileOperation:
@@ -188,7 +187,7 @@ class FileOperation:
             return ''
         json_text = table.dropna(axis=1).to_json(force_ascii=False)
         return json_text
-    
+
     def load_content(self, filepath: str, encodings=['utf-8', 'ISO-8859-1']):
         for encoding in encodings:
             try:
@@ -236,7 +235,7 @@ class FileOperation:
         except Exception as e:
             logger.error((filepath, str(e)))
             return '', e
-        
+
         if file_type != 'code':
             text = text.replace('\n\n', '\n')
             text = text.replace('\n\n', '\n')
