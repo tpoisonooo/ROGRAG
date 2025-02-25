@@ -99,9 +99,7 @@ python3 -m huixiangdou.main
 +------------------+---------+---------------------------------+---------------+
 ```
 
-### Gradio UI 方式
-
-俺也实现了 Gradio 接入方法
+### Gradio UI 接入
 
 ```bash
 python3 -m huixiangdou.gradio_ui
