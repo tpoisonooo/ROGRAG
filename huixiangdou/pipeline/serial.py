@@ -111,8 +111,7 @@ class ReduceGenerate:
             yield sess
         else:
             sess.response = await self.resource.llm.chat(prompt=prompt,
-                                                         history=sess.history,
-                                                         max_tokens=1024)
+                                                         history=sess.history)
             yield sess
 
         # sess.debug[node] = {

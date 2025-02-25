@@ -153,7 +153,7 @@ async def _handle_entity_relation_summary(
     )
     use_prompt = prompt_template.format(**context_base)
     logger.debug(f"Trigger summary: {entity_or_relation_name}")
-    summary = await llm.chat(use_prompt)
+    summary = await llm.chat(prompt=use_prompt, max_tokens=None)
     return summary
 
 
@@ -296,7 +296,7 @@ async def parse_chunk_to_knowledge(chunks: List[Chunk], llm: LLM,
         language = judge_language(text=content)
         hint_prompt = entity_extract_prompt[language].format(
             **context_base, input_text=content)
-        final_result = await llm.chat(hint_prompt)
+        final_result = await llm.chat(prompt=hint_prompt, max_tokens=None)
 
         history = pack_user_assistant_to_messages(
             hint_prompt, final_result)  # 重复提取实体词，until LLM 判断为 finished
@@ -304,16 +304,18 @@ async def parse_chunk_to_knowledge(chunks: List[Chunk], llm: LLM,
 
         try:
             for now_glean_index in range(entity_extract_max_gleaning):
-                glean_result = await llm.chat(continue_prompt[language],
-                                              history=history)
+                glean_result = await llm.chat(prompt=continue_prompt[language],
+                                              history=history,
+                                              max_tokens=None)
                 history += pack_user_assistant_to_messages(
                     continue_prompt[language], glean_result)
                 final_result += glean_result
                 if now_glean_index == entity_extract_max_gleaning - 1:
                     break
 
-                if_loop_result: str = await llm.chat(if_loop_prompt[language],
-                                                     history=history)
+                if_loop_result: str = await llm.chat(prompt=if_loop_prompt[language],
+                                                     history=history,
+                                                     max_tokens=None)
                 if_loop_result = if_loop_result.strip().strip('"').strip(
                     "'").lower()
                 if "yes" in if_loop_result:

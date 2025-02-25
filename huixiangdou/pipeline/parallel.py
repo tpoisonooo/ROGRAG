@@ -1,7 +1,7 @@
 """Pipeline."""
-import argparse
 import asyncio
 import json
+import pytoml
 import pdb
 from typing import List, Union, AsyncGenerator
 
@@ -68,6 +68,7 @@ class PreprocNode:
                     sess.code = ErrorCode.NOT_A_QUESTION
                     yield sess
                     return
+
         except Exception as e:
             sess.logger.error(str(e))
 
@@ -111,8 +112,7 @@ class ReduceGenerate:
             yield sess
         else:
             sess.response = await self.resource.llm.chat(prompt=prompt,
-                                                         history=sess.history,
-                                                         max_tokens=1024)
+                                                         history=sess.history)
             yield sess
         print(real_question)
         print(response)
@@ -125,16 +125,15 @@ class ParallelPipeline:
                  config_path: str = 'config.ini'):
         self.resource = RetrieveResource(config_path)
         self.pool = SharedRetrieverPool(resource=self.resource)
-        # self.retriever_reason = self.pool.get(work_dir=work_dir, method=RetrieveMethod.REASON)
         self.retriever_knowledge = self.pool.get(
             work_dir=work_dir, method=RetrieveMethod.KNOWLEDGE)
         self.retriever_web = self.pool.get(work_dir=work_dir,
                                            method=RetrieveMethod.WEB)
-        # self.retriever_bm25 = self.pool.get(work_dir=work_dir, method=RetrieveMethod.BM25)
-        # self.retriever_inverted = self.pool.get(work_dir=work_dir, method=RetrieveMethod.INVERTED)
-
         self.config_path = config_path
         self.work_dir = work_dir
+        
+        with open(config_path) as f:
+            self.threshold = pytoml.load(f)['store']['reject_threshold']
 
     async def generate(self,
                        query: Union[Query, str],
@@ -161,12 +160,20 @@ class ParallelPipeline:
         ]
 
         # if not a good question, return
-        # try:
-        async for sess in preproc.process(sess):
+        direct_chat = False
+        async for sess in preproc.process(sess, self.retriever_knowledge):
             if sess.code in direct_chat_states:
-                async for resp in reduce.process(sess):
-                    yield resp
-                return
+                direct_chat = True
+            
+        score = self.retriever_knowledge.similarity_score(query=query)
+        sess.logger.info('simliarity score {}'.format(score))
+        if score < self.threshold:
+            direct_chat = True
+
+        if direct_chat:
+            async for resp in reduce.process(sess):
+                yield resp
+            return
 
         sess.stage = "1_search"
         yield sess
@@ -180,7 +187,3 @@ class ParallelPipeline:
                                                      return_exceptions=True)
         async for sess in reduce.process(sess):
             yield sess
-        # except Exception as e:
-        #     pdb.set_trace()
-        #     logger.error(str(e))
-        # return
