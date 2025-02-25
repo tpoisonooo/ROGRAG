@@ -4,9 +4,6 @@ import json
 import pytoml
 import pdb
 from typing import List, Union, AsyncGenerator
-
-from loguru import logger
-
 from ..primitive import Query, Pair
 from .session import Session
 from ..service import SharedRetrieverPool, Retriever, RetrieveResource, ErrorCode
@@ -161,11 +158,12 @@ class ParallelPipeline:
 
         # if not a good question, return
         direct_chat = False
-        async for sess in preproc.process(sess, self.retriever_knowledge):
+        async for sess in preproc.process(sess):
             if sess.code in direct_chat_states:
                 direct_chat = True
+                break
             
-        score = self.retriever_knowledge.similarity_score(query=query)
+        score = await self.retriever_knowledge.similarity_score(query=query)
         sess.logger.info('simliarity score {}'.format(score))
         if score < self.threshold:
             direct_chat = True

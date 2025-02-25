@@ -2,15 +2,12 @@
 """HuixiangDou binary."""
 import argparse
 import os
-import time
 
 import pytoml
 import requests
-from aiohttp import web
 from loguru import logger
 from termcolor import colored
 
-from .service import ErrorCode
 from .pipeline import ParallelPipeline, SerialPipeline
 from .primitive import always_get_an_event_loop, Query
 
@@ -27,10 +24,6 @@ def parse_args():
         default='config.ini',
         type=str,
         help='SerialPipeline configuration path. Default value is config.ini')
-    parser.add_argument('--standalone',
-                        action='store_true',
-                        default=False,
-                        help='Auto deploy required Hybrid LLM Service.')
     args = parser.parse_args()
     return args
 
