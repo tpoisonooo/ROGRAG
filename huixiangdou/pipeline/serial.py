@@ -1,18 +1,17 @@
 """Pipeline."""
-import argparse
 import asyncio
 import json
 import pdb
+import pytoml
 from typing import List, Union, AsyncGenerator
 
 from loguru import logger
 
-from ..primitive import Query, Pair, encode_string
+from ..primitive import Query, Pair
 from .session import Session
 from ..service import SharedRetrieverPool, Retriever, RetrieveResource, ErrorCode
 from ..service.retriever import RetrieveMethod
 from ..service.prompt import rag_prompts as PROMPTS
-
 
 class PreprocNode:
 
@@ -111,8 +110,7 @@ class ReduceGenerate:
             yield sess
         else:
             sess.response = await self.resource.llm.chat(prompt=prompt,
-                                                         history=sess.history,
-                                                         max_tokens=1024)
+                                                         history=sess.history)
             yield sess
 
         # sess.debug[node] = {
@@ -182,6 +180,8 @@ class SerialPipeline:
 
         self.config_path = config_path
         self.work_dir = work_dir
+        with open(config_path) as f:
+            self.threshold = pytoml.load(f)['store']['reject_threshold']
 
     async def generate(self,
                        query: Union[Query, str],
@@ -209,8 +209,18 @@ class SerialPipeline:
         ]
 
         # if not a good simple question, return
+        direct_chat = False
         async for sess in preproc.process(sess):
             if sess.code in direct_chat_states:
+                direct_chat = True
+                break
+
+        score = await self.retriever_knowledge.similarity_score(query=query)
+        sess.logger.info('simliarity score {}'.format(score))
+        if score < self.threshold:
+            direct_chat = True
+
+        if direct_chat:
                 async for resp in reduce.process(sess,
                                                  node='retriever_direct'):
                     yield resp
