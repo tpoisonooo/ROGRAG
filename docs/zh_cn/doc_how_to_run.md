@@ -15,7 +15,7 @@
 
 ## 一、安装依赖
 
-1. **安装 TuGraph**。[TuGraph 官方](https://tugraph-db.readthedocs.io/zh-cn/latest/5.installation%26running/index.html)支持 docker/在线服务/二进制文件部署，这里用 docker 部署 TuGraph（和 HuixiangDou2 环境无关，二者可以不在同一台机器上）
+1. **部署 TuGraph 服务**。[TuGraph 官方](https://tugraph-db.readthedocs.io/zh-cn/latest/5.installation%26running/index.html)支持 docker/在线服务/二进制文件部署，这里用 docker 部署 TuGraph（和 HuixiangDou2 环境无关，二者可以不在同一台机器上）
    
    我使用的 Server 版本是 **4.5.0**
 
@@ -38,10 +38,17 @@
 
    <img src="https://github.com/user-attachments/assets/010224cc-76ee-4c1c-9198-9cf4f01e248d" width=400>
 
-3. **HuixiangDou2 依赖**。直接使用 `pip install` 即可
+3. **HuixiangDou2 依赖**。直接使用 `pip install` 即可。
 
    ```bash
+   # 需 GPU
    python3 -m pip install -r requirements.txt
+   ```
+
+   我们同样支持 cpu-only 运行，但 config.ini 配置需要[参照 config.ini.cpu-only-example](../../config.ini.cpu-only-example) 配置 SiliconCloud api_token
+   ```bash
+   # CPU only
+   python3 -m pip install -r requirements/cpu.txt
    ```
 
 4. **下载 embedding 模型。** HuixiangDou2 支持 bce/bge 文本+图文模型。以 bce [embedding](https://huggingface.co/InfiniFlow/bce-embedding-base_v1) 和 [reranker](https://huggingface.co/InfiniFlow/bce-reranker-base_v1) 为例，假设模型下载到本机以下两个位置：

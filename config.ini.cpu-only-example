@@ -6,16 +6,16 @@ reject_threshold = 0.18081151451255284
 #  "maidalun1020/bce-embedding-base_v1"
 #  "BAAI/bge-m3"
 #  "https://api.siliconflow.cn/v1/embeddings"
-embedding_model_path = "/home/data/share/bce-embedding-base_v1"
+embedding_model_path = "https://api.siliconflow.cn/v1/embeddings"
 
 # reranker model, support list:
 #  "maidalun1020/bce-reranker-base_v1"
 #  "BAAI/bge-reranker-v2-minicpm-layerwise"
 #  "https://api.siliconflow.cn/v1/rerank"
-reranker_model_path = "/home/data/share/bce-reranker-base_v1"
+reranker_model_path = "https://api.siliconflow.cn/v1/rerank"
 
 # if using `siliconcloud` API as `embedding_model_path` or `reranker_model_path`, give the token
-api_token = ""
+api_token = "!!!YOUR_SILICON_CLOUD_API_HERE!!!"
 api_rpm = 1000
 api_tpm = 40000
 work_dir = "workdir"
