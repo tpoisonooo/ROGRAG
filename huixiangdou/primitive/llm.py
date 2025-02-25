@@ -144,7 +144,7 @@ class LLM:
                    system_prompt=None,
                    history=[],
                    allow_truncate=False,
-                   max_tokens=None,
+                   max_tokens=1024,
                    timeout=600) -> str:
         # choose backend
         # if user not specify model, use first one
@@ -229,7 +229,7 @@ class LLM:
                           system_prompt=None,
                           history=[],
                           allow_truncate=False,
-                          max_tokens=None,
+                          max_tokens=1024,
                           timeout=600):
         # choose backend
         # if user not specify model, use first one
