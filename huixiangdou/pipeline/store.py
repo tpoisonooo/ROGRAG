@@ -5,13 +5,11 @@ import os
 import shutil
 import time
 from multiprocessing import Pool
-from typing import Any, Dict, List, Tuple, Iterator
+from typing import Dict, List, Tuple, Iterator
 import random
 import pytoml
 from loguru import logger
 from tqdm import tqdm
-from .fasta import Fasta
-import asyncio
 
 from ..primitive import (ChineseRecursiveTextSplitter, Chunk, Faiss, FileName,
                          FileOperation, RecursiveCharacterTextSplitter,
@@ -435,25 +433,15 @@ if __name__ == '__main__':
 
     loop = always_get_an_event_loop()
 
-    before_cost = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(
+    before = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(
     )
     loop.run_until_complete(store.init(files=files, args=args))
     store.file_opr.summarize(files)
 
-    after_cost = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(
+    after = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(
     )
-
-    if False:
-        with open('cost', 'a') as f:
-            input_token_cost = after_cost[0] - before_cost[0]
-            output_token_cost = after_cost[1] - before_cost[1]
-            time_cost = int(after_cost[2] - before_cost[2])
-            f.write(f'{input_token_cost} {output_token_cost} {time_cost}')
-            f.write('\n')
-
-        # async def init(self, files: List[FileName], graph_store: TuGraphStore, fasta_ner:str, fasta_file:str):
+    logger.info('input token {}, output token {}, timecost {}'.format(after[0]-before[0], after[1]-before[1], after[2]-before[2]))
     del store
 
     # calculate config threshold, write it back
-    # TODO uncomment
-    # loop.run_until_complete(write_back_config_threshold(resource=resource, work_dir=args.work_dir, config_path=args.config_path))
+    loop.run_until_complete(write_back_config_threshold(resource=resource, work_dir=args.work_dir, config_path=args.config_path))

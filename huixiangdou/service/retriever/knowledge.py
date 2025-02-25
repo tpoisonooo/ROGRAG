@@ -539,4 +539,4 @@ class KnowledgeRetriever(Retriever):
         if len(relation_pairs) > 0:
             relation_max_score = relation_pairs[0][1]
 
-        return max(entity_max_score, relation_max_score)
+        return (entity_max_score + relation_max_score) / 2
