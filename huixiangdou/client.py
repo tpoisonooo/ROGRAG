@@ -99,7 +99,7 @@ def test_exemplify():
     request_body = {
         "language": "zh_CN",
         "enable_web_search": False,
-        "user": "汕优63的最佳播期是什么时候？\nA. 7月下旬\nB. 6月下旬\nC. 8月下旬\nD. 9月下旬",
+        "user": "宁香粳9 号",
         "history": []
     }
 

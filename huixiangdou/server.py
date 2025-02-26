@@ -3,6 +3,7 @@ import os
 import pandas as pd
 from pypinyin import pinyin, Style
 import re
+import ast
 from loguru import logger
 
 from .pipeline import SerialPipeline, ParallelPipeline
@@ -21,10 +22,21 @@ assistant = None
 analogy = None
 app = FastAPI(docs_url='/')
 
-
 def get_req_uuid():
     return str(uuid.uuid4())[0:6]
 
+def parse_string_list(input_str):
+    try:
+        # 使用 ast.literal_eval 安全地解析字符串
+        result = ast.literal_eval(input_str)
+        # 确保解析结果是列表
+        if isinstance(result, list):
+            return result
+        else:
+            raise ValueError("输入的字符串不是一个有效的列表形式")
+    except (ValueError, SyntaxError) as e:
+        print(f"解析错误: {e}")
+        return []
 
 class TextSimilarity:
 
@@ -109,6 +121,7 @@ class ExampleAnalogy:
         return bool(re.match(pattern, s))
 
     async def process(self, query: str):
+        query = query.replace(' ', '')
         print(query)
         metric = TextSimilarity()
         words = jieba.lcut(query.lower())
@@ -141,7 +154,7 @@ class ExampleAnalogy:
                                             and matched_rice is None):
             #如果是关于水稻/基因但没涉及种类，使用大模型生成新问题
             prompt = self.EXAMPLIFY_TEMPLATE.format(query=query)
-            response = await self.llm.chat(prompt=prompt)
+            response = parse_string_list(await self.llm.chat(prompt=prompt))
             similar_questions = response
             response_body = {}
             response_body['status'] = {}
@@ -265,7 +278,7 @@ class ExampleAnalogy:
 
         # 如果问指定物种但问题无关，使用大模型生成新问题
         prompt = self.EXAMPLIFY_TEMPLATE.format(query=query)
-        response = await self.llm.chat(prompt=prompt)
+        response = parse_string_list(await self.llm.chat(prompt=prompt))
         similar_questions = response
         # print(similar_questions)
         response_body = {}
