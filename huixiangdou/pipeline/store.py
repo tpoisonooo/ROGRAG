@@ -153,8 +153,9 @@ class FeatureStore:
             os.path.join(self.work_dir, 'db_kag_relation_mix'))
 
         chunkDB = ChunkSQL(file_dir=os.path.join(self.work_dir, 'db_chunk'))
-
+        already_processed = 0
         for file in tqdm(files, 'build knowledge'):
+            already_processed += 1
             if not file.state:
                 logger.error(f'unknown file state {file}')
                 continue
@@ -177,24 +178,24 @@ class FeatureStore:
                                                relationDB_mix=relationDB_mix,
                                                graph_store=self.graph_store)
                 chunkDB.add(chunks)
+                # dump results
+                entityDB.save(folder_path=os.path.join(self.work_dir, 'db_kag_entity'),
+                            embedder=self.embedder)
+                relationDB.save(folder_path=os.path.join(self.work_dir,
+                                                        'db_kag_relation'),
+                                embedder=self.embedder)
+
+                entityDB_mix.save(folder_path=os.path.join(self.work_dir,
+                                                        'db_kag_entity_mix'),
+                                embedder=self.embedder)
+                relationDB_mix.save(folder_path=os.path.join(self.work_dir,
+                                                            'db_kag_relation_mix'),
+                                    embedder=self.embedder)
             except Exception as e:
                 logger.error(str(e))
-                import pdb
-                pdb.set_trace()
                 pass
-        # dump results
-        entityDB.save(folder_path=os.path.join(self.work_dir, 'db_kag_entity'),
-                      embedder=self.embedder)
-        relationDB.save(folder_path=os.path.join(self.work_dir,
-                                                 'db_kag_relation'),
-                        embedder=self.embedder)
+            logger.info(f'#### Processed {already_processed} files. ####')
 
-        entityDB_mix.save(folder_path=os.path.join(self.work_dir,
-                                                   'db_kag_entity_mix'),
-                          embedder=self.embedder)
-        relationDB_mix.save(folder_path=os.path.join(self.work_dir,
-                                                     'db_kag_relation_mix'),
-                            embedder=self.embedder)
         return None
 
     async def build_dense(self, files: Iterator[FileName]) -> None:
@@ -319,26 +320,9 @@ class FeatureStore:
         configuration file.
         """
 
-        code = filter(lambda x: x._type == 'code', files)
         documents = filter(lambda x: x._type != 'code', files)
-
         await self.build_knowledge(files=documents)
         return
-        # tasks = []
-        # if 'bm25' in args.method:
-        #     tasks.append(self.build_bm25(files=code))
-
-        # if 'knowledge' in args.method:
-        #     tasks.append(self.build_knowledge(files=documents))
-
-        # if 'inverted' in args.method:
-        #     fasta = Fasta(work_dir=self.work_dir, embedder=self.embedder)
-        #     tasks.append(fasta.init(ner_path=args.fasta_ner, file_dir=args.fasta_file))
-
-        # if 'dense' in args.method:
-        #     tasks.append(self.build_dense(files=documents))
-
-        # await asyncio.gather(*tasks, return_exceptions=True)
 
 
 def parse_args():

@@ -286,6 +286,7 @@ class Faiss():
                         chunks=self.chunks,
                         embedder=embedder,
                         offset=self.offset)
+        self.offset = len(self.chunks)
 
     @classmethod
     def load_local(cls, folder_path: str) -> FAISS:

@@ -45,18 +45,6 @@ class TextSimilarity:
         union = set1.union(set2)
         return len(intersection) / len(union) if union else 0
 
-    def is_chinese_dominant(self, s, threshold=0.5):
-        chinese_count = 0
-        total_count = len(s)
-
-        for char in s:
-            if '\u4e00' <= char <= '\u9fff':
-                chinese_count += 1
-
-        chinese_ratio = chinese_count / total_count
-        return chinese_ratio > threshold
-
-
 class ExampleAnalogy:
 
     def __init__(self,
@@ -116,14 +104,14 @@ class ExampleAnalogy:
         # init llm chat template
         self.EXAMPLIFY_TEMPLATE = server_prompts['examplify'][language]
 
+    def is_alphanumeric(self, s):
+        pattern = r"^[a-zA-Z0-9]+$"
+        return bool(re.match(pattern, s))
+
     async def process(self, query: str):
+        print(query)
         metric = TextSimilarity()
-        if metric.is_chinese_dominant(query):
-            words = jieba.lcut(query.lower())
-        else:
-            tokens = re.findall(r'\w+|\?', query.lower())
-            words = [token for token in tokens if token]
-        # print(words)
+        words = jieba.lcut(query.lower())
 
         # 查找在self.variety中出现的词
         matched_word = None
@@ -133,6 +121,8 @@ class ExampleAnalogy:
         # print('self.gene_set',self.gene_set)
         for word in words:
             if len(word) <= 1:
+                continue
+            if len(word) <= 2 and self.is_alphanumeric(word):
                 continue
             if not matched_word and word in self.gene_set:
                 matched_word = word
@@ -312,9 +302,9 @@ def format_refs(refs: List[str]):
     return text
 
 
-def extract_history(talk_seed):
+def extract_history(talk_seed, window:int=10):
     history = []
-    for item in talk_seed.history:
+    for item in talk_seed.history[-window:]:
         history.append({"role": "user", "content": item.user})
         history.append({"role": "assistant", "content": item.assistant})
     return history
@@ -408,7 +398,9 @@ async def chat(talk_seed: Talk_seed):
 async def examplify(talk_seed: Talk_seed):
     global analogy
     if analogy:
-        return await analogy.process(query=talk_seed.user)
+        examples = await analogy.process(query=talk_seed.user)
+        logger.info(f'query {talk_seed.user}, {examples}')
+        return examples
     return '{}'
 
 

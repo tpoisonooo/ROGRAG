@@ -145,7 +145,8 @@ class LLM:
                    history=[],
                    allow_truncate=False,
                    max_tokens=1024,
-                   timeout=600) -> str:
+                   timeout=600,
+                   frequency_penalty=0.0) -> str:
         # choose backend
         # if user not specify model, use first one
         if backend == 'default':
@@ -187,7 +188,8 @@ class LLM:
             "model": model,
             "messages": messages,
             "temperature": 0.7,
-            "top_p": 0.7
+            "top_p": 0.7,
+            "frequency_penalty": frequency_penalty
         }
         if max_tokens:
             kwargs['max_tokens'] = max_tokens

@@ -296,7 +296,7 @@ async def parse_chunk_to_knowledge(chunks: List[Chunk], llm: LLM,
         language = judge_language(text=content)
         hint_prompt = entity_extract_prompt[language].format(
             **context_base, input_text=content)
-        final_result = await llm.chat(prompt=hint_prompt, max_tokens=None)
+        final_result = await llm.chat(prompt=hint_prompt, max_tokens=None, frequency_penalty=0.1)
 
         history = pack_user_assistant_to_messages(
             hint_prompt, final_result)  # 重复提取实体词，until LLM 判断为 finished
@@ -306,7 +306,7 @@ async def parse_chunk_to_knowledge(chunks: List[Chunk], llm: LLM,
             for now_glean_index in range(entity_extract_max_gleaning):
                 glean_result = await llm.chat(prompt=continue_prompt[language],
                                               history=history,
-                                              max_tokens=None)
+                                              max_tokens=None, frequency_penalty=0.1)
                 history += pack_user_assistant_to_messages(
                     continue_prompt[language], glean_result)
                 final_result += glean_result
@@ -315,7 +315,7 @@ async def parse_chunk_to_knowledge(chunks: List[Chunk], llm: LLM,
 
                 if_loop_result: str = await llm.chat(prompt=if_loop_prompt[language],
                                                      history=history,
-                                                     max_tokens=None)
+                                                     max_tokens=None, frequency_penalty=0.1)
                 if_loop_result = if_loop_result.strip().strip('"').strip(
                     "'").lower()
                 if "yes" in if_loop_result:
@@ -379,10 +379,13 @@ async def parse_chunk_to_knowledge(chunks: List[Chunk], llm: LLM,
         _merge_nodes_then_upsert(k, v, graph, llm)
         for k, v in maybe_nodes.items()
     ])
+    print(f"Upsert {len(all_entities_data)} entities\r", end="",flush=True)
     all_relationships_data = await asyncio.gather(*[
         _merge_edges_then_upsert(k[0], k[1], v, graph, llm)
         for k, v in maybe_edges.items()
     ])
+    print(f"Upsert {len(all_relationships_data)} relationships\r", end="",flush=True)
+
     if not len(all_entities_data):
         logger.warning(
             "Didn't extract any entities, maybe your LLM is not working")
@@ -424,6 +427,7 @@ async def parse_chunk_to_knowledge(chunks: List[Chunk], llm: LLM,
                           "tgt_id": dp["tgt_id"],
                           "description": dp["description"]
                       }))
-
+            
+    print(f"Inserting graph", end="",flush=True)
     graph_store.insert_graph(graph=graph)
     return
