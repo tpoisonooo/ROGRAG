@@ -96,10 +96,9 @@ class KnowledgeRetriever(Retriever):
             split_string_by_multi_markers(dp["source_id"], [GRAPH_FIELD_SEP])
             for dp in node_datas
         ]
-        edges = await asyncio.gather(*[
-            knowledge_graph_inst.get_neighbor_edges(dp["entity_name"])
-            for dp in node_datas
-        ])
+        entity_names = [dp["entity_name"] for dp in node_datas]
+        edges = await knowledge_graph_inst.get_neighbor_edges_batch(vids=entity_names)
+
         all_one_hop_nodes = set()
         for this_edges in edges:
             if not this_edges:
@@ -157,11 +156,9 @@ class KnowledgeRetriever(Retriever):
         query_param: Query,
         knowledge_graph_inst: MemoryGraph,
     ):
-        all_related_edges = await asyncio.gather(*[
-            knowledge_graph_inst.get_neighbor_edges(dp["entity_name"],
-                                                    direction=Direction.BOTH)
-            for dp in node_datas
-        ])
+        entity_names = [dp["entity_name"] for dp in node_datas]
+        all_related_edges = await knowledge_graph_inst.get_neighbor_edges_batch(vids=entity_names, direction=Direction.BOTH)
+
         all_edges = set()
         for this_edges in all_related_edges:
             for e in this_edges:
@@ -524,17 +521,14 @@ class KnowledgeRetriever(Retriever):
         if type(query) is str:
             query = Query(text=query)
 
-        hl_keywords, ll_keywords = await self.decompose_to_keywords(query=query
-                                                                    )
-
         entity_pairs = self.entityDB.similarity_search(
-            self.embedder, query=Query(text=ll_keywords), threshold=0.0)
+            self.embedder, query=Query(text=query.text), threshold=0.0)
         entity_max_score = 0.0
         if len(entity_pairs) > 0:
             entity_max_score = entity_pairs[0][1]
 
         relation_pairs = self.relationDB.similarity_search(
-            self.embedder, query=Query(text=hl_keywords), threshold=0.0)
+            self.embedder, query=Query(text=query.text), threshold=0.0)
         relation_max_score = 0.0
         if len(relation_pairs) > 0:
             relation_max_score = relation_pairs[0][1]

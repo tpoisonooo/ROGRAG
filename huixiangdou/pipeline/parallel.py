@@ -164,7 +164,7 @@ class ParallelPipeline:
                 break
             
         score = await self.retriever_knowledge.similarity_score(query=query)
-        sess.logger.info('simliarity score {}'.format(score))
+        sess.logger.info('### simliarity score {}'.format(score))
         if score < self.threshold:
             direct_chat = True
 

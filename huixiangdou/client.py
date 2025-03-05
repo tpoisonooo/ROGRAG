@@ -3,7 +3,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # 基础 URL
-BASE_URL = "http://127.0.0.1:23334"
+BASE_URL = "http://127.0.0.1:23335"
 
 # 测试 /v2/chat 接口
 def test_chat_coref():
@@ -129,8 +129,8 @@ def parallel_test_chat_coref(num_requests):
 if __name__ == "__main__":
     # test_chat_coref()
 
-    # print("Testing /v2/chat endpoint...")
-    # test_chat_zh()
+    print("Testing /v2/chat endpoint...")
+    test_chat_zh()
 
     # print("Testing /v2/chat endpoint...")
     # test_chat_en()

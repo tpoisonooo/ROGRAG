@@ -7,7 +7,7 @@ from typing import Any, Generator, Iterator, List, Optional, Tuple
 from ..primitive import Direction, Edge, MemoryGraph, Graph, Vertex
 from loguru import logger
 """TuGraph Connector."""
-from typing import Dict, Generator, cast
+from typing import Dict, Generator, cast, List, AsyncGenerator
 
 
 def escape_quotes(value: str) -> str:
@@ -580,6 +580,24 @@ class TuGraphStore(GraphStore):
         return await memory_graph.get_neighbor_edges(vid=vid,
                                                      direction=direction,
                                                      limit=limit)
+
+    async def get_neighbor_edges_batch(
+        self,
+        vids: Tuple[str, List[str]],
+        direction: Direction = Direction.BOTH,
+        limit: Optional[int] = None,
+    ) -> List[Iterator[Edge]]:
+        if type(vids) is str:
+            vids = [vids]
+
+        formatted_vids = filter(escape_quotes, vids)
+        formatted_vids = list(set(formatted_vids))
+        memory_graph = self.explore(subs=formatted_vids, depth=1)
+
+        rets = []
+        for vid in formatted_vids:
+            rets.append(await memory_graph.get_neighbor_edges(vid=vid, direction=direction, limit=limit))
+        return rets
 
     async def get_connections(
         self,

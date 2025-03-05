@@ -187,8 +187,8 @@ class LLM:
         kwargs = {
             "model": model,
             "messages": messages,
-            "temperature": 0.7,
-            "top_p": 0.7,
+            "temperature": 1.0,
+            "top_p": 0.9,
             "frequency_penalty": frequency_penalty
         }
         if max_tokens:
@@ -273,8 +273,8 @@ class LLM:
             stream = await openai_async_client.chat.completions.create(
                 model=model,
                 messages=messages,
-                temperature=0.7,
-                top_p=0.7,
+                temperature=1.0,
+                top_p=0.9,
                 max_tokens=max_tokens,
                 stream=True)
 
