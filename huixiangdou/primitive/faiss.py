@@ -198,7 +198,7 @@ class Faiss():
         index = None
         if os.path.exists(index_path):
             index = faiss.read_index(index_path)
-        batchsize = 2
+        batchsize = 1
         # max neighbours for each node
         # import pdb
         # pdb.set_trace()
