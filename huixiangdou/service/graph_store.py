@@ -538,7 +538,7 @@ class TuGraphStore(GraphStore):
         direct: Direction = Direction.BOTH,
         depth: Optional[int] = None,
         fan: Optional[int] = None,
-        limit: Optional[int] = None,
+        limit: Optional[int] = 256,
     ) -> Graph:
         """Explore the graph from given subjects up to a depth."""
         if not subs:
