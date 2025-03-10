@@ -21,7 +21,7 @@
 
    ```bash
    # 拉取镜像
-   docker pull tugraph/tugraph-runtime-centos
+   docker pull tugraph/tugraph-runtime-centos7
    # 运行
    docker run -d -p 7070:7070  -p 7687:7687 -p 9090:9090 -v /root/tugraph/data:/var/lib/lgraph/data  -v /root/tugraph/log:/var/log/lgraph_log --name tugraph_demo ${REPOSITORY}:${VERSION}
    # ${REPOSITORY}是镜像地址，${VERSION}是版本号。
