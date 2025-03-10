@@ -21,7 +21,7 @@ The tools used in this document are as follows:
 
    ```bash
    # Pull the image
-   docker pull tugraph/tugraph-runtime-centos
+   docker pull tugraph/tugraph-runtime-centos7
    # Run
    docker run -d -p 7070:7070  -p 7687:7687 -p 9090:9090 -v /root/tugraph/data:/var/lib/lgraph/data  -v /root/tugraph/log:/var/log/lgraph_log --name tugraph_demo ${REPOSITORY}:${VERSION}
    # ${REPOSITORY} is the image address, ${VERSION} is the version number.
