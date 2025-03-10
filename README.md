@@ -31,7 +31,7 @@ Compared to [HuixiangDou1](https://github.com/internlm/huixiangdou), this repo i
 If it is useful to you, please star it ⭐
 
 ## Documentation
-- [1. How to Run (CMD / Swagger API / Gradio mode](docs/en/doc_how_to_run.md)
+- [1. How to Run (CMD / Swagger API / Gradio mode)](docs/en/doc_how_to_run.md)
 - [2. Directory Structure and Function](docs/en/doc_architecture.md)
 - [**FAQ** about environment and error](https://github.com/tpoisonooo/HuixiangDou2/issues/8) 
 
