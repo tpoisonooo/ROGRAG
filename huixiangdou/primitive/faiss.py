@@ -153,16 +153,16 @@ class Faiss():
         ef_construction = 64
         efSearch = 128
         M = 32
+        m = 8
+        pq_nbits = 8
         # max neighours for each node
         # see https://github.com/facebookresearch/faiss/wiki/Indexing-1M-vectors
         if distance_strategy == DistanceStrategy.EUCLIDEAN_DISTANCE:
-            # index = faiss.IndexFlatL2(dimension)
-            # index = faiss.IndexHNSWFlat(dimension, M, faiss.METRIC_L2)
-            m = 8
-            index = faiss.IndexHNSWPQ(dimension, M, m)
+            index = faiss.IndexHNSWPQ(dimension, m, M)  
+            index.metric_type = faiss.METRIC_L2  # Set metric for Euclidean distance
         elif distance_strategy == DistanceStrategy.MAX_INNER_PRODUCT:
-            # index = faiss.IndexFlatIP(dimension)
-            index = faiss.IndexHNSWFlat(dimension, M, faiss.METRIC_IP)
+            index = faiss.IndexHNSWPQ(dimension, m, M)  
+            index.metric_type = faiss.METRIC_IP  # Set metric for inner product
         else:
             raise ValueError('Unknown distance {}'.format(distance_strategy))
         index.hnsw.efSearch = efSearch
