@@ -1,6 +1,11 @@
 [English](./README.md) | 简体中文
 
 # HuixiangDou2: A Robustly Optimized GraphRAG Approach
+<div>
+  <a href="https://arxiv.org/abs/2503.06474" target="_blank">
+    <img alt="Arxiv" src="https://img.shields.io/badge/arxiv-2503.06474%20-darkred?logo=arxiv&logoColor=white" />
+  </a>
+</div>
 
 GraphRAG 有很多地方要调，很难确保是参数生效还是 pipeline 生效。此外大型语言模型（LLM）的训练集里其实有 RAG 测试数据。LLM input token 影响生成概率（背景知识：phi-4技术报告、[《当我谈RAG时我谈些什么》](https://link.zhihu.com/?target=https%3A//fatescript.github.io/blog/2024/LLM-RAG/)）。此时无法保证精度提升来源是 key token search 还是检索。
 
