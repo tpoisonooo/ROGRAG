@@ -9,7 +9,7 @@
 
 GraphRAG 有很多地方要调，很难确保是参数生效还是 pipeline 生效。此外大型语言模型（LLM）的训练集里其实有 RAG 测试数据。LLM input token 影响生成概率（背景知识：phi-4技术报告、[《当我谈RAG时我谈些什么》](https://link.zhihu.com/?target=https%3A//fatescript.github.io/blog/2024/LLM-RAG/)）。此时无法保证精度提升来源是 key token search 还是检索。
 
-因此 HuixiangDou2 并没有提出新的方法，而是合并多个开源项目——HuixiangDou、KAG、LightRAG 和 DB-GPT，总计 18k 行代码，并在 `Qwen2.5-7B-Instruct` 表现不佳的测试集上进行了对比实验。分数从 60 涨到 74.5。 最终融出一个运行效果得到人类领域专家认可的 GraphRAG 实现。[这里是工程报告](https://github.com/tpoisonooo/HuixiangDou2/blob/main/docs/huixiangdou2_github.pdf)。
+因此 HuixiangDou2 并没有提出新的方法，而是合并多个开源项目——HuixiangDou、KAG、LightRAG 和 DB-GPT，总计 18k 行代码，并在 `Qwen2.5-7B-Instruct` 表现不佳的测试集上进行了对比实验。分数从 60 涨到 74.5。 最终融出一个运行效果得到人类领域专家认可的 GraphRAG 实现。[这里是技术报告](https://arxiv.org/abs/2503.06474)。
 
 <div align="center">
 <img src="https://github.com/user-attachments/assets/19558f67-9a3a-48a1-a1c1-7b0a0654602f" width="400">
