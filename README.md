@@ -1,6 +1,11 @@
 English | [Simplified Chinese](./README_zh_cn.md)
 
 # HuixiangDou2: A Robustly Optimized GraphRAG Approach
+<div>
+  <a href="https://arxiv.org/abs/2503.06474" target="_blank">
+    <img alt="Arxiv" src="https://img.shields.io/badge/arxiv-2503.06474%20-darkred?logo=arxiv&logoColor=white" />
+  </a>
+</div>
 
 ## Introduction
 
