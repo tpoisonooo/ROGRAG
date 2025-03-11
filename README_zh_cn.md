@@ -51,10 +51,32 @@ GraphRAG 有很多地方要调，很难确保是参数生效还是 pipeline 生�
 
 ## 引用
 ```text
-@misc{huixiangdou2,
-  author = {Huanjun Kong},
-  title = {HuixiangDou2: A Graph-based Augmented Generation Approach},
-  howpublished = {\url{https://github.com/tpoisonooo/HuixiangDou2}},
-  year = {2025}
+@misc{kong2024huixiangdou,
+      title={HuiXiangDou: Overcoming Group Chat Scenarios with LLM-based Technical Assistance},
+      author={Huanjun Kong and Songyang Zhang and Jiaying Li and Min Xiao and Jun Xu and Kai Chen},
+      year={2024},
+      eprint={2401.08772},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL}
+}
+
+@misc{kong2024labelingsupervisedfinetuningdata,
+      title={Labeling supervised fine-tuning data with the scaling law}, 
+      author={Huanjun Kong},
+      year={2024},
+      eprint={2405.02817},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2405.02817}, 
+}
+
+@misc{kong2025huixiangdou2robustlyoptimizedgraphrag,
+      title={HuixiangDou2: A Robustly Optimized GraphRAG Approach}, 
+      author={Huanjun Kong and Zhefan Wang and Chenyang Wang and Zhe Ma and Nanqing Dong},
+      year={2025},
+      eprint={2503.06474},
+      archivePrefix={arXiv},
+      primaryClass={cs.IR},
+      url={https://arxiv.org/abs/2503.06474}, 
 }
 ```
