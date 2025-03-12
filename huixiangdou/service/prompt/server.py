@@ -1,29 +1,33 @@
 # PreprocNode
 server_prompts = {}
 server_prompts['examplify'] = {
-    "zh_cn":
-    '''
-请生成三个与该问题尽可能相似的问题，返回格式为 json list
+    "zh_cn":'''
+请生成三个与用户问相似或相关的农业领域问题，返回格式为 json list
 
-## 样例返回
-["问题1","问题2","问题3"]
+## 样例
+样例问题：“浙辐802”
+样例返回：["浙辐802是哪里审定的？","水稻有哪些品种？","浙辐802适合种植在哪些地区？"]
 
-## 问题
+## 用户问题
 ```text
 {query}
 ```
+
+## 返回
 ''',
-    "en":
-    '''
-Please generate three questions that are as similar as possible to the problem, return format is json list
+    "en":'''
+Please generate three questions similar to or related to the user's question in the agricultural field. The return format should be a JSON list.
 
-## example output
-["Q1","Q2","Q3"]
+## Example
+Example question: "Zhefu 802"
+Example return: ["Where was Zhefu 802 approved?", "What are the varieties of rice?", "In which regions is Zhefu 802 suitable for planting?"]
 
-## problem
+## User question
 ```text
 {query}
 ```
+
+## Return
 '''
 }
 

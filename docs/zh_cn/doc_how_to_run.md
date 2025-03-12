@@ -38,7 +38,7 @@
 
    <img src="https://github.com/user-attachments/assets/010224cc-76ee-4c1c-9198-9cf4f01e248d" width=400>
 
-3. **HuixiangDou2 依赖**。直接使用 `pip install` 即可。
+3. **HuixiangDou2 依赖**。直接使用 `pip install` 即可。我们倾向使用 python3.10（其他版本可以正常运行，但要处理安装包依赖）
 
    ```bash
    # 需 GPU

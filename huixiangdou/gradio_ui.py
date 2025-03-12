@@ -1,19 +1,11 @@
 import argparse
-import json
 import os
-import time
-import pdb
-from multiprocessing import Process, Value
-import asyncio
 import cv2
 import gradio as gr
-import pytoml
 from loguru import logger
 from typing import List
 from huixiangdou.primitive import Query
-from huixiangdou.service import ErrorCode
 from huixiangdou.pipeline import SerialPipeline, ParallelPipeline
-import json
 from datetime import datetime
 
 

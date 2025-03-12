@@ -36,7 +36,7 @@ The tools used in this document are as follows:
 
    <img src="https://github.com/user-attachments/assets/010224cc-76ee-4c1c-9198-9cf4f01e248d" width=400>
 
-3. **HuixiangDou2 Dependencies**. Simply use `pip install`.
+3. **HuixiangDou2 Dependencies**. Simply use `pip install`. We prefer `python3.10` for better requirements compatibility.
 
    ```bash
    python3 -m pip install -r requirements.txt

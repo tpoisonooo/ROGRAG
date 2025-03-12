@@ -26,6 +26,12 @@ def get_req_uuid():
     return str(uuid.uuid4())[0:6]
 
 def parse_string_list(input_str):
+    if input_str.startswith('```json'):
+        input_str = input_str[len('```json'):]
+
+    if input_str.endswith('```'):
+        input_str = input_str[0:-3]
+
     try:
         # 使用 ast.literal_eval 安全地解析字符串
         result = ast.literal_eval(input_str)
@@ -62,8 +68,7 @@ class ExampleAnalogy:
     def __init__(self,
                  resource,
                  api_data_dir: str,
-                 threshold: float = 0.3,
-                 language: str = 'zh_cn'):
+                 threshold: float = 0.3):
         if not os.path.exists(api_data_dir):
             logger.info('api_data_dir not exist, quit')
             return
@@ -91,7 +96,6 @@ class ExampleAnalogy:
         self.llm = resource.llm
         self.api_data_dir = api_data_dir
         self.threshold = threshold
-        self.language = language
         #读取问题模板
         self.variety_question = pd.read_csv(
             variety_template_path)  # 假设问题在第三、四、五列
@@ -114,17 +118,18 @@ class ExampleAnalogy:
                                      for item in row.split(sep) if item)
 
         # init llm chat template
-        self.EXAMPLIFY_TEMPLATE = server_prompts['examplify'][language]
+        self.EXAMPLIFY_TEMPLATE = server_prompts['examplify']['en']
 
     def is_alphanumeric(self, s):
         pattern = r"^[a-zA-Z0-9]+$"
         return bool(re.match(pattern, s))
 
-    async def process(self, query: str):
+    async def process(self, query: str, language='en'):
         query = query.replace(' ', '')
         print(query)
         metric = TextSimilarity()
         words = jieba.lcut(query.lower())
+        self.EXAMPLIFY_TEMPLATE = server_prompts['examplify'][language]
 
         # 查找在self.variety中出现的词
         matched_word = None
@@ -411,7 +416,7 @@ async def chat(talk_seed: Talk_seed):
 async def examplify(talk_seed: Talk_seed):
     global analogy
     if analogy:
-        examples = await analogy.process(query=talk_seed.user)
+        examples = await analogy.process(query=talk_seed.user, language=talk_seed.language.lower())
         logger.info(f'query {talk_seed.user}, {examples}')
         return examples
     return '{}'
