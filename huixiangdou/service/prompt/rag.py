@@ -310,6 +310,7 @@ rag_prompts["generate"] = {
 - 你不会不用简洁简短的文字输出，你不会输出无关用户指令的文字。
 - 你不会重复表达和同义反复。
 - 如果你不知道答案，或者提供的知识中没有足够的信息来提供答案，请告诉用户自己不知道答案并表达歉意。你不会编造任何东西。
+- 你会用中文回答问题
 
 ## 实体列表
 {entities}
@@ -336,6 +337,7 @@ Please use entities, relationships and search results (some of which may be irre
 - You will not output text that is not concise and brief, and you will not output text that is irrelevant to the user's instructions.
 - You will not repeat expressions and use synonyms excessively.
 - If you don't know the answer or if the provided knowledge do not contain sufficient information to provide an answer, just say so. Do not make anything up.
+- You will reply to questions in English.
 
 ## Entities
 {entities}

@@ -70,7 +70,7 @@ class ExampleAnalogy:
                  api_data_dir: str,
                  threshold: float = 0.3):
         if not os.path.exists(api_data_dir):
-            logger.info('api_data_dir not exist, quit')
+            logger.error('api_data_dir not exist, quit')
             return
         variety_path = os.path.join(api_data_dir,
                                     'variety/Rice_Variety_merged.csv')
@@ -116,9 +116,6 @@ class ExampleAnalogy:
                 self.gene_set.update(item.lower()
                                      for row in self.gene[column].astype(str)
                                      for item in row.split(sep) if item)
-
-        # init llm chat template
-        self.EXAMPLIFY_TEMPLATE = server_prompts['examplify']['en']
 
     def is_alphanumeric(self, s):
         pattern = r"^[a-zA-Z0-9]+$"
@@ -350,6 +347,7 @@ async def coreference_resolution(query: str, history: List, language: str):
 
 @app.post("/v2/chat")
 async def chat(talk_seed: Talk_seed):
+    logger.info('/v2/chat entry point')
     global assistant
     print('enable web search {}'.format(talk_seed.enable_web_search))
     req_id = get_req_uuid()
@@ -462,7 +460,7 @@ if __name__ == '__main__':
         assistant = SerialPipeline(work_dir=args.work_dir,
                                    config_path=args.config_path)
 
-    api_data_dir = '/home/khj/workspace/HuixiangDou/apidata/'
+    api_data_dir = 'apidata'
     analogy = ExampleAnalogy(resource=assistant.resource,
                              api_data_dir=api_data_dir)
 
