@@ -30,11 +30,18 @@ class Embedder:
             self.client = SentenceTransformer(
                 model_name_or_path=model_path).half()
         elif 'bge' in self._type:
-            from FlagEmbedding.visual.modeling import Visualized_BGE
+            # from FlagEmbedding.visual.modeling import Visualized_BGE
+            # self.support_image = True
+            # vision_weight_path = os.path.join(model_path, 'Visualized_m3.pth')
+            # self.client = Visualized_BGE(
+            #     model_name_bge=model_path,
+            #     model_weight=vision_weight_path).eval()
+            import torch
+            from visual_bge.modeling import Visualized_BGE
             self.support_image = True
             vision_weight_path = os.path.join(model_path, 'Visualized_m3.pth')
             self.client = Visualized_BGE(
-                model_name_bge=model_path,
+                model_name_bge='BAAI/bge-m3',
                 model_weight=vision_weight_path).eval()
         elif 'siliconcloud' in self._type:
             api_token = model_config['api_token'].strip()
@@ -60,6 +67,7 @@ class Embedder:
 
     @classmethod
     def model_type(self, model_path):
+
         """Check text2vec model using multimodal or not."""
         if model_path.startswith('https'):
             return 'siliconcloud'
