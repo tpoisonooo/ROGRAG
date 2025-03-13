@@ -1,12 +1,12 @@
 aiohttp
 beautifulsoup4
-duckduckgo_search
 einops
 redis
-# faiss-gpu
+faiss-gpu
 loguru
 lxml_html_clean
 networkx>=3.0
+neo4j
 numpy<2.0.0
 openai>=1.0.0
 openpyxl
@@ -27,6 +27,7 @@ scikit-learn
 texttable
 tiktoken
 torch>=2.0.0
+tenacity
 transformers>=4.38
 transformers_stream_generator
 unstructured
