@@ -148,12 +148,10 @@ class Faiss():
     def build_index(self, np_feature: np.ndarray,
                     distance_strategy: DistanceStrategy):
         dimension = np_feature.shape[-1]
-        # import pdb
-        # pdb.set_trace()
         ef_construction = 64
         efSearch = 128
-        M = 32
-        m = 8
+        M = 32 #邻居数
+        m = 16 #子量化器数量
         pq_nbits = 8
         # max neighours for each node
         # see https://github.com/facebookresearch/faiss/wiki/Indexing-1M-vectors
@@ -200,8 +198,6 @@ class Faiss():
             index = faiss.read_index(index_path)
         batchsize = 1
         # max neighbours for each node
-        # import pdb
-        # pdb.set_trace()
         try:
             batchsize_str = os.getenv('HUIXIANGDOU_BATCHSIZE')
             if batchsize_str is None:
@@ -236,7 +232,7 @@ class Faiss():
                     logger.error('np_feature is None')
                     continue               
                 all_features.append(np_feature)
-            
+
             all_features = np.vstack(all_features).astype('float32')  # 转成 (N, D) 矩阵
             if index is None:
                 index = self.build_index(
