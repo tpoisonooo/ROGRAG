@@ -150,15 +150,17 @@ class Faiss():
         dimension = np_feature.shape[-1]
         ef_construction = 64
         efSearch = 128
-        M = 32
+        M = 32 #邻居数
+        m = 16 #子量化器数量
+        pq_nbits = 8
         # max neighours for each node
         # see https://github.com/facebookresearch/faiss/wiki/Indexing-1M-vectors
         if distance_strategy == DistanceStrategy.EUCLIDEAN_DISTANCE:
-            # index = faiss.IndexFlatL2(dimension)
-            index = faiss.IndexHNSWFlat(dimension, M, faiss.METRIC_L2)
+            index = faiss.IndexHNSWPQ(dimension, m, M)  
+            index.metric_type = faiss.METRIC_L2  # Set metric for Euclidean distance
         elif distance_strategy == DistanceStrategy.MAX_INNER_PRODUCT:
-            # index = faiss.IndexFlatIP(dimension)
-            index = faiss.IndexHNSWFlat(dimension, M, faiss.METRIC_IP)
+            index = faiss.IndexHNSWPQ(dimension, m, M)  
+            index.metric_type = faiss.METRIC_IP  # Set metric for inner product
         else:
             raise ValueError('Unknown distance {}'.format(distance_strategy))
         index.hnsw.efSearch = efSearch
@@ -196,7 +198,6 @@ class Faiss():
             index = faiss.read_index(index_path)
         batchsize = 1
         # max neighbours for each node
-
         try:
             batchsize_str = os.getenv('HUIXIANGDOU_BATCHSIZE')
             if batchsize_str is None:
@@ -210,68 +211,83 @@ class Faiss():
             batchsize = 1
 
         if batchsize == 1:
-            for chunk in tqdm(save_chunks, 'chunks'):
+            # 存储所有 np_feature
+            all_features = []
+            for chunk in tqdm(save_chunks, desc='chunks'):
                 np_feature = None
                 try:
                     if chunk.modal == 'text':
-                        np_feature = embedder.embed_query(
-                            text=chunk.content_or_path)
+                        np_feature = embedder.embed_query(text=chunk.content_or_path)
                     elif chunk.modal == 'image':
-                        np_feature = embedder.embed_query(
-                            path=chunk.content_or_path)
+                        np_feature = embedder.embed_query(path=chunk.content_or_path)
                     elif chunk.modal == 'fasta':
-                        np_feature = embedder.embed_query(
-                            text=chunk.content_or_path)
+                        np_feature = embedder.embed_query(text=chunk.content_or_path)
                     else:
-                        raise ValueError(
-                            f'Unimplement chunk type: {chunk.modal}')
+                        raise ValueError(f'Unimplemented chunk type: {chunk.modal}')
                 except Exception as e:
-                    logger.error('{}'.format(e))
+                    logger.error(f'Error extracting feature: {e}')
+                    continue  # 继续下一个数据
 
                 if np_feature is None:
                     logger.error('np_feature is None')
-                    continue
+                    continue               
+                all_features.append(np_feature)
 
-                if index is None:
-                    index = self.build_index(
-                        np_feature=np_feature,
-                        distance_strategy=embedder.distance_strategy)
-                index.add(np_feature)
+            all_features = np.vstack(all_features).astype('float32')  # 转成 (N, D) 矩阵
+            if index is None:
+                index = self.build_index(
+                    np_feature=all_features,
+                    distance_strategy=embedder.distance_strategy)
+                # **步骤 3：训练索引**
+                index.train(all_features)  # 先训练索引
+            # **步骤 4：添加数据**
+            index.add(all_features)
         else:
             # batching
             block_text, block_image, block_fasta = self.split_by_batchsize(
                 chunks=save_chunks, batchsize=batchsize)
-            for subchunks in tqdm(block_text, 'batching_build_text'):
-                np_features = embedder.embed_query_batch_text(chunks=subchunks)
+            all_features = []
+            # 处理文本
+            for subchunks in tqdm(block_text, desc='batching_build_text'):
+                try:
+                    np_features = embedder.embed_query_batch_text(chunks=subchunks)
+                    if np_features is not None:
+                        all_features.append(np_features)
+                except Exception as e:
+                    logger.error(f'Error processing text batch: {e}')
 
-                if index is None:
-                    index = self.build_index(
-                        np_feature=np_features,
-                        distance_strategy=embedder.distance_strategy)
-                index.add(np_features)
+            # 处理FASTA
+            for subchunks in tqdm(block_fasta, desc='batching_build_fasta'):
+                try:
+                    np_features = embedder.embed_query_batch_text(chunks=subchunks)
+                    if np_features is not None:
+                        all_features.append(np_features)
+                except Exception as e:
+                    logger.error(f'Error processing fasta batch: {e}')
 
-            for subchunks in tqdm(block_fasta, 'batching_build_fasta'):
-                np_features = embedder.embed_query_batch_text(chunks=subchunks)
-
-                if index is None:
-                    index = self.build_index(
-                        np_feature=np_features,
-                        distance_strategy=embedder.distance_strategy)
-                index.add(np_features)
-
-            for subchunks in tqdm(block_image, 'batching_build_image'):
+            # 处理图像
+            for subchunks in tqdm(block_image, desc='batching_build_image'):
                 for chunk in subchunks:
-                    np_feature = embedder.embed_query(
-                        path=chunk.content_or_path)
-                    if np_feature is None:
-                        logger.error('np_feature is None')
-                        continue
+                    try:
+                        np_feature = embedder.embed_query(path=chunk.content_or_path)
+                        if np_feature is not None:
+                            all_features.append(np_feature)
+                    except Exception as e:
+                        logger.error(f'Error processing image batch: {e}')
 
-                    if index is None:
-                        index = self.build_index(
-                            np_feature=np_feature,
-                            distance_strategy=embedder.distance_strategy)
-                    index.add(np_feature)
+            # 统一转换数据格式
+            if all_features:
+                all_features = np.vstack(all_features).astype('float32')
+
+                if index is None:
+                    index = self.build_index(
+                        np_feature=all_features,
+                        distance_strategy=embedder.distance_strategy)
+
+                    index.train(all_features)  # 训练索引
+                index.add(all_features)    # 添加数据
+            else:
+                logger.error('No valid features extracted, skipping index building.')
 
         # save index separately since it is not picklable
         faiss.write_index(index, index_path)
