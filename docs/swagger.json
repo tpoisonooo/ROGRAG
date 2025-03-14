@@ -25,7 +25,7 @@ servers:
   - url: https://petstore3.swagger.io/api/v3
 tags:
   - name: rag
-    description: 丰登 LLM
+    description: RAG
 
 paths:
   /v2/chat:
