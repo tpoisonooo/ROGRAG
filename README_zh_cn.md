@@ -21,7 +21,7 @@ HuixiangDou2 并没有提出新的方法，而是合并多个开源项目——H
 
 ## 版本说明
 
-与 [HuixiangDou1](https://github.com/internlm/huixiangdou) 相比做了精度优化和 `async` 重构：
+与 [HuixiangDou1](https://github.com/internlm/huixiangdou) 扩展功能相比，v2 专注提升精度：
 1. **图谱方案**。稠密计算仅用于查询近似实体和关系
 2. 移植/合并多个开源实现，代码差异 ~18k 行
   - **数据**。整理一套 LLM 未完全见过的、真实领域知识作测试（gpt 准确度低于 0.6）
@@ -31,7 +31,7 @@ HuixiangDou2 并没有提出新的方法，而是合并多个开源项目——H
     <img src="https://github.com/user-attachments/assets/c3453bc8-85d5-47e1-8160-7ba28a467a70" width="300">
     </div>
 
-3. API 保持兼容。过去的微信、飞书、 Web 前后端都可以用。具体入参对比：
+3. 版本间的 API 保持兼容。v1 的微信、飞书、 Web 前后端都可以用。具体入参对比：
    ```text
    # v1 API https://github.com/InternLM/HuixiangDou/blob/main/huixiangdou/service/parallel_pipeline.py#L290
    async def generate(self,
@@ -51,6 +51,8 @@ HuixiangDou2 并没有提出新的方法，而是合并多个开源项目——H
 
    *  history item 从 `Tuple` 改 `Pair`，是因为二代支持 [Swagger API](./docs/swagger.json)，类似知乎直答的效果
    *  language 从 `zh` 改 `zh_cn`，因为中文本来就有简繁两版
+   *  enable_web_search 和 enable_code_search 放进 `query` 里。设计上更合理
+   *  request_id 是考虑日志级别，每个 request 的日志应该记录进不同文件，而不是所有用户的处理日志糊到一起
    
 ## 文档
 
