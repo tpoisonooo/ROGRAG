@@ -49,7 +49,7 @@ HuixiangDou2 并没有提出新的方法，而是合并多个开源项目——H
                    language: str = 'zh_cn'):
    ```
 
-   *  history item 从 `Tuple` 改 `Pair`，是因为二代支持 [Swagger API](./docs/swagger.json)，配合前端做到类似知乎直答的效果
+   *  history item 从 `Tuple` 改 `Pair`，是因为二代支持 [Swagger API](./docs/swagger.json)，类似知乎直答的效果
    *  language 从 `zh` 改 `zh_cn`，因为中文本来就有简繁两版
    
 ## 文档
