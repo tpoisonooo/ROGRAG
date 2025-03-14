@@ -3,7 +3,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # 基础 URL
-BASE_URL = "http://127.0.0.1:23333"
+BASE_URL = "http://127.0.0.1:23334"
 
 # 测试 /v2/chat 接口
 def test_chat_coref():
@@ -43,7 +43,8 @@ def test_chat_zh():
     request_body = {
         "language": "zh_CN",
         "enable_web_search": False,
-        "user": "OsGL1-1 和OsGL1-11有什么区别",
+        # "user": "AGIS_Os05g040410 和  AGIS_Os06g035130 相似的环境响应性有多少种？",
+        "user": "大竹青黄豆标准化生产有啥用？",
         "history": []
         # "history": [
         #     {
@@ -135,8 +136,8 @@ if __name__ == "__main__":
     # print("Testing /v2/chat endpoint...")
     # test_chat_en()
 
-    print("\nTesting /v2/exemplify endpoint...")
-    test_exemplify()
+    # print("\nTesting /v2/exemplify endpoint...")
+    # test_exemplify()
 
     # 示例：并行发送 5 个请求
     # parallel_test_chat_coref(5)

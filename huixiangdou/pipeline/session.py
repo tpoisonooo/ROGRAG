@@ -62,7 +62,7 @@ class Session:
             return []
         refs = list(
             set([
-                os.path.basename(c.metadata["source"])
+                os.path.basename(c.metadata["source"]) if "source" in c.metadata else "大豆知识库"
                 for c in self.fused_reply.sources
             ] if self.fused_reply is not None else []))
         return refs

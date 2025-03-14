@@ -8,6 +8,7 @@ from multiprocessing import Pool
 from typing import Dict, List, Tuple, Iterator
 import random
 import pytoml
+import csv
 from loguru import logger
 from tqdm import tqdm
 
@@ -198,18 +199,28 @@ class FeatureStore:
 
         return None
 
-    async def build_dense(self, files: Iterator[FileName]) -> None:
+    async def build_qa(self, files: Iterator[FileName]) -> None:
         """Split docs into chunks, build knowledge graph and base based on them."""
-        denseDB = Faiss.load_local(os.path.join(self.work_dir, 'db_dense'))
-        for file in tqdm(files, 'build dense'):
-            if not file.state:
-                logger.error(f'unknown file state {file}')
-                continue
 
-            raw_chunks = self.split_to_chunks(file)
-            for c in raw_chunks:
-                denseDB.upsert(c)
-        denseDB.save_local()
+        denseDB = Faiss.load_local(os.path.join(self.work_dir, 'db_qa'))
+        for file in tqdm(files, 'build qa pair'):
+            logger.info(f'skip {file} for not json type.')
+            if file._type != 'excel':
+                continue
+            
+            with open(file.origin, mode='r') as f:
+                csv_reader = csv.reader(f)
+                # 读取 csv 文件的表头（假设第一行是表头）
+                headers = next(csv_reader)
+                print("表头：", headers)
+
+                # 逐行读取 csv 文件的内容
+                for row in csv_reader:
+                    source, question, answer = row[0], row[2], row[3]
+                    c = Chunk(content_or_path=question, metadata={'answer':answer, 'source': source})
+                    denseDB.upsert(c)
+
+        denseDB.save(folder_path=os.path.join(self.work_dir, 'db_qa'), embedder=self.embedder)
 
     def analyze(self, chunks: List[Chunk]):
         """Output documents length mean, median and histogram."""
@@ -321,9 +332,13 @@ class FeatureStore:
         """
 
         documents = filter(lambda x: x._type != 'code', files)
-        await self.build_knowledge(files=documents)
+        import pdb
+        pdb.set_trace()
+        if args.method == 'raw':
+            await self.build_knowledge(files=documents)
+        elif args.method == 'qa':
+            await self.build_qa(files=documents)
         return
-
 
 def parse_args():
     """Parse command-line arguments."""
@@ -335,10 +350,10 @@ def parse_args():
                         help='Working directory.')
     parser.add_argument(
         '--method',
-        nargs='+',
-        choices=['knowledge', 'dense', 'inverted', 'bm25'],
-        default=['knowledge', 'inverted', 'bm25'],
-        help='Supported retrieve method, use knowledge and sparse by default.')
+        type=str,
+        choices=['raw', 'qa'],
+        default='raw',
+        help='Knowledge base content type, support raw or qa. `raw` means raw text; `qa` means json qa pair.')
     parser.add_argument(
         '--repo_dir',
         type=str,

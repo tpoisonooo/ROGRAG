@@ -7,7 +7,7 @@ from .knowledge import KnowledgeRetriever
 from .web import WebRetriever
 from .bm25 import BM25Retriever
 from .inverted import InvertedRetriever
-from .dense import DenseRetriever
+from .qa import QARetriever
 from .base import RetrieveResource
 from enum import Enum
 
@@ -20,6 +20,7 @@ class RetrieveMethod(str, Enum):
     BM25 = "BM25"
     WEB = "WEB"
     INVERTED = "INVERTED"
+    QA = "QA"
 
 
 class SharedRetrieverPool:
@@ -34,7 +35,8 @@ class SharedRetrieverPool:
             RetrieveMethod.WEB: WebRetriever,
             RetrieveMethod.BM25: BM25Retriever,
             RetrieveMethod.INVERTED: InvertedRetriever,
-            RetrieveMethod.REASON: ReasonRetriever
+            RetrieveMethod.REASON: ReasonRetriever,
+            RetrieveMethod.QA: QARetriever
         }
 
     def get(self,

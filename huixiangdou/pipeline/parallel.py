@@ -124,6 +124,7 @@ class ParallelPipeline:
         self.pool = SharedRetrieverPool(resource=self.resource)
         self.retriever_knowledge = self.pool.get(
             work_dir=work_dir, method=RetrieveMethod.KNOWLEDGE)
+        self.retriever_qa = self.pool.get(work_dir=work_dir, method=RetrieveMethod.QA)
         self.retriever_web = self.pool.get(work_dir=work_dir,
                                            method=RetrieveMethod.WEB)
         self.config_path = config_path
@@ -162,9 +163,32 @@ class ParallelPipeline:
             if sess.code in direct_chat_states:
                 direct_chat = True
                 break
-            
+        
+        # yield stage
+        sess.stage = "1_search"
+        yield sess
+
+        # 检索大豆
+        soybean_reply = await self.retriever_qa.explore(query=sess.query)
+        if soybean_reply.sources:
+            sess.retrieve_replies = [soybean_reply]
+            async for resp in reduce.process(sess):
+                yield resp
+            return
+
+        # # 检索水稻
+        # score = await self.retriever_knowledge.similarity_score(query=query)
+        # sess.logger.info('### rice simliarity score {}'.format(score))
+
+        # # 跟二者都无关，直接 chat
+        # if score < self.threshold and not soybean_reply.sources:
+        #     direct_chat = True
+
+        # 检索水稻
         score = await self.retriever_knowledge.similarity_score(query=query)
-        sess.logger.info('### simliarity score {}'.format(score))
+        sess.logger.info('### rice simliarity score {}'.format(score))
+
+        # 跟二者都无关，直接 chat
         if score < self.threshold:
             direct_chat = True
 
@@ -173,9 +197,6 @@ class ParallelPipeline:
                 yield resp
             return
 
-        sess.stage = "1_search"
-        yield sess
-
         # parallel run text2vec, websearch and codesearch
         tasks = [self.retriever_knowledge.explore(query=sess.query)]
         if query.enable_web_search:
@@ -183,5 +204,7 @@ class ParallelPipeline:
 
         sess.retrieve_replies = await asyncio.gather(*tasks,
                                                      return_exceptions=True)
+        # if soybean_reply.sources:
+            # sess.retrieve_replies = [soybean_reply] + sess.retrieve_replies
         async for sess in reduce.process(sess):
             yield sess

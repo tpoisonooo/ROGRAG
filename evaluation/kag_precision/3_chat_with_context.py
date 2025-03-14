@@ -1,5 +1,5 @@
 from huixiangdou.primitive import LLM, always_get_an_event_loop, RecursiveCharacterTextSplitter, Query
-from huixiangdou.service.retriever import DenseRetriever
+from huixiangdou.service.retriever import QARetriever
 import os
 import json
 from loguru import logger

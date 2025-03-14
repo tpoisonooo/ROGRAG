@@ -4,5 +4,5 @@ from .inverted import InvertedRetriever
 from .knowledge import KnowledgeRetriever
 from .web import WebRetriever
 from .bm25 import BM25Retriever
-from .dense import DenseRetriever
+from .qa import QARetriever
 from .logic import ReasonRetriever

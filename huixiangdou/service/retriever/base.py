@@ -44,7 +44,7 @@ class RetrieveReply:
 
     def format_prompt(self, query: str, language: str = "zh_cn"):
         text_units = [["参考文献", "参考内容"]] + [[
-            os.path.basename(s.metadata['source']), s.content_or_path
+            os.path.basename(s.metadata['source']) if 'source' in s.metadata else '大豆知识库', s.content_or_path
         ] for s in self.sources]
         formatted_str = rag_prompts["generate"][language].format(
             entities=list_of_list_to_csv(self.nodes),
@@ -57,11 +57,11 @@ class RetrieveReply:
     def format_evidence(self, language: str = "zh_cn"):
         if 'zh' in language:
             text_units = [["参考文献", "参考内容"]] + [[
-                os.path.basename(s.metadata['source']), s.content_or_path
+                os.path.basename(s.metadata['source']) if 'source' in s.metadata else '大豆知识库', s.content_or_path
             ] for s in self.sources]
         else:
             text_units = [["Sources", "References"]] + [[
-                os.path.basename(s.metadata['source']), s.content_or_path
+                os.path.basename(s.metadata['source']) if 'source' in s.metadata else '大豆知识库', s.content_or_path
             ] for s in self.sources]
         template = """## entities
 {entities}

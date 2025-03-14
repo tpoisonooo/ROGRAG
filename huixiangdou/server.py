@@ -379,7 +379,7 @@ async def chat(talk_seed: Talk_seed):
 
                 logger.info(sources)
                 for source in sources:
-                    ref = source.metadata["source"]
+                    ref = source.metadata["source"] if "source" in source.metadata else "大豆知识库"
 
                     if '://' in ref:
                         reference = {
