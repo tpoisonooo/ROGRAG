@@ -19,9 +19,16 @@ Thus, HuixiangDou2 didn't introduce new methods but integrated multiple open-sou
 <img src="https://github.com/user-attachments/assets/19558f67-9a3a-48a1-a1c1-7b0a0654602f" width=400>
 </div>
 
+## Documentation
+- [1. How to Run (CMD / Swagger API / Gradio mode)](docs/en/doc_how_to_run.md)
+- [2. Directory Structure and Function](docs/en/doc_architecture.md)
+- [**FAQ** about environment and error](https://github.com/tpoisonooo/HuixiangDou2/issues/8) 
+
+If it is useful to you, please star it ⭐
+
 ## Version Description
 
-Compared to [HuixiangDou1](https://github.com/internlm/huixiangdou), this repo improves accuracy and `async` refactor:
+Compared to [HuixiangDou1](https://github.com/internlm/huixiangdou), this repo improves accuracy:
 1. **Graph Schema**. Dense retrieval is only for querying similar entities and relationships.
 2. Ported/merged multiple open-source implementations, with code differences of nearly 18k lines:
    - **Data**. Organized a set of real domain knowledge that LLM has not fully seen for testing (gpt accuracy < 0.6)
@@ -31,14 +38,24 @@ Compared to [HuixiangDou1](https://github.com/internlm/huixiangdou), this repo i
       <img src="https://github.com/user-attachments/assets/c3453bc8-85d5-47e1-8160-7ba28a467a70" width=300>
       </div>
      
-3. API remains compatible
+3. API remains compatible. That means wechat/dingtalk/web in v1 is also accessible.
+   ```text
+   # v1 API https://github.com/InternLM/HuixiangDou/blob/main/huixiangdou/service/parallel_pipeline.py#L290
+   async def generate(self,
+               query: Union[Query, str],
+               history: List[Tuple[str]]=[], 
+               language: str='zh', 
+               enable_web_search: bool=True,
+               enable_code_search: bool=True):
 
-If it is useful to you, please star it ⭐
-
-## Documentation
-- [1. How to Run (CMD / Swagger API / Gradio mode)](docs/en/doc_how_to_run.md)
-- [2. Directory Structure and Function](docs/en/doc_architecture.md)
-- [**FAQ** about environment and error](https://github.com/tpoisonooo/HuixiangDou2/issues/8) 
+   # v2 API https://github.com/tpoisonooo/HuixiangDou2/blob/main/huixiangdou/pipeline/parallel.py#L135
+   async def generate(self,
+                   query: Union[Query, str],
+                   history: List[Pair] = [],
+                   request_id: str = 'default',
+                   language: str = 'zh_cn'):
+   ```
+   
 
 ## Acknowledgements
 - [SiliconCloud](https://siliconflow.cn) Abundant LLM API, some models are free
