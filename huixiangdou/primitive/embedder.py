@@ -41,7 +41,7 @@ class Embedder:
             self.support_image = True
             vision_weight_path = os.path.join(model_path, 'Visualized_m3.pth')
             self.client = Visualized_BGE(
-                model_name_bge='BAAI/bge-m3',
+                model_name_bge = model_path,
                 model_weight=vision_weight_path).eval()
         elif 'siliconcloud' in self._type:
             api_token = model_config['api_token'].strip()
