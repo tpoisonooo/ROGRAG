@@ -4,12 +4,14 @@ import time
 
 # 定义要发送的数据
 data = {
-    "query_id": "random_string_for_log_analysis",  # 自己定义的随机 str，用来 async 映射谁是谁的消息
+    "query_id":
+    "random_string_for_log_analysis",  # 自己定义的随机 str，用来 async 映射谁是谁的消息
     "groupname": "茴香豆（大暑群）",  # 群名
-    "username": "tpoisonooo", # 微信群中的用户名
+    "username": "tpoisonooo",  # 微信群中的用户名
     "query": {
-        "type": "text",  # 类型，支持 text 和 poll 两种。 text 意味上行给服务器发消息； poll 意味着拉**所有历史** chat 结果。
-        "content": "你好，请问如何安装 mmpose ?" # 群里发的问题
+        "type":
+        "text",  # 类型，支持 text 和 poll 两种。 text 意味上行给服务器发消息； poll 意味着拉**所有历史** chat 结果。
+        "content": "你好，请问如何安装 mmpose ?"  # 群里发的问题
     }
 }
 
@@ -59,9 +61,7 @@ data = {
 url = "http://139.224.198.162:18443/api/v1/message/v1/wechat/3Cy7"  # 请替换为实际的API URL
 
 # 设置请求头，通常需要包含Content-Type为application/json
-headers = {
-    'Content-Type': 'application/json'
-}
+headers = {'Content-Type': 'application/json'}
 
 # 发送POST请求
 response = requests.post(url, data=json.dumps(data), headers=headers)

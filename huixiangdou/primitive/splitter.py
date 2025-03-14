@@ -132,8 +132,8 @@ class TextSplitter(ABC):
                     # - or if we still have any chunks and the length is long
                     while total > self._chunk_overlap or (
                             total + _len +
-                        (separator_len if len(current_chunk) > 0 else 0)
-                            > self._chunk_size and total > 0):
+                        (separator_len if len(current_chunk) > 0 else 0) >
+                            self._chunk_size and total > 0):
                         total -= self._length_function(current_chunk[0]) + (
                             separator_len if len(current_chunk) > 1 else 0)
                         current_chunk = current_chunk[1:]
@@ -492,8 +492,8 @@ class MarkdownHeaderTextSplitter:
                         current_header_level = sep.count("#")
 
                         # Pop out headers of lower or same level from the stack
-                        while (header_stack and header_stack[-1]["level"]
-                               >= current_header_level):
+                        while (header_stack and header_stack[-1]["level"] >=
+                               current_header_level):
                             # We have encountered a new header
                             # at the same or higher level
                             popped_header = header_stack.pop()

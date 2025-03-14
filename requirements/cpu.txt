@@ -3,6 +3,7 @@ aiohttp
 beautifulsoup4
 duckduckgo_search
 einops
+redis
 faiss-cpu
 loguru
 lxml_html_clean

@@ -1,6 +1,7 @@
 import os
 import shutil
 
+
 def copy_files(src_dir, dest_dir):
     # 遍历源目录
     for root, dirs, files in os.walk(src_dir):
@@ -13,6 +14,7 @@ def copy_files(src_dir, dest_dir):
 
             shutil.copy(src_file, dest_file)
             print(f"Copied '{src_file}' to '{dest_file}'")
+
 
 # 指定源目录和目标目录
 source_directory = '/home/khj/CNKI_pure_text'

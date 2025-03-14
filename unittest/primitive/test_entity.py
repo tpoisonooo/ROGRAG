@@ -28,5 +28,6 @@ def test_entity_build_and_query():
 
     shutil.rmtree(work_dir)
 
+
 if __name__ == '__main__':
     test_entity_build_and_query()

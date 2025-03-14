@@ -3,12 +3,15 @@ import asyncio
 from huixiangdou.primitive import RPM, TPM  # 替换 your_module 为你的模块名
 from datetime import datetime, timedelta
 from loguru import logger
+
+
 # 测试 RPM 类
 @pytest.mark.asyncio
 async def test_rpm():
     rpm_instance = RPM(rpm=1)
     await rpm_instance.wait()
     assert rpm_instance.record['counter'] == 1
+
 
 # 测试 RPM 类的速率限制
 @pytest.mark.asyncio
@@ -22,6 +25,7 @@ async def test_rpm_rate_limit():
     assert (end_time - start_time) <= timedelta(minutes=1)
     assert rpm_instance.record['counter'] == 1
 
+
 # 测试 TPM 类
 @pytest.mark.asyncio
 async def test_tpm():
@@ -31,7 +35,8 @@ async def test_tpm():
     assert tpm_instance.record['counter'] <= 2
     await tpm_instance.wait(1)
     assert tpm_instance.record['counter'] == 1
-    
+
+
 # 测试 TPM 类的速率限制
 @pytest.mark.asyncio
 async def test_tpm_rate_limit():
@@ -42,6 +47,7 @@ async def test_tpm_rate_limit():
     end_time = datetime.now()
     assert (end_time - start_time) <= timedelta(minutes=1)
     assert tpm_instance.record['counter'] == 1
+
 
 # 测试 TPM 类的 token_count 参数
 @pytest.mark.asyncio
@@ -57,10 +63,10 @@ def always_get_an_event_loop() -> asyncio.AbstractEventLoop:
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
-        logger.info("Creating a new event loop in a sub-thread.")
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
     return loop
+
 
 if __name__ == '__main__':
     loop = always_get_an_event_loop()
@@ -69,5 +75,3 @@ if __name__ == '__main__':
     loop.run_until_complete(test_tpm())
     loop.run_until_complete(test_tpm_rate_limit())
     loop.run_until_complete(test_tpm_token_count())
-    
-    

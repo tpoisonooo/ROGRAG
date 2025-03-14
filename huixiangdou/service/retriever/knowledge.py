@@ -111,8 +111,7 @@ class KnowledgeRetriever(Retriever):
         ]
 
         all_one_hop_text_units_lookup = {
-            k:
-            set(
+            k: set(
                 split_string_by_multi_markers(v.props.get('source_id'),
                                               [GRAPH_FIELD_SEP]))
             for k, v in zip(all_one_hop_nodes, all_one_hop_nodes_data)
@@ -540,4 +539,4 @@ class KnowledgeRetriever(Retriever):
         if len(relation_pairs) > 0:
             relation_max_score = relation_pairs[0][1]
 
-        return max(entity_max_score, relation_max_score)
+        return (entity_max_score + relation_max_score) / 2

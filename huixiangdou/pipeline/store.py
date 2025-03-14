@@ -5,13 +5,11 @@ import os
 import shutil
 import time
 from multiprocessing import Pool
-from typing import Any, Dict, List, Tuple, Iterator
+from typing import Dict, List, Tuple, Iterator
 import random
 import pytoml
 from loguru import logger
 from tqdm import tqdm
-from .fasta import Fasta
-import asyncio
 
 from ..primitive import (ChineseRecursiveTextSplitter, Chunk, Faiss, FileName,
                          FileOperation, RecursiveCharacterTextSplitter,
@@ -282,7 +280,7 @@ class FeatureStore:
                                              '{}.code'.format(md5))
                 read_and_save(file)
 
-            elif file._type in ['md', 'text']:
+            elif file._type in ['md', 'text', 'json']:
                 # rename text files to new dir
                 md5 = self.file_opr.md5(file.origin)
                 file.copypath = os.path.join(
@@ -326,22 +324,21 @@ class FeatureStore:
 
         await self.build_knowledge(files=documents)
         return
-        tasks = []
-        if 'bm25' in args.method:
-            tasks.append(self.build_bm25(files=code))
+        # tasks = []
+        # if 'bm25' in args.method:
+        #     tasks.append(self.build_bm25(files=code))
 
-        if 'knowledge' in args.method:
-            tasks.append(self.build_knowledge(files=documents))
+        # if 'knowledge' in args.method:
+        #     tasks.append(self.build_knowledge(files=documents))
 
-        if 'inverted' in args.method:
-            fasta = Fasta(work_dir=self.work_dir, embedder=self.embedder)
-            tasks.append(
-                fasta.init(ner_path=args.fasta_ner, file_dir=args.fasta_file))
+        # if 'inverted' in args.method:
+        #     fasta = Fasta(work_dir=self.work_dir, embedder=self.embedder)
+        #     tasks.append(fasta.init(ner_path=args.fasta_ner, file_dir=args.fasta_file))
 
-        if 'dense' in args.method:
-            tasks.append(self.build_dense(files=documents))
+        # if 'dense' in args.method:
+        #     tasks.append(self.build_dense(files=documents))
 
-        await asyncio.gather(*tasks, return_exceptions=True)
+        # await asyncio.gather(*tasks, return_exceptions=True)
 
 
 def parse_args():
@@ -436,26 +433,15 @@ if __name__ == '__main__':
 
     loop = always_get_an_event_loop()
 
-    before_cost = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(
+    before = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(
     )
-
     loop.run_until_complete(store.init(files=files, args=args))
     store.file_opr.summarize(files)
 
-    after_cost = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(
+    after = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(
     )
-
-    if False:
-        with open('cost', 'a') as f:
-            input_token_cost = after_cost[0] - before_cost[0]
-            output_token_cost = after_cost[1] - before_cost[1]
-            time_cost = int(after_cost[2] - before_cost[2])
-            f.write(f'{input_token_cost} {output_token_cost} {time_cost}')
-            f.write('\n')
-
-        # async def init(self, files: List[FileName], graph_store: TuGraphStore, fasta_ner:str, fasta_file:str):
+    logger.info('input token {}, output token {}, timecost {}'.format(after[0]-before[0], after[1]-before[1], after[2]-before[2]))
     del store
 
     # calculate config threshold, write it back
-    # TODO uncomment
-    # loop.run_until_complete(write_back_config_threshold(resource=resource, work_dir=args.work_dir, config_path=args.config_path))
+    loop.run_until_complete(write_back_config_threshold(resource=resource, work_dir=args.work_dir, config_path=args.config_path))

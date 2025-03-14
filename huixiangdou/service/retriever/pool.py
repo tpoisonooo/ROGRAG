@@ -2,11 +2,12 @@ from .base import Retriever
 from .bm25 import BM25Retriever
 from loguru import logger
 import time
-from .knowledge import KnowledgeRetriever
 from .logic import ReasonRetriever
+from .knowledge import KnowledgeRetriever
 from .web import WebRetriever
 from .bm25 import BM25Retriever
 from .inverted import InvertedRetriever
+from .dense import DenseRetriever
 from .base import RetrieveResource
 from enum import Enum
 
