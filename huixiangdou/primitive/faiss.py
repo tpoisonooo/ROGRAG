@@ -239,8 +239,8 @@ class Faiss():
                     np_feature=all_features,
                     distance_strategy=embedder.distance_strategy)
                 # **步骤 3：训练索引**
-            index.train(all_features)  # 先训练索引
-                # **步骤 4：添加数据**
+                index.train(all_features)  # 先训练索引
+            # **步骤 4：添加数据**
             index.add(all_features)
         else:
             # batching
@@ -284,7 +284,7 @@ class Faiss():
                         np_feature=all_features,
                         distance_strategy=embedder.distance_strategy)
 
-                index.train(all_features)  # 训练索引
+                    index.train(all_features)  # 训练索引
                 index.add(all_features)    # 添加数据
             else:
                 logger.error('No valid features extracted, skipping index building.')
