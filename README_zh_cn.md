@@ -7,9 +7,11 @@
   </a>
 </div>
 
-GraphRAG 有很多地方要调，很难确保是参数生效还是 pipeline 生效。此外大语言模型（LLM）的训练集里其实有 RAG 测试数据。LLM input token 影响生成概率（背景知识：phi-4技术报告、[《当我谈RAG时我谈些什么》](https://link.zhihu.com/?target=https%3A//fatescript.github.io/blog/2024/LLM-RAG/)）。此时无法保证精度提升来源是 key token search 还是检索。
+## 🔥 简介
 
-HuixiangDou2 并没有提出新的方法，而是合并多个开源项目——HuixiangDou、KAG、LightRAG 和 DB-GPT，总计 18k 行代码，并在 `Qwen2.5-7B-Instruct` 表现不佳的测试集上进行了对比实验。分数从 60 涨到 74.5。 最终融出一个运行效果得到人类领域专家认可的 GraphRAG 实现。[这里是技术报告](https://arxiv.org/abs/2503.06474)。
+GraphRAG 有很多参数要调整，大语言模型（LLM）训练集也有 RAG 测试数据。LLM input token 影响生成概率（背景知识：phi-4技术报告、[《当我谈RAG时我谈些什么》](https://link.zhihu.com/?target=https%3A//fatescript.github.io/blog/2024/LLM-RAG/)）。无法保证精度提升来源是 key token search 还是检索。
+
+HuixiangDou2 合并多个开源项目——HuixiangDou、KAG、LightRAG 和 DB-GPT，总计 18k 行代码，并在 `Qwen2.5-7B-Instruct` 表现不佳的测试集上进行了对比实验。分数从 60 涨到 74.5。 最终融出一个运行效果得到人类领域专家认可的 GraphRAG 实现。[这里是技术报告](https://arxiv.org/abs/2503.06474)。
 
 <div align="center">
 <img src="https://github.com/user-attachments/assets/19558f67-9a3a-48a1-a1c1-7b0a0654602f" width="400">
@@ -19,7 +21,14 @@ HuixiangDou2 并没有提出新的方法，而是合并多个开源项目——H
 
 如果对你有用，麻烦 star 一下⭐
 
-## 版本说明
+## 📖 文档
+
+- [1. docker运行（命令行、Swagger API、Gradio 方式）](docs/zh_cn/doc_how_to_run.md)
+- [2. 源码运行](docs/zh_cn/doc_how_to_run.md)
+- [3. 目录结构功能](docs/zh_cn/doc_architecture.md)
+- [环境、报错 **FAQ**](https://github.com/tpoisonooo/HuixiangDou2/issues/8)
+
+## 🔆 版本说明
 
 与 [HuixiangDou1](https://github.com/internlm/huixiangdou) 扩展功能相比，v2 专注提升精度：
 1. **图谱方案**。稠密计算仅用于查询近似实体和关系
@@ -54,19 +63,14 @@ HuixiangDou2 并没有提出新的方法，而是合并多个开源项目——H
    *  enable_web_search 和 enable_code_search 放进 `query` 里。设计上更合理
    *  request_id 是考虑日志级别，每个 request 的日志应该记录进不同文件，而不是所有用户的处理日志糊到一起
    
-## 文档
 
-- [1. 如何运行（命令行、Swagger API、Gradio 三种方式）](docs/zh_cn/doc_how_to_run.md)
-- [2. 目录结构功能](docs/zh_cn/doc_architecture.md)
-- [环境、报错 **FAQ**](https://github.com/tpoisonooo/HuixiangDou2/issues/8)
-
-## 致谢
+## 🍀 致谢
 - [SiliconCloud](https://siliconflow.cn/zh-cn/siliconcloud)    海量 LLM API，部分模型免费
 - [KAG](https://github.com/OpenSPG/KAG)    基于推理的图谱检索
 - [DB-GPT](https://github.com/eosphoros-ai/DB-GPT)    LLM 工具集合体
 - [LightRAG](https://github.com/HKUDS/LightRAG)    简单高效的图谱检索方案
 
-## 引用
+## 📝 引用
 ```text
 @misc{kong2024huixiangdou,
       title={HuiXiangDou: Overcoming Group Chat Scenarios with LLM-based Technical Assistance},
