@@ -7,7 +7,7 @@ English | [Simplified Chinese](./README_zh_cn.md)
   </a>
 </div>
 
-## Introduction
+## 🔥 Introduction
 
 GraphRAG has many tuning spots, making it hard to discern whether performance gains stem from parameter adjustments or pipeline optimizations. Moreover, RAG test data is embedded in LLM training sets. LLM input tokens impact generation probabilities (background: phi-4 technical report). It's unclear if precision improvements originate from key token searches or retrievals.
 
@@ -19,7 +19,7 @@ Thus, HuixiangDou2 didn't introduce new methods but integrated multiple open-sou
 <img src="https://github.com/user-attachments/assets/19558f67-9a3a-48a1-a1c1-7b0a0654602f" width=400>
 </div>
 
-## Documentation
+## 📖 Documentation
 - [1. Run from Docker (CMD / Swagger Server API / Gradio)](docs/en/doc_how_to_run_from_docker.md)
 - [2. Run from Source](docs/en/doc_how_to_run.md)
 - [3. Directory Structure and Function](docs/en/doc_architecture.md)
@@ -27,7 +27,7 @@ Thus, HuixiangDou2 didn't introduce new methods but integrated multiple open-sou
 
 If it is useful to you, please star it ⭐
 
-## Version Description
+## 🔆 Version Description
 
 Compared to [HuixiangDou1](https://github.com/internlm/huixiangdou), this repo improves accuracy:
 1. **Graph Schema**. Dense retrieval is only for querying similar entities and relationships.
@@ -58,13 +58,13 @@ Compared to [HuixiangDou1](https://github.com/internlm/huixiangdou), this repo i
    ```
    
 
-## Acknowledgements
+## 🍀 Acknowledgements
 - [SiliconCloud](https://siliconflow.cn) Abundant LLM API, some models are free
 - [KAG](https://github.com/OpenSPG/KAG) Graph retrieval based on reasoning
 - [DB-GPT](https://github.com/eosphoros-ai/DB-GPT) LLM tool collection
 - [LightRAG](https://github.com/HKUDS/LightRAG) Simple and efficient graph retrieval solution
 
-## Citation
+## 📝 Citation
 ```text
 @misc{kong2024huixiangdou,
       title={HuiXiangDou: Overcoming Group Chat Scenarios with LLM-based Technical Assistance},
