@@ -20,10 +20,9 @@ Thus, HuixiangDou2 didn't introduce new methods but integrated multiple open-sou
 </div>
 
 ## Documentation
-- [1. How to Run (CMD / Swagger Server API / Gradio mode)](docs/en/doc_how_to_run.md)
-  - From source
-  - From docker image
-- [2. Directory Structure and Function](docs/en/doc_architecture.md)
+- [1. Run from Docker (CMD / Swagger Server API / Gradio)](docs/en/doc_how_to_run_from_docker.md)
+- [2. Run from Source](docs/en/doc_how_to_run.md)
+- [3. Directory Structure and Function](docs/en/doc_architecture.md)
 - [**FAQ** about environment and error](https://github.com/tpoisonooo/HuixiangDou2/issues/8) 
 
 If it is useful to you, please star it ⭐
