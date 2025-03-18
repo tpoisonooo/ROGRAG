@@ -1,4 +1,4 @@
-# 运行
+# 源码方式部署
 
 建图期间，我们会把 raw 文档整理成有结构的图谱形式。如图所示：
 
@@ -13,7 +13,8 @@
 - **图谱存储**：[TuGraph](https://github.com/TuGraph-family/tugraph-db)，开源图数据库（看作 mysql-server 即可）
 - **LLM**：本文档以 [SiliconCloud](https://cloud.siliconflow.cn) 提供的 Qwen2.5-7B-Instruct 为例，用户可切换为任何 [PyPI `openai`](https://pypi.org/project/openai/) 接口，无论模型来自 SFT 还是 remote API
 
-## 一、安装依赖
+
+## 一、配置环境
 
 1. **部署 TuGraph 服务**。[TuGraph 官方](https://tugraph-db.readthedocs.io/zh-cn/latest/5.installation%26running/index.html)支持 docker/在线服务/二进制文件部署，这里用 docker 部署 TuGraph（和 HuixiangDou2 环境无关，二者可以不在同一台机器上）
    
@@ -69,7 +70,7 @@
    cp config.ini.example config.ini
    ```
 
-## 二、创建
+## 二、创建知识库
 
 `tests/data` 下有两篇文档，把它拷贝到 `repodir`，建知识库。
 ```bash
@@ -81,7 +82,7 @@ python3 -m huixiangdou.pipeline.store
 
 <img src="https://github.com/user-attachments/assets/873fedfe-c2fe-47f2-bbb1-723c1c21c463" width=400>
 
-## 三、查询
+## 三、运行检索
 
 ### 命令行方式
 
