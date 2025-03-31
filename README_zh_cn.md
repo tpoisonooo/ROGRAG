@@ -17,8 +17,6 @@ ROGRAG 合并多个开源项目——HuixiangDou、KAG、LightRAG 和 DB-GPT，�
   <img src="https://github.com/user-attachments/assets/5754c247-f6af-44b2-addb-5840ee2ee247" width=600>
 </div>
 
-> 注意：开源这件事本身，对不同领域/行业的影响各不相同。我们只能提供代码和测试结论，**无法提供测试数据**。
-
 如果对你有用，麻烦 star 一下⭐
 
 ## 📖 文档
@@ -66,8 +64,12 @@ ROGRAG 合并多个开源项目——HuixiangDou、KAG、LightRAG 和 DB-GPT，�
 - [KAG](https://github.com/OpenSPG/KAG)    基于推理的图谱检索
 - [DB-GPT](https://github.com/eosphoros-ai/DB-GPT)    LLM 工具集合体
 - [LightRAG](https://github.com/HKUDS/LightRAG)    简单高效的图谱检索方案
+- [SeedBench](https://github.com/open-sciencelab/SeedBench)    育种行业 LLM（垂域）评测集
 
 ## 📝 引用
+
+开源这件事本身，对不同领域/行业的影响各不相同。我们只能提供代码和测试结论，**无法提供测试数据**。
+
 ```text
 @misc{kong2024huixiangdou,
       title={HuiXiangDou: Overcoming Group Chat Scenarios with LLM-based Technical Assistance},
