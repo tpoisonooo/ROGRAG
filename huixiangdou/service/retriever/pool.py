@@ -1,13 +1,12 @@
 from .base import Retriever
 from .bm25 import BM25Retriever
-from loguru import logger
 import time
 from .logic import ReasonRetriever
 from .knowledge import KnowledgeRetriever
 from .web import WebRetriever
 from .bm25 import BM25Retriever
-from .inverted import InvertedRetriever
 from .qa import QARetriever
+from .regular import RegularRetriever
 from .base import RetrieveResource
 from enum import Enum
 
@@ -21,6 +20,7 @@ class RetrieveMethod(str, Enum):
     WEB = "WEB"
     INVERTED = "INVERTED"
     QA = "QA"
+    REGULAR = "REGULAR"
 
 
 class SharedRetrieverPool:
@@ -34,15 +34,17 @@ class SharedRetrieverPool:
             RetrieveMethod.KNOWLEDGE: KnowledgeRetriever,
             RetrieveMethod.WEB: WebRetriever,
             RetrieveMethod.BM25: BM25Retriever,
-            RetrieveMethod.INVERTED: InvertedRetriever,
+            # RetrieveMethod.INVERTED: InvertedRetriever,
             RetrieveMethod.REASON: ReasonRetriever,
-            RetrieveMethod.QA: QARetriever
+            RetrieveMethod.QA: QARetriever,
+            RetrieveMethod.REGULAR: RegularRetriever
         }
 
     def get(self,
             fs_id: str = 'default',
             work_dir='workdir',
-            method: RetrieveMethod = RetrieveMethod.KNOWLEDGE) -> Retriever:
+            method: RetrieveMethod = RetrieveMethod.KNOWLEDGE,
+            **kwargs) -> Retriever:
         """Get database by id."""
 
         newkey = f'{fs_id}-{str(method)}'
@@ -67,7 +69,8 @@ class SharedRetrieverPool:
                 del del_value['retriever']
 
         instance = self.classes[method](resource=self.resource,
-                                        work_dir=work_dir)
+                                        work_dir=work_dir,
+                                        **kwargs)
         self.cache[newkey] = {'retriever': instance, 'time': time.time()}
         return instance
 

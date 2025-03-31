@@ -16,7 +16,7 @@ import pdb
 
 class KnowledgeRetriever(Retriever):
 
-    def __init__(self, resource: RetrieveResource, work_dir: str) -> None:
+    def __init__(self, resource: RetrieveResource, work_dir: str, **kwargs) -> None:
         super().__init__()
         """Init with model device type and config."""
         self.embedder = resource.embedder
@@ -211,9 +211,8 @@ class KnowledgeRetriever(Retriever):
             logger.warning(str(e), text)
             return [text]
 
-    async def _build_local_query_context(self, query: Query,
+    async def _build_local_query_context(self, query_param: Query,
                                          knowledge_graph_inst: GraphStore,
-                                         entities_vdb: Faiss,
                                          text_chunks_db: ChunkSQL,
                                          chunks: List[Chunk]) -> RetrieveReply:
         # if False:
@@ -262,9 +261,9 @@ class KnowledgeRetriever(Retriever):
                       if n is not None]
 
         use_text_units = await self._find_most_related_text_unit_from_entities(
-            node_datas, query, text_chunks_db, knowledge_graph_inst)
+            node_datas, query_param, text_chunks_db, knowledge_graph_inst)
         use_relations = await self._find_most_related_edges_from_entities(
-            node_datas, query, knowledge_graph_inst)
+            node_datas, query_param, knowledge_graph_inst)
         logger.info(
             f"Local query uses {len(node_datas)} entites, {len(use_relations)} relations, {len(use_text_units)} text units"
         )
@@ -367,8 +366,7 @@ class KnowledgeRetriever(Retriever):
         return all_text_units
 
     async def _build_global_query_context(
-            self, query_param: Query, knowledge_graph_inst: GraphStore,
-            relationships_vdb: Faiss, text_chunks_db: ChunkSQL,
+            self, query_param: Query, knowledge_graph_inst: GraphStore, text_chunks_db: ChunkSQL,
             chunks: List[Chunk]) -> RetrieveReply:
         if not chunks:
             return RetrieveReply()
@@ -481,18 +479,17 @@ class KnowledgeRetriever(Retriever):
 
         low_level_context = RetrieveReply()
         high_level_context = RetrieveReply()
-
         if ll_keywords:
             results = self.entityDB.similarity_search(
                 embedder=self.embedder,
                 query=query,
                 threshold=self.DENSE_THRESHOLD)
+            
             if results:
                 chunks = [r[0] for r in results[0:self.LOWLEVEL_DENSE_TOPK]]
                 low_level_context = await self._build_local_query_context(
-                    query=Query(text=ll_keywords),
+                    query_param=query,
                     knowledge_graph_inst=self.graph_store,
-                    entities_vdb=self.entityDB,
                     text_chunks_db=self.chunkDB,
                     chunks=chunks)
 
@@ -504,9 +501,8 @@ class KnowledgeRetriever(Retriever):
             if results:
                 chunks = [r[0] for r in results[0:self.HIGHLEVEL_DENSE_TOPK]]
                 high_level_context = await self._build_global_query_context(
-                    query_param=Query(text=hl_keywords),
+                    query_param=query,
                     knowledge_graph_inst=self.graph_store,
-                    relationships_vdb=self.relationDB,
                     text_chunks_db=self.chunkDB,
                     chunks=chunks)
         # for r in high_level_context.sources:

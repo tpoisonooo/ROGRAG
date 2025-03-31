@@ -269,7 +269,7 @@ class LLM:
                                               api_key=instance.api_key,
                                               timeout=timeout)
 
-            print(messages)
+            # print(messages)
             stream = await openai_async_client.chat.completions.create(
                 model=model,
                 messages=messages,

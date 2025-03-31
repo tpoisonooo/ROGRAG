@@ -54,7 +54,7 @@ class PreprocNode:
             else:
                 topic = 'undefine'
 
-            for block_intention in ['问候', 'greeting', 'undefine']:
+            for block_intention in ['问候', '表达个人感受', 'greeting', 'undefine']:
                 if block_intention in intention:
                     sess.code = ErrorCode.NOT_A_QUESTION
                     yield sess
@@ -127,6 +127,7 @@ class ParallelPipeline:
         self.retriever_qa = self.pool.get(work_dir=work_dir, method=RetrieveMethod.QA)
         self.retriever_web = self.pool.get(work_dir=work_dir,
                                            method=RetrieveMethod.WEB)
+        self.retriever_re = self.pool.get(work_dir=work_dir, method=RetrieveMethod.REGULAR)
         self.config_path = config_path
         self.work_dir = work_dir
         
@@ -169,20 +170,12 @@ class ParallelPipeline:
         yield sess
 
         # 检索大豆
-        soybean_reply = await self.retriever_qa.explore(query=sess.query)
-        if soybean_reply.sources:
-            sess.retrieve_replies = [soybean_reply]
+        qa_reply = await self.retriever_qa.explore(query=sess.query)
+        if qa_reply.sources:
+            sess.retrieve_replies = [qa_reply]
             async for resp in reduce.process(sess):
                 yield resp
             return
-
-        # # 检索水稻
-        # score = await self.retriever_knowledge.similarity_score(query=query)
-        # sess.logger.info('### rice simliarity score {}'.format(score))
-
-        # # 跟二者都无关，直接 chat
-        # if score < self.threshold and not soybean_reply.sources:
-        #     direct_chat = True
 
         # 检索水稻
         score = await self.retriever_knowledge.similarity_score(query=query)
@@ -198,7 +191,7 @@ class ParallelPipeline:
             return
 
         # parallel run text2vec, websearch and codesearch
-        tasks = [self.retriever_knowledge.explore(query=sess.query)]
+        tasks = [self.retriever_re.explore(query=sess.query), self.retriever_knowledge.explore(query=sess.query)]
         if query.enable_web_search:
             tasks.append(self.retriever_web.explore(query=sess.query))
 

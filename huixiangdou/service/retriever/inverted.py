@@ -4,10 +4,10 @@ from .base import Retriever, RetrieveResource, RetrieveReply
 
 import os
 
-
+@DeprecationWarning
 class InvertedRetriever(Retriever):
 
-    def __init__(self, resource: RetrieveResource, work_dir: str) -> None:
+    def __init__(self, resource: RetrieveResource, work_dir: str, **kwargs) -> None:
         super().__init__()
         """Init with model device type and config."""
         self.indexer = Entity2ChunkSQL(

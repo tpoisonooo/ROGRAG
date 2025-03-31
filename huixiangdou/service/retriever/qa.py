@@ -5,7 +5,7 @@ import os
 
 class QARetriever(Retriever):
 
-    def __init__(self, resource: RetrieveResource, work_dir: str) -> None:
+    def __init__(self, resource: RetrieveResource, work_dir: str, **kwargs) -> None:
         super().__init__()
         """Init with model device type and config."""
         self.faiss = Faiss.load_local(os.path.join(work_dir, 'db_qa'))
@@ -33,7 +33,7 @@ class QARetriever(Retriever):
             merged_content = ""
             for c in chunks:
                 merged_content += '问：{} 答：{}\n'.format(c.content_or_path, c.metadata["answer"])
-                sources.append(Chunk(content_or_path=merged_content, metadata={"source":"丰登·大豆知识库"}))
+                sources.append(Chunk(content_or_path=merged_content, metadata={"source":"丰登大豆知识库"}))
 
         r = RetrieveReply(sources=sources)
         return r

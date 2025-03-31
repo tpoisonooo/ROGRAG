@@ -6,7 +6,7 @@ import os
 
 class BM25Retriever(Retriever):
 
-    def __init__(self, resource: RetrieveResource, work_dir: str) -> None:
+    def __init__(self, resource: RetrieveResource, work_dir: str, **kwargs) -> None:
         super().__init__()
         """Init with model device type and config."""
         self.bm25 = BM25Okapi()
