@@ -12,7 +12,7 @@ English | [Simplified Chinese](./README_zh_cn.md)
 ROGRAG enhances LLM performance on specialized topics using a robust GraphRAG approach. It features a two-stage (dual-level and logic form methods) retrieval mechanism to improve accuracy without extra computation costs. ROGRAG achieves a 15% score boost on [SeedBench](https://github.com/open-sciencelab/SeedBench), outperforming mainstream methods. 
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/5754c247-f6af-44b2-addb-5840ee2ee247" width=600>
+  <img src="https://github.com/user-attachments/assets/5754c247-f6af-44b2-addb-5840ee2ee247" width=500>
 </div>
 
 **Key Highlights**:
