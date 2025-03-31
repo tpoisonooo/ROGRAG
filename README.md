@@ -9,7 +9,7 @@ English | [Simplified Chinese](./README_zh_cn.md)
 
 ## 🔥 Introduction
 
-ROGRAG enhances LLM performance on specialized topics using a robust GraphRAG approach. It features a two-stage (dual-level and logic form methods) retrieval mechanism to improve accuracy without extra computation costs. ROGRAG achieves a 25% score boost on [SeedBench](https://github.com/open-sciencelab/SeedBench), outperforming mainstream methods. 
+ROGRAG enhances LLM performance on specialized topics using a robust GraphRAG approach. It features a two-stage (dual-level and logic form methods) retrieval mechanism to improve accuracy without extra computation costs. ROGRAG achieves a 15% score boost on [SeedBench](https://github.com/open-sciencelab/SeedBench), outperforming mainstream methods. 
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/5754c247-f6af-44b2-addb-5840ee2ee247" width=600>
@@ -20,6 +20,18 @@ ROGRAG enhances LLM performance on specialized topics using a robust GraphRAG ap
   - Two-stage retrieval for robustness
   - Incremental database construction
   - Enhanced fuzzy matching and structured reasoning
+
+<div align="center">
+  
+| Method          | QA-1 (Accuracy) | QA-2 (F1) | QA-3 (Rouge) | QA-4 (Rouge) |
+|-----------------|-----------------|-----------|--------------|--------------|
+| vanilla (w/o RAG) | 0.57            | 0.71      | 0.16         | 0.35         |
+| LangChain        | 0.68            | 0.68      | 0.15         | 0.04         |
+| BM25             | 0.65            | 0.69      | 0.23         | 0.03         |
+| RQ-RAG           | 0.59            | 0.62      | 0.17         | 0.33         |
+| ROGRAG (Ours)    | **0.75**        | **0.79**  | **0.36**     | **0.38**     |
+
+</div>
 
 Deployed on an online research platform, ROGRAG is ready for integration. [Here](https://arxiv.org/abs/2503.06474) is the technical report.
 
