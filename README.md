@@ -33,7 +33,7 @@ If it is useful to you, please star it ⭐
 
 ## 🔆 Version Description
 
-Compared to [HuixiangDou1](https://github.com/internlm/huixiangdou), this repo improves accuracy:
+Compared to [HuixiangDou](https://github.com/internlm/huixiangdou), this repo improves accuracy:
 1. **Graph Schema**. Dense retrieval is only for querying similar entities and relationships.
 2. Ported/merged multiple open-source implementations, with code differences of nearly 18k lines:
    - **Data**. Organized a set of real domain knowledge that LLM has not fully seen for testing (gpt accuracy < 0.6)
