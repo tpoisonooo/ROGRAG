@@ -9,7 +9,7 @@
 
 ## 🔥 简介
 
-GraphRAG 有很多参数要调整，大语言模型（LLM）训练集也有 RAG 测试数据。LLM input token 影响生成概率（背景知识：phi-4技术报告、[《当我谈RAG时我谈些什么》](https://link.zhihu.com/?target=https%3A//fatescript.github.io/blog/2024/LLM-RAG/)）。无法保证精度提升来源是 key token search 还是检索。
+GraphRAG 有很多参数要调整，大语言模型（LLM）训练集也有 RAG 测试数据。LLM input token 影响生成概率（phi-4技术报告、[《当我谈RAG时我谈些什么》](https://link.zhihu.com/?target=https%3A//fatescript.github.io/blog/2024/LLM-RAG/)）。这些导致无法明确 LLM response 精度提升来源是 Key Token 还是检索 pipeline。
 
 ROGRAG 合并多个开源项目——HuixiangDou、KAG、LightRAG 和 DB-GPT，总计 18k 行代码，并在 `Qwen2.5-7B-Instruct` 表现不佳的测试集上进行了对比实验。分数从 60 涨到 74.5。 最终融出一个运行效果得到人类领域专家认可的 GraphRAG 实现。[这里是技术报告](https://arxiv.org/abs/2503.06474)。
 
@@ -33,8 +33,9 @@ ROGRAG 合并多个开源项目——HuixiangDou、KAG、LightRAG 和 DB-GPT，�
 与 [HuixiangDou](https://github.com/internlm/huixiangdou) 扩展功能相比，v2 专注提升精度：
 1. **图谱方案**。稠密计算仅用于查询近似实体和关系
 2. 移植/合并多个开源实现，代码差异 ~18k 行
-  - **数据**。整理一套 LLM 未完全见过的、真实领域知识作测试（gpt 准确度低于 0.6）
-  - **消融**。确认不同环节和参数对精度的影响
+
+    - **数据**。整理一套 LLM 未完全见过的、真实领域知识作测试（gpt 准确度低于 0.6）
+    - **消融**。确认不同环节和参数对精度的影响
 
 3. 版本间的 API 保持兼容。v1 的微信、飞书、 Web 前后端、[readthedocs](https://huixiangdou.readthedocs.io/zh-cn/latest/) 都可以用。具体入参对比：
    ```text
