@@ -87,7 +87,8 @@ class ReduceGenerate:
             yield sess
             sess.fused_reply = Retriever.fuse(replies=sess.retrieve_replies,
                                               query=sess.query,
-                                              resource=self.resource)
+                                              resource=self.resource,
+                                              keep_first_n=sess.keep_first_n)
 
             prompt = sess.fused_reply.format_prompt(query=real_question,
                                                     language=sess.language)
@@ -191,12 +192,14 @@ class ParallelPipeline:
             return
 
         # parallel run text2vec, websearch and codesearch
-        tasks = [self.retriever_re.explore(query=sess.query), self.retriever_knowledge.explore(query=sess.query)]
+        tasks = [self.retriever_knowledge.explore(query=sess.query)]
         if query.enable_web_search:
             tasks.append(self.retriever_web.explore(query=sess.query))
 
-        sess.retrieve_replies = await asyncio.gather(*tasks,
-                                                     return_exceptions=True)
+        re_reply = await self.retriever_re.explore(query=sess.query)
+        sess.keep_first_n = len(re_reply.sources)
+        sess.retrieve_replies = [re_reply] + await asyncio.gather(*tasks, return_exceptions=True)
+
         # if soybean_reply.sources:
             # sess.retrieve_replies = [soybean_reply] + sess.retrieve_replies
         async for sess in reduce.process(sess):

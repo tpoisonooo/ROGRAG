@@ -402,7 +402,6 @@ class SumNode(LogicNode):
         # count_alias=count(alias)
         match = re.match(r'(\w+)[\(\（](.*)[\)\）](->)?(.*)?', input_str)
         if not match:
-            pdb.set_trace()
             raise RuntimeError(
                 f"{__file__} parse logic form error {input_str}")
         # print('match:',match.groups())

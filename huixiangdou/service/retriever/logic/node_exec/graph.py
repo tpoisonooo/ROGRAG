@@ -108,7 +108,6 @@ class GraphExecutor(OpExecutor):
 
         if type(p_type) is list or type(s_entity) is list or type(
                 o_entity) is list:
-            pdb.set_trace()
             pass
 
         async def upsert(alias: str, refs: List):

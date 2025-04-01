@@ -7,6 +7,7 @@ from loguru import logger
 
 from ...primitive import Chunk, Query
 from .base import Retriever, RetrieveResource, RetrieveReply
+from .agis import g_agis
 
 class RegularRetriever(Retriever):
 
@@ -24,24 +25,21 @@ class RegularRetriever(Retriever):
         if not query.text:
             logger.error(f"{__file__} input text is None")
             return r
-
-        matches = re.findall(self.pattern, query.text.lower())
-        if not matches:
-            return r
         
-        for match in matches:
-            try:
-                two_digits = match[0]
-                six_digits = match[1]
-                id = f'AGIS_Os{two_digits}g{six_digits}'
-                agispath = os.path.join(self.preprocess_dir, f'{id}.txt')
+        lower_text = query.text.lower()
+        match_files = set()
+        for k, v in g_agis.items():
+            if k.lower() in lower_text:
+                agispath = os.path.join(self.preprocess_dir, v)
                 if not os.path.exists(agispath):
                     continue
 
-                with open(agispath) as f:
-                    content = f.read()
-                    c = Chunk(content_or_path=content, metadata={"source": agispath})
-                    r.sources.append(c)
-            except Exception as e:
-                logger.error(e)
+                if v not in match_files:
+                    match_files.add(v)
+
+                    with open(agispath) as f:
+                        content = f.read()
+                        c = Chunk(content_or_path=content, metadata={"source": agispath})
+                        r.nodes.append([id])
+                        r.sources.append(c)
         return r

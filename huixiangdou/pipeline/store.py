@@ -332,8 +332,6 @@ class FeatureStore:
         """
 
         documents = filter(lambda x: x._type != 'code', files)
-        import pdb
-        pdb.set_trace()
         if args.method == 'raw':
             await self.build_knowledge(files=documents)
         elif args.method == 'qa':

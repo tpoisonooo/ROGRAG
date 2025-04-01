@@ -3,7 +3,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # 基础 URL
-BASE_URL = "http://127.0.0.1:23334"
+BASE_URL = "http://10.15.1.122:23334"
 
 # 测试 /v2/chat 接口
 def test_chat_zh():
@@ -16,7 +16,8 @@ def test_chat_zh():
         "enable_web_search": False,
         # "user": "AGIS_Os05g040410 和  AGIS_Os06g035130 相似的环境响应性有多少种？",
         # "user": "大竹青黄豆标准化生产有啥用？",
-        "user": "AGIS_Os01g063400的基本信息",
+        # "user": "AGIS_Os01g063400的基本信息",
+        "user": "LOC_Os12g21734 在哪些胁迫中差异表达",
         "history": []
         # "history": [
         #     {

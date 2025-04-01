@@ -111,7 +111,7 @@ class Retriever(ABC):
 
     @staticmethod
     def fuse(resource: RetrieveResource, query: Query,
-             replies: List[RetrieveReply]) -> RetrieveReply:
+             replies: List[RetrieveReply], keep_first_n:int=0) -> RetrieveReply:
         # rerank 重排倒排/bm25/web 等的结果，防止越过最大 token 限制
         if len(replies) == 1:
             return replies[0]
@@ -129,7 +129,7 @@ class Retriever(ABC):
             nodes += r.nodes
             relations += r.relations
 
-        rchunks = resource.reranker.rerank(query=query.text, chunks=chunks)
+        rchunks = chunks[0:keep_first_n] + resource.reranker.rerank(query=query.text, chunks=chunks[keep_first_n:])
         rchunks = truncate_list_by_token_size(
             list_data=rchunks,
             key=lambda x: x.content_or_path,
@@ -200,7 +200,6 @@ class OpSession:
                         alias: str,
                         items: List[Tuple[Edge, Vertex, str]],
                         sub_answer: str = None):
-        # pdb.set_trace()
         chunk_ids = []
         for item in items:
             if isinstance(item, Edge) or isinstance(item, Vertex):
