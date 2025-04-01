@@ -48,11 +48,11 @@ class Query():
     enable_web_search: bool = False
 
     # Number of tokens for the original chunks.
-    max_token_for_text_unit: int = 12000
+    max_token_for_text_unit: int = 14000
     # Number of tokens for the relationship descriptions
     max_token_for_global_context: int = 8000
     # Number of tokens for the entity descriptions
-    max_token_for_local_context: int = 8000
+    max_token_for_local_context: int = 6000
 
     def __str__(self) -> str:
         """Override __str__ to restrict it to text, image and audio."""

@@ -17,7 +17,7 @@ def test_chat_zh():
         # "user": "AGIS_Os05g040410 和  AGIS_Os06g035130 相似的环境响应性有多少种？",
         # "user": "大竹青黄豆标准化生产有啥用？",
         # "user": "AGIS_Os01g063400的基本信息",
-        "user": "LOC_Os12g21734 在哪些胁迫中差异表达",
+        "user": "AGIS_Os01g002290  基因的功能是什么",
         "history": []
         # "history": [
         #     {
