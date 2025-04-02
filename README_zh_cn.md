@@ -1,4 +1,4 @@
-<img src="./resource/logo_2.png" style="zoom:33%;" />
+<img src="./resource/logo_3.png" style="zoom:50%;" />
 
 [English](./README.md) | 简体中文
 

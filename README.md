@@ -1,4 +1,4 @@
-<img src="./resource/logo_2.png" style="zoom:33%;" />
+<img src="./resource/logo_3.png" style="zoom:50%;" />
 
 English | [Simplified Chinese](./README_zh_cn.md)
 
