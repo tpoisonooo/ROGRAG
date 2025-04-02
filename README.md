@@ -1,8 +1,8 @@
-<img src="./resource/logo_3.png" style="zoom:50%;" />
-
 English | [Simplified Chinese](./README_zh_cn.md)
 
-# ROGRAG: A Robustly Optimized GraphRAG Framework
+<div align="center">
+  <img src="./resource/logo_3.png" style="zoom:50%;" />
+</div>
 
 <div>
   <a href="https://arxiv.org/abs/2503.06474" target="_blank">
