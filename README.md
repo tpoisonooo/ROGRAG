@@ -1,6 +1,9 @@
+<img src="./resource/logo_3.png" style="zoom:50%;" />
+
 English | [Simplified Chinese](./README_zh_cn.md)
 
 # ROGRAG: A Robustly Optimized GraphRAG Framework
+
 <div>
   <a href="https://arxiv.org/abs/2503.06474" target="_blank">
     <img alt="Arxiv" src="https://img.shields.io/badge/arxiv-2503.06474%20-darkred?logo=arxiv&logoColor=white" />
@@ -22,7 +25,7 @@ ROGRAG enhances LLM performance on specialized topics using a robust GraphRAG ap
   - Enhanced fuzzy matching and structured reasoning
 
 <div align="center">
-  
+
 | Method          | QA-1 (Accuracy) | QA-2 (F1) | QA-3 (Rouge) | QA-4 (Rouge) |
 |-----------------|-----------------|-----------|--------------|--------------|
 | vanilla (w/o RAG) | 0.57            | 0.71      | 0.16         | 0.35         |
@@ -60,7 +63,7 @@ Compared to [HuixiangDou](https://github.com/internlm/huixiangdou), this repo im
                language: str='zh', 
                enable_web_search: bool=True,
                enable_code_search: bool=True):
-
+   
    # v2 API https://github.com/tpoisonooo/HuixiangDou2/blob/main/huixiangdou/pipeline/parallel.py#L135
    async def generate(self,
                    query: Union[Query, str],

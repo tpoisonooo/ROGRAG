@@ -1,3 +1,5 @@
+<img src="./resource/logo_3.png" style="zoom:50%;" />
+
 [English](./README.md) | 简体中文
 
 # ROGRAG: A Robustly Optimized GraphRAG Framework
@@ -23,7 +25,7 @@ ROGRAG 合并多个开源项目——HuixiangDou、KAG、LightRAG 和 DB-GPT，�
   - 增量式建知识库
 
 <div align="center">
-  
+
 | Method          | QA-1 (Accuracy) | QA-2 (F1) | QA-3 (Rouge) | QA-4 (Rouge) |
 |-----------------|-----------------|-----------|--------------|--------------|
 | vanilla (w/o RAG) | 0.57            | 0.71      | 0.16         | 0.35         |
@@ -62,7 +64,7 @@ ROGRAG 合并多个开源项目——HuixiangDou、KAG、LightRAG 和 DB-GPT，�
                language: str='zh', 
                enable_web_search: bool=True,
                enable_code_search: bool=True):
-
+   
    # v2 API https://github.com/tpoisonooo/HuixiangDou2/blob/main/huixiangdou/pipeline/parallel.py#L135
    async def generate(self,
                    query: Union[Query, str],
