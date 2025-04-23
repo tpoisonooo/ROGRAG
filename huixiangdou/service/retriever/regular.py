@@ -11,12 +11,9 @@ from .agis import g_agis
 
 class RegularRetriever(Retriever):
 
-    def __init__(self, resource: RetrieveResource, work_dir: str, pattern: str=r"agis_os(\d{2})g(\d{6})", **kwargs) -> None:
+    def __init__(self, resource: RetrieveResource, work_dir: str, **kwargs) -> None:
         """Initializes the WebSearch object with initialized resource."""
         super().__init__()
-        if not pattern:
-            logger.error(f'{__file__} pattern is empty')
-        self.pattern = pattern
         self.preprocess_dir = os.path.join(work_dir, 'preprocess')
 
     async def constrait_length(self, content: str, query: Query):
@@ -47,6 +44,7 @@ class RegularRetriever(Retriever):
                         content = f.read()
                         content = await self.constrait_length(content=content, query=query)
                         c = Chunk(content_or_path=content, metadata={"source": agispath})
+                        logger.debug(f'retrieval {agispath}')
                         r.nodes.append([id])
                         r.sources.append(c)
         return r
