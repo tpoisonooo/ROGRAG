@@ -41,7 +41,7 @@ ROGRAG 合并多个开源项目——HuixiangDou、KAG、LightRAG 和 DB-GPT，�
 
 ## 📖 文档
 
-- [1. docker运行（命令行、Swagger API、Gradio 方式）](docs/zh_cn/doc_how_to_run.md)
+- [1. docker运行（命令行、Swagger API、Gradio 方式）](docs/zh_cn/doc_how_to_run_from_docker.md)
 - [2. 源码运行](docs/zh_cn/doc_how_to_run.md)
 - [3. 目录结构功能](docs/zh_cn/doc_architecture.md)
 - [环境、报错 **FAQ**](https://github.com/tpoisonooo/HuixiangDou2/issues/8)
