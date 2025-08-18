@@ -14,7 +14,10 @@ English | [Simplified Chinese](./README_zh_cn.md)
 
 ROGRAG enhances LLM performance on specialized topics using a robust GraphRAG approach. It features a two-stage (dual-level and logic form methods) retrieval mechanism to improve accuracy without extra computation costs. ROGRAG achieves a 15% score boost on [SeedBench](https://github.com/open-sciencelab/SeedBench), outperforming mainstream methods.
 
-This repo has contributed to [GraphGen](https://github.com/open-sciencelab/GraphGen) for better knowledge graph construction.
+This repo has contributed to:
+
+- [GraphGen](https://github.com/open-sciencelab/GraphGen) for better knowledge graph construction
+- [SeedLLM Rice](https://www.cell.com/molecular-plant/issue?pii=S1674-2052(24)X0008-8) for online service
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/5754c247-f6af-44b2-addb-5840ee2ee247" width=500>
