@@ -75,7 +75,7 @@ class FeatureStore:
         length = 0
         text = file.basename + '\n'
 
-        with open(file.copypath, encoding='utf8') as f:
+        with open(file.copypath, encoding='utf-8') as f:
             text += f.read()
         if len(text) <= 1:
             return [], length
@@ -116,7 +116,7 @@ class FeatureStore:
             size = 0
             text = file.basename + '\n'
 
-            with open(file.copypath, encoding='utf8') as f:
+            with open(file.copypath, encoding='utf-8') as f:
                 text += f.read()
 
             chunks = nested_split_markdown(file.origin,
@@ -384,9 +384,9 @@ async def write_back_config_threshold(resource: RetrieveResource,
     from sklearn.metrics import precision_recall_curve
     import numpy as np
 
-    with open(os.path.join('resource', 'good_questions.json')) as f:
+    with open(os.path.join('resource', 'good_questions.json'), encoding='utf-8') as f:
         good_questions = json.load(f)
-    with open(os.path.join('resource', 'bad_questions.json')) as f:
+    with open(os.path.join('resource', 'bad_questions.json'), encoding='utf-8') as f:
         bad_questions = json.load(f)
     if len(good_questions) == 0 or len(bad_questions) == 0:
         raise Exception('good and bad question examples cat not be empty.')
@@ -411,10 +411,10 @@ async def write_back_config_threshold(resource: RetrieveResource,
     index_max = np.argmax(sum_precision_recall)
     optimal_threshold = max(thresholds[index_max], 0.0)
 
-    with open(config_path, encoding='utf8') as f:
+    with open(config_path, encoding='utf-8') as f:
         config = pytoml.load(f)
     config['store']['reject_threshold'] = float(optimal_threshold)
-    with open(config_path, 'w', encoding='utf8') as f:
+    with open(config_path, 'w', encoding='utf-8') as f:
         pytoml.dump(config, f)
     logger.info(
         f'The optimal threshold is: {optimal_threshold}, saved it to {config_path}'  # noqa E501

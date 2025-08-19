@@ -68,6 +68,12 @@ async def show(assistant, _: dict):
     while True:
         user_input = input(
             "🔆 Input your question here, type `bye` for exit:\n")
+        
+        # Not null
+        if not user_input or user_input.strip() == '':
+            print("Input cannot be empty, please try again.")
+            continue
+
         if 'bye' in user_input:
             break
 
