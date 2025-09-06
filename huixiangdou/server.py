@@ -5,7 +5,7 @@ from pypinyin import pinyin, Style
 import re
 from loguru import logger
 
-from .pipeline import SerialPipeline, ParallelPipeline
+from .pipeline import SerialPipeline, ParallelPipeline, FeatureStore, write_back_config_threshold
 from .primitive import Query, Pair, Token
 from .service import server_prompts
 from fastapi import FastAPI
@@ -17,6 +17,8 @@ from typing import List
 import uuid
 import jieba
 
+configpath = None
+workdir = None
 assistant = None
 analogy = None
 app = FastAPI(docs_url='/')
@@ -403,6 +405,25 @@ async def chat(talk_seed: Talk_seed):
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
+@app.post("/v2/add_files")
+async def add_files(dir: str):
+    global workdir
+    global assistant
+    if not os.path.exists(dir):
+        return 'dir not exist'
+    resource = assistant.resource
+    store = FeatureStore(resource=resource, work_dir=workdir)
+    # convert pdf/excel/ppt to markdown
+    files = store.file_opr.scan_dir(repo_dir=args.repo_dir)
+    store.preprocess(repo_dir=args.repo_dir, files=files)
+
+    await store.init(files=files)
+    store.file_opr.summarize(files)
+
+    await write_back_config_threshold(resource=resource, work_dir=workdir, config_path=args.config_path)
+
+
+
 
 @app.post("/v2/exemplify")
 async def examplify(talk_seed: Talk_seed):
@@ -411,11 +432,9 @@ async def examplify(talk_seed: Talk_seed):
         return await analogy.process(query=talk_seed.user)
     return '{}'
 
-
 @app.post("/v2/download")
 async def download(token: Token):
     return 'deprecated'
-
 
 def parse_args():
     """Parse args."""
@@ -441,7 +460,6 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-
 if __name__ == '__main__':
     args = parse_args()
     # setup chat service
@@ -451,7 +469,8 @@ if __name__ == '__main__':
     elif 'serial' in args.pipeline:
         assistant = SerialPipeline(work_dir=args.work_dir,
                                    config_path=args.config_path)
-
+    workdir = args.work_dir
+    configpath = args.config_path
     api_data_dir = '/home/khj/workspace/HuixiangDou/apidata/'
     analogy = ExampleAnalogy(resource=assistant.resource,
                              api_data_dir=api_data_dir)

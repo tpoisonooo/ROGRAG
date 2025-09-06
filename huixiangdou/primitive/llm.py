@@ -5,7 +5,7 @@ import os
 from .limitter import RPM, TPM
 from .utils import always_get_an_event_loop
 import asyncio
-from typing import Dict
+from typing import Dict, List, Dict, Union, AsyncGenerator
 import pytoml
 from loguru import logger
 from openai import AsyncOpenAI, APIConnectionError, RateLimitError, Timeout, APITimeoutError
@@ -17,6 +17,9 @@ from tenacity import (
     retry_if_exception_type,
 )
 from functools import wraps
+import sqlite3
+import uuid
+import hashlib
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -86,6 +89,58 @@ class Backend:
         return json.dumps(self.jsonify())
 
 
+class ChatCache:
+
+    def __init__(self, file_path: str = '.cache_llm'):
+        self.conn = sqlite3.connect(file_path)
+        self.cursor = self.conn.cursor()
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS chat (
+                _hash TEXT PRIMARY KEY,
+                query TEXT,
+                response TEXT,
+                backend TEXT
+            )
+        ''')
+        self.conn.commit()
+
+    def hash(self, content: str) -> str:
+        md5 = hashlib.md5()
+        if type(content) is str:
+            md5.update(content.encode('utf8'))
+        else:
+            md5.update(content)
+        return md5.hexdigest()[0:6]
+
+    def add(self, query: str, response: str, backend:str):
+        _hash = self.hash(query)
+        self.cursor.execute('''
+            INSERT OR IGNORE INTO chat (_hash, query, response, backend)
+            VALUES (?, ?, ?, ?)
+        ''', (_hash, query, response, backend))
+        self.conn.commit()
+
+    def get(self, query: str, backend:str) -> Union[str, None]:
+        """Retrieve a chunk by its ID."""
+        if not query:
+            return None
+        _hash = self.hash(query)
+        
+        self.cursor.execute(
+            'SELECT response FROM chat WHERE _hash = ? and backend = ?',
+            (_hash, backend))
+        r = self.cursor.fetchone()
+        if r:
+            return r[1]
+        return None
+
+    def __del__(self):
+        try:
+            self.cursor.close()
+            self.conn.close()
+        except Exception as e:
+            logger.error(e)
+
 class LLM:
 
     def __init__(self, config_path: str):
@@ -101,6 +156,7 @@ class LLM:
 
             for key, value in self.llm_config.items():
                 self.backends[key] = Backend(name=key, data=value)
+        self.cache = ChatCache()
 
     def choose_model(self, backend: Backend, token_size: int) -> str:
         if backend.model != None and len(backend.model) > 0:
@@ -145,7 +201,14 @@ class LLM:
                    history=[],
                    allow_truncate=False,
                    max_tokens=1024,
-                   timeout=600) -> str:
+                   timeout=600,
+                   enable_cache:bool=True) -> str:
+        
+        if enable_cache:
+            r = self.cache.get(query=prompt, backend=backend)
+            if r is not None:
+                return r
+        
         # choose backend
         # if user not specify model, use first one
         if backend == 'default':
@@ -230,7 +293,16 @@ class LLM:
                           history=[],
                           allow_truncate=False,
                           max_tokens=1024,
-                          timeout=600):
+                          timeout=600,
+                          enable_cache:bool=True) -> AsyncGenerator[str, None]:
+    
+        if enable_cache:
+            r = self.cache.get(query=prompt, backend=backend)
+            if r is not None:
+                for char in r:
+                    yield char
+                return
+            
         # choose backend
         # if user not specify model, use first one
         if backend == 'default':
