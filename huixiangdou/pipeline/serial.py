@@ -180,7 +180,9 @@ class SerialPipeline:
 
         self.config_path = config_path
         self.work_dir = work_dir
-        with open(config_path) as f:
+        
+        # utf-8
+        with open(config_path,'r', encoding='utf-8') as f:
             self.threshold = pytoml.load(f)['store']['reject_threshold']
 
     async def generate(self,

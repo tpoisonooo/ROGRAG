@@ -203,7 +203,8 @@ class TuGraphStore(GraphStore):
 
     def __init__(self, config_path: str) -> None:
         """Initialize the TuGraphStore with connection details."""
-        with open(config_path) as f:
+        # utf-8
+        with open(config_path, encoding="utf-8") as f:
             config = pytoml.load(f)['tugraph']
             self.host = config.get('host', '127.0.0.1')
             self.port = config.get('port', 7072)
