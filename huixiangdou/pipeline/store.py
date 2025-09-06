@@ -242,7 +242,7 @@ class FeatureStore:
         logger.info('text histogram, {}'.format(histogram(text_lens)))
         logger.info('token histogram, {}'.format(histogram(token_lens)))
 
-    def preprocess(self, repo_dir: str, files: List[FileName]):
+    def preprocess(self, files: List[FileName]):
         """Preprocesses files in a given directory. Copies each file to
         'preprocess' with new name formed by joining all subdirectories with
         '_'.
@@ -286,9 +286,10 @@ class FeatureStore:
             elif file._type in ['md', 'text', 'json']:
                 # rename text files to new dir
                 md5 = self.file_opr.md5(file.origin)
+                dirname = os.path.dirname(file.origin)
                 file.copypath = os.path.join(
                     preproc_dir,
-                    file.origin.replace(repo_dir + "/", '').replace('/',
+                    file.origin.replace(dirname + "/", '').replace('/',
                                                                     '_')[-84:])
                 try:
                     shutil.copy(file.origin, file.copypath)
@@ -432,7 +433,7 @@ if __name__ == '__main__':
 
     # convert pdf/excel/ppt to markdown
     files = store.file_opr.scan_dir(repo_dir=args.repo_dir)
-    store.preprocess(repo_dir=args.repo_dir, files=files)
+    store.preprocess(files=files)
 
     loop = always_get_an_event_loop()
 

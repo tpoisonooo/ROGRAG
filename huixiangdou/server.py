@@ -405,25 +405,57 @@ async def chat(talk_seed: Talk_seed):
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
+def reinit_assistant():
+    global assistant
+    global workdir
+    global configpath
+
+    if type(assistant) is ParallelPipeline:
+        assistant = ParallelPipeline(work_dir=workdir,
+                                     config_path=configpath)
+    else:
+        assistant = SerialPipeline(work_dir=workdir,
+                                    config_path=configpath)
+    
+
 @app.post("/v2/add_files")
-async def add_files(dir: str):
+async def add_files(file_list: List[str]):
+    global workdir
+    global assistant
+    global configpath
+    
+    files = []
+    for file in file_list:
+        if not os.path.exists(file):
+            continue
+        files.append(file)
+    
+    import pdb
+    pdb.set_trace()
+    resource = assistant.resource
+    store = FeatureStore(resource=resource, work_dir=workdir)
+    # convert pdf/excel/ppt to markdown
+    scan_files = store.file_opr.scan_files(file_list=files)
+    store.preprocess(files=scan_files)
+
+    await store.init(files=scan_files)
+    store.file_opr.summarize(scan_files)
+
+    await write_back_config_threshold(resource=resource, work_dir=workdir, config_path=configpath)
+    
+    reinit_assistant()
+    
+
+@app.post("/v2/delete")
+async def delete():
     global workdir
     global assistant
     if not os.path.exists(dir):
         return 'dir not exist'
     resource = assistant.resource
     store = FeatureStore(resource=resource, work_dir=workdir)
-    # convert pdf/excel/ppt to markdown
-    files = store.file_opr.scan_dir(repo_dir=args.repo_dir)
-    store.preprocess(repo_dir=args.repo_dir, files=files)
-
-    await store.init(files=files)
-    store.file_opr.summarize(files)
-
-    await write_back_config_threshold(resource=resource, work_dir=workdir, config_path=args.config_path)
-
-
-
+    await store.remove_knowledge()
+    reinit_assistant()
 
 @app.post("/v2/exemplify")
 async def examplify(talk_seed: Talk_seed):
@@ -471,6 +503,7 @@ if __name__ == '__main__':
                                    config_path=args.config_path)
     workdir = args.work_dir
     configpath = args.config_path
+    
     api_data_dir = '/home/khj/workspace/HuixiangDou/apidata/'
     analogy = ExampleAnalogy(resource=assistant.resource,
                              api_data_dir=api_data_dir)

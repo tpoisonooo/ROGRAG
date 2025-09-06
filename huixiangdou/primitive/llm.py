@@ -131,7 +131,7 @@ class ChatCache:
             (_hash, backend))
         r = self.cursor.fetchone()
         if r:
-            return r[1]
+            return r[0]
         return None
 
     def __del__(self):
@@ -204,15 +204,17 @@ class LLM:
                    timeout=600,
                    enable_cache:bool=True) -> str:
         
-        if enable_cache:
-            r = self.cache.get(query=prompt, backend=backend)
-            if r is not None:
-                return r
-        
         # choose backend
         # if user not specify model, use first one
         if backend == 'default':
             backend = list(self.backends.keys())[0]
+        
+        if enable_cache:
+            r = self.cache.get(query=prompt, backend=backend)
+            if r is not None:
+                logger.info('LLM cache hit')
+                return r
+        
         instance = self.backends[backend]
 
         # try truncate input prompt
@@ -261,6 +263,8 @@ class LLM:
         logger.info(response.choices[0].message.content)
 
         content = response.choices[0].message.content
+        self.cache.add(query=prompt, response=content, backend=backend)
+        
         # except Exception as e:
         #     logger.error( str(e) +' input len {}'.format(len(str(messages))))
         #     raise e
@@ -348,7 +352,6 @@ class LLM:
                 max_tokens=max_tokens,
                 stream=True)
 
-            content = ""
             async for chunk in stream:
                 if chunk.choices is None:
                     raise Exception(str(chunk))
@@ -361,6 +364,7 @@ class LLM:
             logger.error(str(e) + ' input len {}'.format(len(str(messages))))
             raise e
         content_token_size = len(encode_string(content=content))
+        self.cache.add(query=prompt, response=content, backend=backend)
 
         self.sum_input_token_size += input_token_size
         self.sum_output_token_size += content_token_size

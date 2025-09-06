@@ -8,7 +8,7 @@ import requests
 # import textract
 from bs4 import BeautifulSoup
 from loguru import logger
-
+from typing import List
 
 class FileName:
     """Record file original name, state and copied filepath with text
@@ -128,7 +128,7 @@ class FileOperation:
 
         return hash_object.hexdigest()[0:8]
 
-    def summarize(self, files: list):
+    def summarize(self, files: List[str]):
         success = 0
         skip = 0
         failed = 0
@@ -156,7 +156,17 @@ class FileOperation:
                     files.append(
                         FileName(root=root, filename=filename, _type=_type))
         return files
-
+    
+    def scan_files(self, file_list: str):
+        files = []
+        for filename in file_list:
+            _type = self.get_type(filename)
+            print(filename, _type)
+            if _type is not None:
+                files.append(
+                    FileName(root=os.path.dirname(filename), filename=filename, _type=_type))
+        return files
+        
     def read_pdf(self, filepath: str):
         # load pdf and serialize table
 
