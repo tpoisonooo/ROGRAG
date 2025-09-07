@@ -183,6 +183,9 @@ class SerialPipeline:
         with open(config_path) as f:
             self.threshold = pytoml.load(f)['store']['reject_threshold']
 
+    def is_initialized(self) -> bool:
+        return self.retriever_knowledge.entityDB.index is not None
+
     async def generate(self,
                        query: Union[Query, str],
                        history: List[Pair] = [],
@@ -230,7 +233,6 @@ class SerialPipeline:
         sess.stage = "1_search"
         yield sess
 
-        run_graphrag = False
         try:
             sess.retrieve_replies = [
                 await self.retriever_reason.explore(query=sess.query)
@@ -244,18 +246,16 @@ class SerialPipeline:
                 async for _sess in reduce.process(sess,
                                                   node='retriever_reason'):
                     yield _sess
-
+                return
         except Exception as e:
             logger.error(str(e) + f"{__file__}")
-            run_graphrag = True
 
-        if run_graphrag:
-            tasks = [self.retriever_knowledge.explore(query=sess.query)]
-            if query.enable_web_search:
-                tasks.append(self.retriever_web.explore(query=sess.query))
-            sess.retrieve_replies = await asyncio.gather(
-                *tasks, return_exceptions=True)
+        tasks = [self.retriever_knowledge.explore(query=sess.query)]
+        if query.enable_web_search:
+            tasks.append(self.retriever_web.explore(query=sess.query))
+        sess.retrieve_replies = await asyncio.gather(
+            *tasks, return_exceptions=True)
 
-            async for sess in reduce.process(sess, node='retriever_knowledge'):
-                yield sess
+        async for sess in reduce.process(sess, node='retriever_knowledge'):
+            yield sess
         return

@@ -19,3 +19,4 @@ from .knowledge import MemoryGraph, Direction, Edge, MemoryGraph, Graph, Vertex
 from .llm import LLM, Backend
 from .token import encode_string, decode_tokens, judge_language
 from .utils import always_get_an_event_loop
+from .db import DB

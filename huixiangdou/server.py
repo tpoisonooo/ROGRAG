@@ -430,8 +430,9 @@ async def add_files(file_list: List[str]):
             continue
         files.append(file)
     
-    import pdb
-    pdb.set_trace()
+    if len(files) < 1:
+        return 'success'
+    
     resource = assistant.resource
     store = FeatureStore(resource=resource, work_dir=workdir)
     # convert pdf/excel/ppt to markdown
@@ -444,18 +445,18 @@ async def add_files(file_list: List[str]):
     await write_back_config_threshold(resource=resource, work_dir=workdir, config_path=configpath)
     
     reinit_assistant()
-    
+    return 'success'
 
-@app.post("/v2/delete")
-async def delete():
+@app.post("/v2/drop_db")
+async def drop_db():
     global workdir
     global assistant
-    if not os.path.exists(dir):
-        return 'dir not exist'
     resource = assistant.resource
     store = FeatureStore(resource=resource, work_dir=workdir)
+    
     await store.remove_knowledge()
     reinit_assistant()
+    return 'success'
 
 @app.post("/v2/exemplify")
 async def examplify(talk_seed: Talk_seed):

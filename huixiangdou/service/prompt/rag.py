@@ -242,6 +242,7 @@ rag_prompts["perplexsity_check_preceding"] = {
 
 ## 注意事项
 - 在检验学生答案过程中，你会注意到表达单位的差异，例如1公斤是2斤
+- 输出时请严格遵循 YES 或 NO 的大写格式，不要用小写
 
 ## 学生答案示例
 - 解释后输出 NO：“无法确定，选项A、B、C、D中的信息与文献提供的内容不符。”
@@ -268,6 +269,7 @@ Please carefully read the exam questions and the students' evidence to determine
 
 ## Notes
 - In the process of checking student answers, you will notice differences in expression units, such as 1 kilogram being 2 jin
+- Use **YES** or **NO** in uppercase format when outputting, not lowercase
 
 ## Examples of Student Answers
 - Explanation followed by output no: "Cannot determine, the information in options A, B, C, and D does not match the content provided in the literature."

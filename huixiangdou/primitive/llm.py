@@ -21,6 +21,53 @@ import sqlite3
 import uuid
 import hashlib
 
+from .db import DB
+
+class ChatCache:
+    def __init__(self, file_path: str = '.cache_llm'):
+        self.file_path = file_path
+        with DB(self.file_path) as db:
+            db.execute('''
+                CREATE TABLE IF NOT EXISTS chat (
+                    _hash TEXT PRIMARY KEY,
+                    query TEXT,
+                    response TEXT,
+                    backend TEXT
+                )
+            ''')
+
+    def hash(self, content: str) -> str:
+        md5 = hashlib.md5()
+        if type(content) is str:
+            md5.update(content.encode('utf8'))
+        else:
+            md5.update(content)
+        return md5.hexdigest()[0:6]
+
+    def add(self, query: str, response: str, backend:str):
+        _hash = self.hash(query)
+        
+        with DB(self.file_path) as db:
+            db.execute('''
+                INSERT OR IGNORE INTO chat (_hash, query, response, backend)
+                VALUES (?, ?, ?, ?)
+            ''', (_hash, query, response, backend))
+        
+    def get(self, query: str, backend:str) -> Union[str, None]:
+        """Retrieve a chunk by its ID."""
+        if not query:
+            return None
+        _hash = self.hash(query)
+
+        with DB(self.file_path) as db:
+            db.execute(
+                'SELECT response FROM chat WHERE _hash = ? and backend = ?',
+                (_hash, backend))
+            r = db.fetchone()
+            if r:
+                return r[0]
+            return None
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 backend2url = {
@@ -87,59 +134,6 @@ class Backend:
 
     def __str__(self):
         return json.dumps(self.jsonify())
-
-
-class ChatCache:
-
-    def __init__(self, file_path: str = '.cache_llm'):
-        self.conn = sqlite3.connect(file_path)
-        self.cursor = self.conn.cursor()
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS chat (
-                _hash TEXT PRIMARY KEY,
-                query TEXT,
-                response TEXT,
-                backend TEXT
-            )
-        ''')
-        self.conn.commit()
-
-    def hash(self, content: str) -> str:
-        md5 = hashlib.md5()
-        if type(content) is str:
-            md5.update(content.encode('utf8'))
-        else:
-            md5.update(content)
-        return md5.hexdigest()[0:6]
-
-    def add(self, query: str, response: str, backend:str):
-        _hash = self.hash(query)
-        self.cursor.execute('''
-            INSERT OR IGNORE INTO chat (_hash, query, response, backend)
-            VALUES (?, ?, ?, ?)
-        ''', (_hash, query, response, backend))
-        self.conn.commit()
-
-    def get(self, query: str, backend:str) -> Union[str, None]:
-        """Retrieve a chunk by its ID."""
-        if not query:
-            return None
-        _hash = self.hash(query)
-        
-        self.cursor.execute(
-            'SELECT response FROM chat WHERE _hash = ? and backend = ?',
-            (_hash, backend))
-        r = self.cursor.fetchone()
-        if r:
-            return r[0]
-        return None
-
-    def __del__(self):
-        try:
-            self.cursor.close()
-            self.conn.close()
-        except Exception as e:
-            logger.error(e)
 
 class LLM:
 
