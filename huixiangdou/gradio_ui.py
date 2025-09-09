@@ -12,7 +12,7 @@ from loguru import logger
 from typing import List
 from huixiangdou.primitive import Query
 from huixiangdou.service import ErrorCode
-from huixiangdou.pipeline import SerialPipeline, ParallelPipeline
+from huixiangdou.pipeline import SerialPipeline, ParallelPipeline, FeatureStore, write_back_config_threshold
 import json
 from datetime import datetime
 
@@ -63,20 +63,13 @@ enable_web_search = False
 enable_code_search = True
 pipeline = 'serial'
 main_args = None
-parallel_assistant = None
-serial_assistant = None
+assistant = None
 
 
 def on_language_changed(value: str):
     global language
-    print(value)
     language = value
-
-
-def on_pipeline_changed(value: str):
-    global pipeline
-    print(value)
-    pipeline = value
+    return f'Switch to {value}'
 
 
 def on_web_search_changed(value: str):
@@ -86,6 +79,7 @@ def on_web_search_changed(value: str):
         enable_web_search = False
     else:
         enable_web_search = True
+    return f'Web search set to {enable_web_search}'
 
 
 def on_code_search_changed(value: str):
@@ -95,6 +89,7 @@ def on_code_search_changed(value: str):
         enable_code_search = False
     else:
         enable_code_search = True
+    return f'Code search set to {enable_code_search}'
 
 
 def format_refs(refs: List[str]):
@@ -102,7 +97,7 @@ def format_refs(refs: List[str]):
     if len(refs) < 1:
         return ''
     text = ''
-    if language == 'zh':
+    if language == 'zh_cn':
         text += '参考资料：\r\n'
     else:
         text += '**References:**\r\n'
@@ -113,13 +108,55 @@ def format_refs(refs: List[str]):
     return text
 
 
+def reinit_assistant():
+    global assistant
+    global pipeline
+    global main_args
+    if 'serial' in pipeline:
+        assistant = SerialPipeline(work_dir=main_args.work_dir,
+                                   config_path=main_args.config_path)
+    else:
+        assistant = ParallelPipeline(work_dir=main_args.work_dir,
+                                     config_path=main_args.config_path)
+
+
+async def add_dir(dir: str):
+    global assistant
+    resource = assistant.resource
+    store = FeatureStore(resource=resource, work_dir=main_args.work_dir)
+    scan_files = store.file_opr.scan_dir(dir)
+    if len(scan_files) < 1:
+        return 'no valid files found'
+    store.preprocess(files=scan_files)
+    store.file_opr.summarize(scan_files)
+    
+    await store.init(files=scan_files)
+    await write_back_config_threshold(resource=resource,
+                                      work_dir=main_args.work_dir,
+                                      config_path=main_args.config_path)
+    reinit_assistant()
+    return 'success'
+
+
+async def drop_db():
+    global workdir
+    global assistant
+    resource = assistant.resource
+    store = FeatureStore(resource=resource, work_dir=main_args.work_dir)
+
+    await store.remove_knowledge()
+    reinit_assistant()
+    return 'success'
+
+
 async def predict(text: str, image: str):
     global language
     global enable_web_search
-    global pipeline
     global main_args
-    global serial_assistant
-    global parallel_assistant
+    global assistant
+
+    if not text:
+        text = main_args.placeholder
 
     if image is not None:
         filename = 'image.png'
@@ -128,20 +165,18 @@ async def predict(text: str, image: str):
     else:
         image_path = None
 
-    query = Query(text=text, image=image_path, enable_web_search=enable_web_search, enable_code_search=enable_code_search)
-    assistant = None
-    if 'serial' in pipeline:
-        if serial_assistant is None:
-            serial_assistant = SerialPipeline(
-                work_dir=main_args.work_dir, config_path=main_args.config_path)
-        assistant = serial_assistant
+    query = Query(text=text,
+                  image=image_path,
+                  enable_web_search=enable_web_search,
+                  enable_code_search=enable_code_search)
 
-    else:
-        if parallel_assistant is None:
-            parallel_assistant = ParallelPipeline(
-                work_dir=main_args.work_dir, config_path=main_args.config_path)
-        assistant = parallel_assistant
-        
+    if not assistant.is_initialized():
+        if language == 'zh_cn':
+            yield "知识库未准备好，请先上传数据。"
+        else:
+            yield "The knowledge base is not ready, please upload."
+        return
+
     args = {'query': query, 'history': [], 'language': language}
 
     sentence = ''
@@ -153,41 +188,22 @@ async def predict(text: str, image: str):
             sentence += sess.delta
             print('{}'.format(sess.delta), end="")
             yield sentence
-    
+
     print('yield2 {}'.format(sentence))
     yield sentence
 
 
-def download_and_unzip(main_args):
-    zip_filepath = os.path.join(main_args.feature_local, 'workdir.zip')
-    main_args.work_dir = os.path.join(main_args.feature_local, 'workdir')
-    logger.info(f'assign {main_args.work_dir} to args.work_dir')
-
-    download_cmd = f'wget -O {zip_filepath} {main_args.feature_url}'
-    os.system(download_cmd)
-
-    if not os.path.exists(zip_filepath):
-        raise Exception(f'zip filepath {zip_filepath} not exist.')
-
-    unzip_cmd = f'unzip -o {zip_filepath} -d {main_args.feature_local}'
-    os.system(unzip_cmd)
-    if not os.path.exists(main_args.work_dir):
-        raise Exception(f'feature dir {zip_dir} not exist.')
-
-
-def build_feature_store(main_args):
-    if os.path.exists('workdir'):
-        logger.warning('feature_store `workdir` already exist, skip')
-        return
-    logger.info('start build feature_store..')
-    os.system(
-        'python3 -m huixiangdou.service.feature_store --config_path {}'.format(
-            main_args.config_path))
-
+# def build_feature_store(main_args):
+#     if os.path.exists('workdir'):
+#         logger.warning('feature_store `workdir` already exist, skip')
+#         return
+#     logger.info('start build feature_store..')
+#     os.system(
+#         'python3 -m huixiangdou.service.feature_store --config_path {}'.format(
+#             main_args.config_path))
 
 if __name__ == '__main__':
     main_args = parse_args()
-    build_feature_store(main_args)
 
     show_image = True
     radio_options = ["serial", "parallel"]
@@ -207,6 +223,13 @@ if __name__ == '__main__':
     else:
         theme = gr.themes.Soft()
 
+    if 'serial' in pipeline:
+        assistant = SerialPipeline(work_dir=main_args.work_dir,
+                                   config_path=main_args.config_path)
+    else:
+        assistant = ParallelPipeline(work_dir=main_args.work_dir,
+                                     config_path=main_args.config_path)
+
     with gr.Blocks(theme=theme,
                    title='HuixiangDou AI assistant',
                    analytics_enabled=True) as demo:
@@ -221,42 +244,26 @@ if __name__ == '__main__':
             )
 
         with gr.Row():
-            if len(radio_options) > 1:
-                with gr.Column():
-                    ui_pipeline = gr.Radio(
-                        radio_options,
-                        label="Pipeline type",
-                        info=
-                        "Default value is `serial`"
-                    )
-                    ui_pipeline.change(fn=on_pipeline_changed,
-                                       inputs=ui_pipeline,
-                                       outputs=[])
+            ui_language = gr.Radio(["en", "zh_cn"],
+                                   label="Language",
+                                   info="Use `en` by default")
+            ui_web_search = gr.Radio(["no", "yes"],
+                                     label="Enable web search",
+                                     info="Disable by default")
+            ui_code_search = gr.Radio(["yes", "no"],
+                                      label="Enable code search",
+                                      info="Enable by default")
+
+        with gr.Row():
+            ui_file_dir = gr.TextArea(
+                label='File directory',
+                show_copy_button=True,
+                placeholder='Such as `/path/to/your/documents/`',
+                lines=1)
+            
             with gr.Column():
-                ui_language = gr.Radio(
-                    ["en", "zh"],
-                    label="Language",
-                    info="Use `en` by default                                 "
-                )
-                ui_language.change(fn=on_language_changed,
-                                   inputs=ui_language,
-                                   outputs=[])
-            with gr.Column():
-                ui_web_search = gr.Radio(
-                    ["no", "yes"],
-                    label="Enable web search",
-                    info="Disable by default                                 ")
-                ui_web_search.change(fn=on_web_search_changed,
-                                     inputs=ui_web_search,
-                                     outputs=[])
-            with gr.Column():
-                ui_code_search = gr.Radio(
-                    ["yes", "no"],
-                    label="Enable code search",
-                    info="Enable by default                                 ")
-                ui_code_search.change(fn=on_code_search_changed,
-                                      inputs=ui_code_search,
-                                      outputs=[])
+                ui_file_button = gr.Button('Add file directory')
+                ui_drop_button = gr.Button('Drop database')
 
         with gr.Row():
             input_question = gr.TextArea(label='Input your question',
@@ -281,6 +288,19 @@ if __name__ == '__main__':
                 show_copy_button=True)
             # result = gr.TextArea(label='Reply', show_copy_button=True, placeholder='Text Reply or inner status callback, depends on `pipeline type`')
 
+        ui_language.change(fn=on_language_changed,
+                           inputs=ui_language,
+                           outputs=[result])
+
+        ui_web_search.change(fn=on_web_search_changed,
+                             inputs=ui_web_search,
+                             outputs=[result])
+        ui_code_search.change(fn=on_code_search_changed,
+                              inputs=ui_code_search,
+                              outputs=[result])
+        ui_file_button.click(fn=add_dir, inputs=ui_file_dir, outputs=[result])
+        ui_drop_button.click(fn=drop_db, inputs=[], outputs=[result])
         run_button.click(predict, [input_question, input_image], [result])
+
     demo.queue()
     demo.launch(share=False, server_name='0.0.0.0', debug=True)

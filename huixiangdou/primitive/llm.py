@@ -5,7 +5,7 @@ import os
 from .limitter import RPM, TPM
 from .utils import always_get_an_event_loop
 import asyncio
-from typing import Dict
+from typing import Dict, List, Dict, Union, AsyncGenerator
 import pytoml
 from loguru import logger
 from openai import AsyncOpenAI, APIConnectionError, RateLimitError, Timeout, APITimeoutError
@@ -17,6 +17,56 @@ from tenacity import (
     retry_if_exception_type,
 )
 from functools import wraps
+import sqlite3
+import uuid
+import hashlib
+
+from .db import DB
+
+class ChatCache:
+    def __init__(self, file_path: str = '.cache_llm'):
+        self.file_path = file_path
+        with DB(self.file_path) as db:
+            db.execute('''
+                CREATE TABLE IF NOT EXISTS chat (
+                    _hash TEXT PRIMARY KEY,
+                    query TEXT,
+                    response TEXT,
+                    backend TEXT
+                )
+            ''')
+
+    def hash(self, content: str) -> str:
+        md5 = hashlib.md5()
+        if type(content) is str:
+            md5.update(content.encode('utf8'))
+        else:
+            md5.update(content)
+        return md5.hexdigest()[0:6]
+
+    def add(self, query: str, response: str, backend:str):
+        _hash = self.hash(query)
+        
+        with DB(self.file_path) as db:
+            db.execute('''
+                INSERT OR IGNORE INTO chat (_hash, query, response, backend)
+                VALUES (?, ?, ?, ?)
+            ''', (_hash, query, response, backend))
+        
+    def get(self, query: str, backend:str) -> Union[str, None]:
+        """Retrieve a chunk by its ID."""
+        if not query:
+            return None
+        _hash = self.hash(query)
+
+        with DB(self.file_path) as db:
+            db.execute(
+                'SELECT response FROM chat WHERE _hash = ? and backend = ?',
+                (_hash, backend))
+            r = db.fetchone()
+            if r:
+                return r[0]
+            return None
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -85,7 +135,6 @@ class Backend:
     def __str__(self):
         return json.dumps(self.jsonify())
 
-
 class LLM:
 
     def __init__(self, config_path: str):
@@ -101,6 +150,7 @@ class LLM:
 
             for key, value in self.llm_config.items():
                 self.backends[key] = Backend(name=key, data=value)
+        self.cache = ChatCache()
 
     def choose_model(self, backend: Backend, token_size: int) -> str:
         if backend.model != None and len(backend.model) > 0:
@@ -145,11 +195,20 @@ class LLM:
                    history=[],
                    allow_truncate=False,
                    max_tokens=1024,
-                   timeout=600) -> str:
+                   timeout=600,
+                   enable_cache:bool=True) -> str:
+        
         # choose backend
         # if user not specify model, use first one
         if backend == 'default':
             backend = list(self.backends.keys())[0]
+        
+        if enable_cache:
+            r = self.cache.get(query=prompt, backend=backend)
+            if r is not None:
+                logger.info('LLM cache hit')
+                return r
+        
         instance = self.backends[backend]
 
         # try truncate input prompt
@@ -198,6 +257,8 @@ class LLM:
         logger.info(response.choices[0].message.content)
 
         content = response.choices[0].message.content
+        self.cache.add(query=prompt, response=content, backend=backend)
+        
         # except Exception as e:
         #     logger.error( str(e) +' input len {}'.format(len(str(messages))))
         #     raise e
@@ -230,7 +291,16 @@ class LLM:
                           history=[],
                           allow_truncate=False,
                           max_tokens=1024,
-                          timeout=600):
+                          timeout=600,
+                          enable_cache:bool=True) -> AsyncGenerator[str, None]:
+    
+        if enable_cache:
+            r = self.cache.get(query=prompt, backend=backend)
+            if r is not None:
+                for char in r:
+                    yield char
+                return
+            
         # choose backend
         # if user not specify model, use first one
         if backend == 'default':
@@ -276,7 +346,6 @@ class LLM:
                 max_tokens=max_tokens,
                 stream=True)
 
-            content = ""
             async for chunk in stream:
                 if chunk.choices is None:
                     raise Exception(str(chunk))
@@ -289,6 +358,7 @@ class LLM:
             logger.error(str(e) + ' input len {}'.format(len(str(messages))))
             raise e
         content_token_size = len(encode_string(content=content))
+        self.cache.add(query=prompt, response=content, backend=backend)
 
         self.sum_input_token_size += input_token_size
         self.sum_output_token_size += content_token_size

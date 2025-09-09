@@ -139,6 +139,11 @@ class FeatureStore:
         file.reason = str(len(text))
         return self.text_splitter.create_chunks(texts=[text],
                                                 metadatas=[metadata])
+        
+    async def remove_knowledge(self) -> None:
+        logger.warning('Remove knowledge graph and database')
+        shutil.rmtree(self.work_dir, ignore_errors=True)
+        self.graph_store.drop()
 
     async def build_knowledge(self, files: Iterator[FileName]) -> None:
         """Split docs into chunks, build knowledge graph and base based on them."""
@@ -179,10 +184,9 @@ class FeatureStore:
                 chunkDB.add(chunks)
             except Exception as e:
                 logger.error(str(e))
-                import pdb
-                pdb.set_trace()
                 pass
         # dump results
+        logger.info('Save db')
         entityDB.save(folder_path=os.path.join(self.work_dir, 'db_kag_entity'),
                       embedder=self.embedder)
         relationDB.save(folder_path=os.path.join(self.work_dir,
@@ -239,7 +243,7 @@ class FeatureStore:
         logger.info('text histogram, {}'.format(histogram(text_lens)))
         logger.info('token histogram, {}'.format(histogram(token_lens)))
 
-    def preprocess(self, repo_dir: str, files: List[FileName]):
+    def preprocess(self, files: List[FileName]):
         """Preprocesses files in a given directory. Copies each file to
         'preprocess' with new name formed by joining all subdirectories with
         '_'.
@@ -283,9 +287,10 @@ class FeatureStore:
             elif file._type in ['md', 'text', 'json']:
                 # rename text files to new dir
                 md5 = self.file_opr.md5(file.origin)
+                dirname = os.path.dirname(file.origin)
                 file.copypath = os.path.join(
                     preproc_dir,
-                    file.origin.replace(repo_dir + "/", '').replace('/',
+                    file.origin.replace(dirname + "/", '').replace('/',
                                                                     '_')[-84:])
                 try:
                     shutil.copy(file.origin, file.copypath)
@@ -311,7 +316,7 @@ class FeatureStore:
                     file.state = False
                     file.reason = 'read error'
 
-    async def init(self, files: List[FileName], args):
+    async def init(self, files: List[FileName]):
         """Initializes response feature store.
 
         Only needs to be called once. Also calculates the optimal threshold
@@ -429,13 +434,13 @@ if __name__ == '__main__':
 
     # convert pdf/excel/ppt to markdown
     files = store.file_opr.scan_dir(repo_dir=args.repo_dir)
-    store.preprocess(repo_dir=args.repo_dir, files=files)
+    store.preprocess(files=files)
 
     loop = always_get_an_event_loop()
 
     before = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(
     )
-    loop.run_until_complete(store.init(files=files, args=args))
+    loop.run_until_complete(store.init(files=files))
     store.file_opr.summarize(files)
 
     after = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(

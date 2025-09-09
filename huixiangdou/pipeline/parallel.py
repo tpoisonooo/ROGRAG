@@ -132,6 +132,9 @@ class ParallelPipeline:
         with open(config_path) as f:
             self.threshold = pytoml.load(f)['store']['reject_threshold']
 
+    def is_initialized(self) -> bool:
+        return self.retriever_knowledge.entityDB.index is not None
+
     async def generate(self,
                        query: Union[Query, str],
                        history: List[Pair] = [],

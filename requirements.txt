@@ -32,7 +32,7 @@ transformers>=4.38
 transformers_stream_generator
 unstructured
 sentence_transformers
-sse_starlette
+sse_starlette[
 fastapi
 uvicorn
 termcolor
