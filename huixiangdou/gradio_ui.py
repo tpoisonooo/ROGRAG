@@ -120,21 +120,29 @@ def reinit_assistant():
                                      config_path=main_args.config_path)
 
 
-async def add_dir(dir: str):
+async def add_files(files: List, progress=gr.Progress()):
     global assistant
     resource = assistant.resource
     store = FeatureStore(resource=resource, work_dir=main_args.work_dir)
-    scan_files = store.file_opr.scan_dir(dir)
+    scan_files = store.file_opr.scan_files(files)
     if len(scan_files) < 1:
         return 'no valid files found'
+    
+    progress(0, desc="Coverting")
     store.preprocess(files=scan_files)
     store.file_opr.summarize(scan_files)
+
+    progress(0.3, desc="Start indexing")
+    async for step in store.init(files=scan_files):
+        progress(0.3 + 0.3 * step, desc="Indexing")
     
-    await store.init(files=scan_files)
+    progress(0.6, desc="Update config")
     await write_back_config_threshold(resource=resource,
                                       work_dir=main_args.work_dir,
                                       config_path=main_args.config_path)
+    progress(0.9, desc="Reinitializing")
     reinit_assistant()
+    progress(1.0, desc="Finished")
     return 'success'
 
 
@@ -255,14 +263,10 @@ if __name__ == '__main__':
                                       info="Enable by default")
 
         with gr.Row():
-            ui_file_dir = gr.TextArea(
-                label='File directory',
-                show_copy_button=True,
-                placeholder='Such as `/path/to/your/documents/`',
-                lines=1)
-            
+            files = gr.Files(file_count="multiple", label="Upload files here")
             with gr.Column():
                 ui_file_button = gr.Button('Add file directory')
+                # ui_progress = gr.Progress()
                 ui_drop_button = gr.Button('Drop database')
 
         with gr.Row():
@@ -298,7 +302,7 @@ if __name__ == '__main__':
         ui_code_search.change(fn=on_code_search_changed,
                               inputs=ui_code_search,
                               outputs=[result])
-        ui_file_button.click(fn=add_dir, inputs=ui_file_dir, outputs=[result])
+        ui_file_button.click(fn=add_files, inputs=files, outputs=[result])
         ui_drop_button.click(fn=drop_db, inputs=[], outputs=[result])
         run_button.click(predict, [input_question, input_image], [result])
 
