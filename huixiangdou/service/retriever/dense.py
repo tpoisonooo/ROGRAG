@@ -7,10 +7,10 @@ import os
 
 class DenseRetriever(Retriever):
 
-    def __init__(self, resource: RetrieveResource, work_dir: str) -> None:
+    def __init__(self, resource: RetrieveResource) -> None:
         super().__init__()
         """Init with model device type and config."""
-        dense_path = os.path.join(work_dir, 'db_dense')
+        dense_path = os.path.join(resource.cur_work_dir(), 'db_dense')
         self.faiss = Faiss.load(dense_path)
         self.resource = resource
 

@@ -118,19 +118,13 @@ class ReduceGenerate:
 class ParallelPipeline:
 
     def __init__(self,
-                 work_dir: str = 'workdir',
-                 config_path: str = 'config.ini'):
-        self.resource = RetrieveResource(config_path)
+                 resource: RetrieveResource):
+        self.resource = resource
         self.pool = SharedRetrieverPool(resource=self.resource)
-        self.retriever_knowledge = self.pool.get(
-            work_dir=work_dir, method=RetrieveMethod.KNOWLEDGE)
-        self.retriever_web = self.pool.get(work_dir=work_dir,
-                                           method=RetrieveMethod.WEB)
-        self.config_path = config_path
-        self.work_dir = work_dir
-        
-        with open(config_path) as f:
-            self.threshold = pytoml.load(f)['store']['reject_threshold']
+        self.retriever_knowledge = self.pool.get(method=RetrieveMethod.KNOWLEDGE)
+        self.retriever_web = self.pool.get(method=RetrieveMethod.WEB)
+        self.threshold = self.resource.fs_config.get('reject_threshold', None)    
+        assert self.threshold is not None, "请在配置文件中设置 store.reject_threshold 参数"
 
     def is_initialized(self) -> bool:
         return self.retriever_knowledge.entityDB.index is not None

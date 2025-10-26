@@ -11,7 +11,7 @@ import pytoml
 from loguru import logger
 from typing import List
 from huixiangdou.primitive import Query
-from huixiangdou.service import ErrorCode
+from huixiangdou.service import ErrorCode, RetrieveResource
 from huixiangdou.pipeline import SerialPipeline, ParallelPipeline, FeatureStore, write_back_config_threshold
 import json
 from datetime import datetime
@@ -58,13 +58,13 @@ def parse_args():
     return args
 
 
-language = 'en'
+language = 'zh_cn'
 enable_web_search = False
 enable_code_search = True
-pipeline = 'serial'
+pipeline = 'parallel'
 main_args = None
-assistant = None
-
+resource = None
+ui_allfiles = None
 
 def on_language_changed(value: str):
     global language
@@ -108,67 +108,75 @@ def format_refs(refs: List[str]):
     return text
 
 
-def reinit_assistant():
-    global assistant
-    global pipeline
+def reinit():
     global main_args
-    if 'serial' in pipeline:
-        assistant = SerialPipeline(work_dir=main_args.work_dir,
-                                   config_path=main_args.config_path)
-    else:
-        assistant = ParallelPipeline(work_dir=main_args.work_dir,
-                                     config_path=main_args.config_path)
+    global resource
+    
+    resource = RetrieveResource(main_args.config_path)
 
 
-async def add_dir(dir: str):
-    global assistant
-    resource = assistant.resource
+def allfiles():
+    from huixiangdou.service import ChunkSQL
+    chunksql = ChunkSQL(os.path.join(main_args.work_dir, 'db_chunk')) 
+    names = chunksql.listall()
+    namestr = '\n'.join(names)
+    return namestr
+
+
+async def add_files(files: List, progress=gr.Progress()):
+    if not files:
+        return '没有上传任何文件', allfiles()
+    global resource
     store = FeatureStore(resource=resource, work_dir=main_args.work_dir)
-    scan_files = store.file_opr.scan_dir(dir)
+    scan_files = store.file_opr.scan_files(files)
     if len(scan_files) < 1:
-        return 'no valid files found'
+        return '未上传任何文件', allfiles()
+
+    progress(0, desc="转换中")
     store.preprocess(files=scan_files)
     store.file_opr.summarize(scan_files)
     
-    await store.init(files=scan_files)
-    await write_back_config_threshold(resource=resource,
-                                      work_dir=main_args.work_dir,
-                                      config_path=main_args.config_path)
-    reinit_assistant()
-    return 'success'
+    progress(0.3, desc="开始建库")
+    async for step in store.init(files=scan_files):
+        progress(0.3 + 0.3 * step, desc="索引中")
+
+    progress(0.9, desc="重新初始化")
+    reinit()
+    progress(1.0, desc="完成")
+    return '扩展成功', allfiles() 
 
 
 async def drop_db():
     global workdir
-    global assistant
-    resource = assistant.resource
+    global resource
     store = FeatureStore(resource=resource, work_dir=main_args.work_dir)
 
     await store.remove_knowledge()
-    reinit_assistant()
-    return 'success'
+    reinit()
+    return '删除成功', allfiles()
 
 
-async def predict(text: str, image: str):
+async def predict(text: str):
     global language
     global enable_web_search
     global main_args
-    global assistant
+    global resource
+    global pipeline
 
     if not text:
         text = main_args.placeholder
 
-    if image is not None:
-        filename = 'image.png'
-        image_path = os.path.join(main_args.work_dir, filename)
-        cv2.imwrite(image_path, image)
-    else:
-        image_path = None
+    image_path = None
 
     query = Query(text=text,
                   image=image_path,
                   enable_web_search=enable_web_search,
                   enable_code_search=enable_code_search)
+
+    if 'serial' in pipeline:
+        assistant = SerialPipeline(resouce=resource)
+    else:
+        assistant = ParallelPipeline(resouce=resource)
 
     if not assistant.is_initialized():
         if language == 'zh_cn':
@@ -205,6 +213,7 @@ async def predict(text: str, image: str):
 if __name__ == '__main__':
     main_args = parse_args()
 
+    reinit()
     show_image = True
     radio_options = ["serial", "parallel"]
 
@@ -223,20 +232,13 @@ if __name__ == '__main__':
     else:
         theme = gr.themes.Soft()
 
-    if 'serial' in pipeline:
-        assistant = SerialPipeline(work_dir=main_args.work_dir,
-                                   config_path=main_args.config_path)
-    else:
-        assistant = ParallelPipeline(work_dir=main_args.work_dir,
-                                     config_path=main_args.config_path)
-
     with gr.Blocks(theme=theme,
                    title='HuixiangDou AI assistant',
                    analytics_enabled=True) as demo:
         with gr.Row():
             gr.Markdown(
                 """
-            #### [HuixiangDou](https://github.com/internlm/huixiangdou) AI assistant
+            #### “智幄明航”动态通航安全监管智能体
             """,
                 label='Reply',
                 header_links=True,
@@ -245,43 +247,48 @@ if __name__ == '__main__':
 
         with gr.Row():
             ui_language = gr.Radio(["en", "zh_cn"],
-                                   label="Language",
-                                   info="Use `en` by default")
+                                   label="语言",
+                                   info="默认使用 `zh_cn`")
             ui_web_search = gr.Radio(["no", "yes"],
-                                     label="Enable web search",
-                                     info="Disable by default")
+                                     label="网络搜索",
+                                     info="默认关闭")
             ui_code_search = gr.Radio(["yes", "no"],
-                                      label="Enable code search",
-                                      info="Enable by default")
+                                      label="代码检索",
+                                      info="默认开启")
 
         with gr.Row():
-            ui_file_dir = gr.TextArea(
-                label='File directory',
-                show_copy_button=True,
-                placeholder='Such as `/path/to/your/documents/`',
-                lines=1)
+            ui_allfiles = gr.TextArea(label='当前知识库文件列表', value=allfiles(), lines=11)
             
             with gr.Column():
-                ui_file_button = gr.Button('Add file directory')
-                ui_drop_button = gr.Button('Drop database')
+                ui_file_button = gr.Button('扩展知识库')
+                ui_drop_button = gr.Button('清空知识库')
+                files = gr.Files(file_count="multiple", label="请选择要增加的文件（支持多选）")
 
         with gr.Row():
-            input_question = gr.TextArea(label='Input your question',
+            input_question = gr.TextArea(label='输入问题',
                                          placeholder=main_args.placeholder,
                                          show_copy_button=True,
-                                         lines=9)
-            input_image = gr.Image(
-                label=
-                '[Optional] Image-text retrieval needs `config-multimodal.ini`',
-                render=show_image)
+                                         lines=1)
+        #    input_image = gr.Image(
+        #        label=
+        #        '[可选] 图文检索需配置 `config-multimodal.ini`',
+        #        render=show_image)
 
         with gr.Row():
-            run_button = gr.Button()
+            run_button = gr.Button('运行')
 
-        with gr.Row():
-            result = gr.Markdown(
-                '>Text reply or inner status callback here, depends on `pipeline type`',
-                label='Reply',
+        with gr.Column():
+            system_state = gr.Markdown(
+                '>这里是系统状态',
+                label='状态',
+                show_label=True,
+                header_links=True,
+                line_breaks=True,
+                show_copy_button=True)
+
+            reply_question = gr.Markdown(
+                '>这里是问题回复',
+                label='答复',
                 show_label=True,
                 header_links=True,
                 line_breaks=True,
@@ -290,17 +297,17 @@ if __name__ == '__main__':
 
         ui_language.change(fn=on_language_changed,
                            inputs=ui_language,
-                           outputs=[result])
+                           outputs=[system_state])
 
         ui_web_search.change(fn=on_web_search_changed,
                              inputs=ui_web_search,
-                             outputs=[result])
+                             outputs=[system_state])
         ui_code_search.change(fn=on_code_search_changed,
                               inputs=ui_code_search,
-                              outputs=[result])
-        ui_file_button.click(fn=add_dir, inputs=ui_file_dir, outputs=[result])
-        ui_drop_button.click(fn=drop_db, inputs=[], outputs=[result])
-        run_button.click(predict, [input_question, input_image], [result])
+                              outputs=[system_state])
+        ui_file_button.click(fn=add_files, inputs=files, outputs=[system_state, ui_allfiles])
+        ui_drop_button.click(fn=drop_db, inputs=[], outputs=[system_state, ui_allfiles])
+        run_button.click(predict, [input_question], reply_question)
 
     demo.queue()
-    demo.launch(share=False, server_name='0.0.0.0', debug=True)
+    demo.launch(share=False, server_name='0.0.0.0', server_port=8888, debug=True)

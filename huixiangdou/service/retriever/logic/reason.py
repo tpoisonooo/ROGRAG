@@ -33,10 +33,11 @@ class LFPlanResult:
 
 class ReasonRetriever(Retriever):
 
-    def __init__(self, resource: RetrieveResource, work_dir: str) -> None:
+    def __init__(self, resource: RetrieveResource) -> None:
         super().__init__()
         """Init with model device type and config."""
         self.resource = resource
+        work_dir = resource.cur_work_dir()
         self.chunkDB = ChunkSQL(file_dir=os.path.join(work_dir, 'db_chunk'))
         if not os.path.exists(work_dir):
             logger.warning('!!!warning, workdir not exist.!!!')

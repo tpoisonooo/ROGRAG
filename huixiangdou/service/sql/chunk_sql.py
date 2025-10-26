@@ -38,6 +38,23 @@ class ChunkSQL:
                 ''', (c._hash, c.content_or_path,
                     json.dumps(c.metadata, ensure_ascii=False), c.modal))
 
+    def listall(self) -> List[str]:
+        names = set()
+        with DB(self.file_name) as db:
+            db.execute('SELECT metadata FROM chunks')
+            items = db.fetchall()
+            for item in items:
+                jsonstr = item[0]
+                jsonobj = json.loads(jsonstr)
+                if 'source' not in jsonobj:
+                    continue
+                filepath = jsonobj['source']
+                filename = filepath.split('/')[-1]
+                names.add(filename)
+
+        return list(names) 
+        
+
     def get(self, _hash: str) -> Optional[Chunk]:
         """Retrieve a chunk by its ID."""
         

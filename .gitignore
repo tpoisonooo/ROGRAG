@@ -22,3 +22,4 @@ evaluation/candidates.zip
 evaluation/feature_stores.zip
 evaluation/query.log
 llm.jsonl
+.cache_llm

@@ -39,7 +39,6 @@ class SharedRetrieverPool:
 
     def get(self,
             fs_id: str = 'default',
-            work_dir='workdir',
             method: RetrieveMethod = RetrieveMethod.KNOWLEDGE) -> Retriever:
         """Get database by id."""
 
@@ -64,8 +63,7 @@ class SharedRetrieverPool:
                 self.cache.pop(del_key)
                 del del_value['retriever']
 
-        instance = self.classes[method](resource=self.resource,
-                                        work_dir=work_dir)
+        instance = self.classes[method](resource=self.resource)
         self.cache[newkey] = {'retriever': instance, 'time': time.time()}
         return instance
 

@@ -7,7 +7,7 @@ from loguru import logger
 
 from .pipeline import SerialPipeline, ParallelPipeline, FeatureStore, write_back_config_threshold
 from .primitive import Query, Pair, Token
-from .service import server_prompts
+from .service import server_prompts, RetrieveResource
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -21,6 +21,7 @@ configpath = None
 workdir = None
 assistant = None
 analogy = None
+main_args = None
 app = FastAPI(docs_url='/')
 
 
@@ -62,10 +63,10 @@ class TextSimilarity:
 class ExampleAnalogy:
 
     def __init__(self,
-                 resource,
                  api_data_dir: str,
                  threshold: float = 0.3,
                  language: str = 'zh_cn'):
+        global resource
         if not os.path.exists(api_data_dir):
             logger.info('api_data_dir not exist, quit')
             return
@@ -325,7 +326,7 @@ def extract_history(talk_seed):
 async def coreference_resolution(query: str, history: List, language: str):
     if not history:
         return query
-    global assistant
+    global resource
     pronouns = [
         'it', 'he', 'she', 'their', 'they', 'him', 'her', 'this', 'that', '它',
         '他', '她', '这', '那'
@@ -335,7 +336,7 @@ async def coreference_resolution(query: str, history: List, language: str):
             template = server_prompts['corefence_resolution'][language]
             json_str = json.dumps(history[-1], ensure_ascii=False)
             prompt = template.format(query=query, history=json_str)
-            response = await assistant.resource.llm.chat(prompt=prompt)
+            response = await resource.llm.chat(prompt=prompt)
             if 'NO' in response:
                 return query
             return response
@@ -344,7 +345,8 @@ async def coreference_resolution(query: str, history: List, language: str):
 
 @app.post("/v2/chat")
 async def chat(talk_seed: Talk_seed):
-    global assistant
+    global resource
+    
     print('enable web search {}'.format(talk_seed.enable_web_search))
     req_id = get_req_uuid()
     pipeline = {}
@@ -395,7 +397,7 @@ async def chat(talk_seed: Talk_seed):
             data = {
                 "_id": req_id,
                 "stage": sess.stage,
-                "references": references[0:assistant.resource.reranker.topn],
+                "references": references[0:resource.reranker.topn],
                 "delta": sess.delta,
             }
 
@@ -405,25 +407,23 @@ async def chat(talk_seed: Talk_seed):
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
-def reinit_assistant():
-    global assistant
-    global workdir
-    global configpath
-
-    if type(assistant) is ParallelPipeline:
-        assistant = ParallelPipeline(work_dir=workdir,
-                                     config_path=configpath)
-    else:
-        assistant = SerialPipeline(work_dir=workdir,
-                                    config_path=configpath)
+def reinit():
+    global main_args
+    global resource
     
+    resource = RetrieveResource(main_args.config_path)
 
 @app.post("/v2/add_files")
 async def add_files(file_list: List[str]):
     global workdir
-    global assistant
+    global resource
     global configpath
-    
+
+    if type(assistant) is ParallelPipeline:
+        assistant = ParallelPipeline(resource=resource)
+    else:
+        assistant = SerialPipeline(resource=resource)
+
     files = []
     for file in file_list:
         if not os.path.exists(file):
@@ -433,7 +433,6 @@ async def add_files(file_list: List[str]):
     if len(files) < 1:
         return 'success'
     
-    resource = assistant.resource
     store = FeatureStore(resource=resource, work_dir=workdir)
     # convert pdf/excel/ppt to markdown
     scan_files = store.file_opr.scan_files(file_list=files)
@@ -444,18 +443,17 @@ async def add_files(file_list: List[str]):
 
     await write_back_config_threshold(resource=resource, work_dir=workdir, config_path=configpath)
     
-    reinit_assistant()
+    reinit()
     return 'success'
 
 @app.post("/v2/drop_db")
 async def drop_db():
     global workdir
-    global assistant
-    resource = assistant.resource
+    global resource
     store = FeatureStore(resource=resource, work_dir=workdir)
     
     await store.remove_knowledge()
-    reinit_assistant()
+    reinit()
     return 'success'
 
 @app.post("/v2/exemplify")
@@ -473,10 +471,6 @@ def parse_args():
     """Parse args."""
     parser = argparse.ArgumentParser(
         description='SerialPipeline or Parallel Pipeline.')
-    parser.add_argument('--work_dir',
-                        type=str,
-                        default='workdir',
-                        help='Working directory.')
     parser.add_argument('--config_path',
                         default='config.ini',
                         type=str,
@@ -494,19 +488,13 @@ def parse_args():
     return args
 
 if __name__ == '__main__':
-    args = parse_args()
-    # setup chat service
-    if 'parallel' in args.pipeline:
-        assistant = ParallelPipeline(work_dir=args.work_dir,
-                                     config_path=args.config_path)
-    elif 'serial' in args.pipeline:
-        assistant = SerialPipeline(work_dir=args.work_dir,
-                                   config_path=args.config_path)
-    workdir = args.work_dir
-    configpath = args.config_path
+    global global_args
+    global_args = parse_args()
+    
+    configpath = main_args.config_path
+    reinit()
     
     api_data_dir = '/home/khj/workspace/HuixiangDou/apidata/'
-    analogy = ExampleAnalogy(resource=assistant.resource,
-                             api_data_dir=api_data_dir)
+    analogy = ExampleAnalogy(api_data_dir=api_data_dir)
 
     uvicorn.run(app, host='0.0.0.0', port=args.port, log_level='info')

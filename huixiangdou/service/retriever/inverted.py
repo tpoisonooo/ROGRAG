@@ -7,12 +7,12 @@ import os
 
 class InvertedRetriever(Retriever):
 
-    def __init__(self, resource: RetrieveResource, work_dir: str) -> None:
+    def __init__(self, resource: RetrieveResource) -> None:
         super().__init__()
         """Init with model device type and config."""
         self.indexer = Entity2ChunkSQL(
-            os.path.join(work_dir, 'db_entity2chunk'))
-        self.chunkDB = ChunkSQL(file_dir=os.path.join(work_dir, 'db_chunk'))
+            os.path.join(resource.cur_work_dir(), 'db_entity2chunk'))
+        self.chunkDB = ChunkSQL(file_dir=os.path.join(resource.cur_work_dir(), 'db_chunk'))
         self.topk = 10
 
     async def explore(self, query: Query) -> RetrieveReply:

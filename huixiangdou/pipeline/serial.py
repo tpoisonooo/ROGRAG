@@ -165,25 +165,16 @@ class PPLCheck:
 class SerialPipeline:
 
     def __init__(self,
-                 work_dir: str = 'workdir',
-                 config_path: str = 'config.ini'):
-        self.resource = RetrieveResource(config_path)
+                 resouce: RetrieveResource):
+        self.resource = resouce
         self.pool = SharedRetrieverPool(resource=self.resource)
-        self.retriever_reason = self.pool.get(work_dir=work_dir,
-                                              method=RetrieveMethod.REASON)
-        self.retriever_knowledge = self.pool.get(
-            work_dir=work_dir, method=RetrieveMethod.KNOWLEDGE)
-        self.retriever_web = self.pool.get(work_dir=work_dir,
-                                           method=RetrieveMethod.WEB)
-        # self.retriever_bm25 = self.pool.get(work_dir=work_dir, method=RetrieveMethod.BM25)
-        # self.retriever_inverted = self.pool.get(work_dir=work_dir, method=RetrieveMethod.INVERTED)
+        self.retriever_reason = self.pool.get(method=RetrieveMethod.REASON)
+        self.retriever_knowledge = self.pool.get(method=RetrieveMethod.KNOWLEDGE)
+        self.retriever_web = self.pool.get(method=RetrieveMethod.WEB)
 
-        self.config_path = config_path
-        self.work_dir = work_dir
-        
         # utf-8
-        with open(config_path,'r', encoding='utf-8') as f:
-            self.threshold = pytoml.load(f)['store']['reject_threshold']
+        self.threshold = self.resource.fs_config.get('reject_threshold')    
+        assert self.threshold is not None, "请在配置文件中设置 store.reject_threshold 参数"
 
     def is_initialized(self) -> bool:
         return self.retriever_knowledge.entityDB.index is not None

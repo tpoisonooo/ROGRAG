@@ -16,12 +16,12 @@ import pdb
 
 class KnowledgeRetriever(Retriever):
 
-    def __init__(self, resource: RetrieveResource, work_dir: str) -> None:
+    def __init__(self, resource: RetrieveResource) -> None:
         super().__init__()
         """Init with model device type and config."""
         self.embedder = resource.embedder
         self.llm = resource.llm
-        self.work_dir = work_dir
+        work_dir = resource.cur_work_dir()
         self.entityDB = Faiss.load_local(
             os.path.join(work_dir, 'db_kag_entity_mix'))
         self.relationDB = Faiss.load_local(
@@ -471,7 +471,7 @@ class KnowledgeRetriever(Retriever):
                 hl_keywords = ", ".join(hl_keywords)
                 ll_keywords = ", ".join(ll_keywords)
             # Handle parsing error
-            except json.JSONDecodeError as e:
+            except Exception as e:
                 logger.error(f"JSON parsing error: {e}, input {result}")
                 return [], []
 

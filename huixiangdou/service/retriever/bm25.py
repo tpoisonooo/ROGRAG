@@ -6,12 +6,12 @@ import os
 
 class BM25Retriever(Retriever):
 
-    def __init__(self, resource: RetrieveResource, work_dir: str) -> None:
+    def __init__(self, resource: RetrieveResource) -> None:
         super().__init__()
         """Init with model device type and config."""
         self.bm25 = BM25Okapi()
 
-        db_code_path = os.path.join(work_dir, 'db_code')
+        db_code_path = os.path.join(resource.cur_work_dir(), 'db_code')
         if os.path.exists(db_code_path):
             self.bm25.load(db_code_path)
             self.inited = True

@@ -5,7 +5,7 @@ import os
 import shutil
 import time
 from multiprocessing import Pool
-from typing import Dict, List, Tuple, Iterator
+from typing import Dict, List, Tuple, Iterator, AsyncGenerator
 import random
 import pytoml
 from loguru import logger
@@ -45,16 +45,15 @@ class FeatureStore:
     def __init__(self,
                  resource: RetrieveResource,
                  language: str = 'zh',
-                 chunk_size=900,
-                 work_dir: str = 'workdir') -> None:
+                 chunk_size=900) -> None:
         """Init with model device type and config."""
         self.language = language
         logger.debug('loading text2vec model..')
         self.embedder = resource.embedder
         self.llm = resource.llm
         self.graph_store = resource.graph_store
+        self.work_dir = resource.cur_work_dir()
         self.chunk_size = chunk_size
-        self.work_dir = work_dir
         self.file_opr = FileOperation()
 
         logger.info('init dense retrieval database with chunk_size {}'.format(
@@ -107,7 +106,7 @@ class FeatureStore:
         sparse_dir = os.path.join(self.work_dir, 'db_code')
         bm25 = BM25Okapi()
         bm25.save(chunks, sparse_dir)
-        return None
+        return
 
     def split_to_chunks(self, file: FileName) -> Tuple[List[Chunk]]:
         metadata = {'source': file.origin}
@@ -145,7 +144,7 @@ class FeatureStore:
         shutil.rmtree(self.work_dir, ignore_errors=True)
         self.graph_store.drop()
 
-    async def build_knowledge(self, files: Iterator[FileName]) -> None:
+    async def build_knowledge(self, files: Iterator[FileName]) -> AsyncGenerator[float, None]:
         """Split docs into chunks, build knowledge graph and base based on them."""
         entityDB = Faiss.load_local(
             os.path.join(self.work_dir, 'db_kag_entity'))
@@ -159,6 +158,9 @@ class FeatureStore:
 
         chunkDB = ChunkSQL(file_dir=os.path.join(self.work_dir, 'db_chunk'))
 
+        progress = 0
+        names = chunkDB.listall() 
+        files = list(files)
         for file in tqdm(files, 'build knowledge'):
             if not file.state:
                 logger.error(f'unknown file state {file}')
@@ -182,6 +184,8 @@ class FeatureStore:
                                                relationDB_mix=relationDB_mix,
                                                graph_store=self.graph_store)
                 chunkDB.add(chunks)
+                yield progress
+                progress += 1 / len(files)
             except Exception as e:
                 logger.error(str(e))
                 pass
@@ -199,7 +203,7 @@ class FeatureStore:
         relationDB_mix.save(folder_path=os.path.join(self.work_dir,
                                                      'db_kag_relation_mix'),
                             embedder=self.embedder)
-        return None
+        return
 
     async def build_dense(self, files: Iterator[FileName]) -> None:
         """Split docs into chunks, build knowledge graph and base based on them."""
@@ -316,7 +320,7 @@ class FeatureStore:
                     file.state = False
                     file.reason = 'read error'
 
-    async def init(self, files: List[FileName]):
+    async def init(self, files: List[FileName]) -> AsyncGenerator[float, None]:
         """Initializes response feature store.
 
         Only needs to be called once. Also calculates the optimal threshold
@@ -327,7 +331,8 @@ class FeatureStore:
         code = filter(lambda x: x._type == 'code', files)
         documents = filter(lambda x: x._type != 'code', files)
 
-        await self.build_knowledge(files=documents)
+        async for progress in self.build_knowledge(files=documents):
+            yield progress
         return
         # tasks = []
         # if 'bm25' in args.method:
@@ -384,7 +389,7 @@ def parse_args():
 
 
 async def write_back_config_threshold(resource: RetrieveResource,
-                                      work_dir: str, config_path: str):
+                                      config_path: str):
     """Update reject threshold based on positive and negative examples."""
     from sklearn.metrics import precision_recall_curve
     import numpy as np
@@ -401,7 +406,7 @@ async def write_back_config_threshold(resource: RetrieveResource,
 
     # retrieve score
     pool = SharedRetrieverPool(resource=resource)
-    retriever = pool.get(work_dir=work_dir)
+    retriever = pool.get()
 
     for question in questions:
         score = await retriever.similarity_score(query=question)

@@ -201,16 +201,14 @@ class GraphStore(ABC):
 class TuGraphStore(GraphStore):
     """TuGraph graph store."""
 
-    def __init__(self, config_path: str) -> None:
+    def __init__(self, config: dict) -> None:
         """Initialize the TuGraphStore with connection details."""
-        # utf-8
-        with open(config_path, encoding="utf-8") as f:
-            config = pytoml.load(f)['tugraph']
-            self.host = config.get('host', '127.0.0.1')
-            self.port = config.get('port', 7072)
-            self.username = config.get('username', 'admin')
-            self.password = config.get('password', '73@TuGraph')
-            self.name = config.get('name', 'HuixiangDou')
+        self.host = config.get('host', '127.0.0.1')
+        self.port = config.get('port', 7072)
+        self.username = config.get('username', 'admin')
+        self.password = config.get('password', '73@TuGraph')
+        self.name = config.get('name', 'HuixiangDou')
+        
         self._summary_enabled = True
         self._vertex_type = "entity"
         self._edge_type = "relation"
