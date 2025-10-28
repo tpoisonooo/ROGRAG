@@ -114,6 +114,9 @@ class RetrieveResource:
 
     def check_db_name(self, name:str) -> None:
         name = name.strip()
+        if '.' in name or '/' in name or '\\' in name:
+            raise ValueError("Database name cannot contain special characters like '.', '/', or '\\'.")
+        
         if len(name) == 0:
             raise ValueError("Database name cannot be empty.")
     

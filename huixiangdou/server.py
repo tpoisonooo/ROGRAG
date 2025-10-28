@@ -375,7 +375,7 @@ async def coreference_resolution(query: str, history: List, language: str):
 
 
 @app.post("/v2/chat")
-async def chat(talk_seed: Talk_seed):
+async def stream_chat(talk_seed: Talk_seed):
     global resource
     
     # 切换数据库
@@ -398,7 +398,7 @@ async def chat(talk_seed: Talk_seed):
                   enable_web_search=talk_seed.enable_web_search)
 
     async def event_stream():
-        if global_args.pipeline_mode == 'parallel':
+        if global_args.pipeline == 'parallel':
             assistant = ParallelPipeline(resource=resource)
         else:
             assistant = SerialPipeline(resource=resource)
@@ -453,7 +453,7 @@ def reinit(db_name: str):
     resource = RetrieveResource(global_args.config_path)
     resource.switch(db_name)
 
-@app.get("/v2/list_files")
+@app.get("/v2/list_file")
 async def list_files(db_name: str = 'HuixiangDou'):
     global resource
     resource.switch(name=db_name)
@@ -476,21 +476,63 @@ async def add_files(request: AddFilesRequest):
         files.append(file)
     
     if len(files) < 1:
-        yield 'success'
+        async def empty_stream():
+            yield f"data:{json.dumps({'status': {'code': 0, 'error': 'success'}, 'data': {'progress': 1.0, 'message': 'No files to process'}}, ensure_ascii=False)}\n\n"
+        return StreamingResponse(empty_stream(), media_type="text/event-stream")
     
-    store = FeatureStore(resource=resource)
-    # convert pdf/excel/ppt to markdown
-    scan_files = store.file_opr.scan_files(file_list=files)
-    store.preprocess(files=scan_files)
+    async def progress_stream():
+        store = FeatureStore(resource=resource)
+        
+        try:
+            # convert pdf/excel/ppt to markdown
+            scan_files = store.file_opr.scan_files(file_list=files)
+            store.preprocess(files=scan_files)
+            
+            total_files = len(scan_files)
+            current_file = 0
+            
+            # 发送开始消息
+            yield f"data:{json.dumps({'status': {'code': 0, 'error': 'processing'}, 'data': {'progress': 0.0, 'message': f'Starting to process {total_files} files', 'total_files': total_files}}, ensure_ascii=False)}\n\n"
+            
+            # 处理文件并流式发送进度
+            async for progress in store.init(files=scan_files):
+                current_file = int(progress * total_files)
+                percentage = progress * 100
+                
+                progress_data = {
+                    'status': {'code': 0, 'error': 'processing'},
+                    'data': {
+                        'progress': progress,
+                        'percentage': percentage,
+                        'current_file': current_file,
+                        'total_files': total_files,
+                        'message': f'Processing file {current_file}/{total_files} ({percentage:.1f}%)'
+                    }
+                }
+                yield f"data:{json.dumps(progress_data, ensure_ascii=False)}\n\n"
+            
+            # 完成后处理
+            store.file_opr.summarize(scan_files)
+            await write_back_config_threshold(resource=resource)
+            reinit(db_name=request.db_name)
+            
+            # 发送完成消息
+            yield f"data:{json.dumps({'status': {'code': 0, 'error': 'success'}, 'data': {'progress': 1.0, 'message': f'Successfully processed {total_files} files', 'total_files': total_files}}, ensure_ascii=False)}\n\n"
+            
+        except Exception as e:
+            logger.error(f'Error processing files: {str(e)}')
+            error_data = {
+                'status': {'code': 1, 'error': f'Error: {str(e)}'},
+                'data': {'progress': 0.0, 'message': f'Error occurred: {str(e)}'}
+            }
+            yield f"data:{json.dumps(error_data, ensure_ascii=False)}\n\n"
     
-    async for progress in store.init(files=scan_files):
-        yield progress
-    store.file_opr.summarize(scan_files)
+    return StreamingResponse(progress_stream(), media_type="text/event-stream")
 
-    await write_back_config_threshold(resource=resource)
-    
-    reinit(db_name=request.db_name)
-    yield 'success'
+@app.post("/v2/list_db")
+async def list_db():
+    global resource
+    return os.listdir(resource.base_work_dir)
 
 @app.post("/v2/drop_db")
 async def drop_db(request: DropDbRequest):
@@ -512,7 +554,7 @@ async def drop_db(request: DropDbRequest):
     return 'success'
 
 
-def export_graph_database(db_name: str, format_type: str = 'csv', export_dir: str = './export') -> dict:
+def export_graph_database(db_name: str) -> dict:
     """
     导出图数据库到指定格式
     
@@ -528,6 +570,8 @@ def export_graph_database(db_name: str, format_type: str = 'csv', export_dir: st
         # 获取数据库配置
         global resource
         
+        export_dir = './export'
+        format_type = 'csv'
         # 构建导出命令
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         export_filename = f"{db_name}_export_{timestamp}.{format_type}"

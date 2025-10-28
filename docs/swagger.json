@@ -12,7 +12,9 @@ info:
     - 支持多数据库切换
     - 多平台前端支持（微信、飞书、网页界面）
     
-    本次更新新增多数据库支持，允许在运行时切换不同的数据库。
+    本次更新：
+    - 新增多数据库支持，允许在运行时切换不同的数据库
+    - /v2/add_files 接口升级为流式响应，实时返回文件处理进度
 
   termsOfService: http://example.com/terms/
   contact:
@@ -20,7 +22,7 @@ info:
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  version: 2.0.0
+  version: 2.1.0
 externalDocs:
   description: 了解更多关于 ROGRAG 的信息
   url: https://github.com/tpoisonooo/ROGRAG
@@ -54,33 +56,59 @@ paths:
     post:
       tags:
         - rag
-      summary: 添加文件到知识库
-      description: 将指定文件添加到知识库中，支持指定目标数据库。文件会被预处理并建立索引。
+      summary: 添加文件到知识库（流式）
+      description: 将指定文件添加到知识库中，支持指定目标数据库。文件会被预处理并建立索引。此接口使用 Server-Sent Events (SSE) 流式返回处理进度。
       operationId: add_files
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/AddFilesRequest'
+            examples:
+              example1:
+                summary: 添加单个文件
+                value:
+                  file_list: ["/path/to/document.pdf"]
+                  db_name: "HuixiangDou"
+              example2:
+                summary: 添加多个文件到自定义数据库
+                value:
+                  file_list: ["/path/to/doc1.pdf", "/path/to/doc2.txt", "/path/to/doc3.md"]
+                  db_name: "ProjectDB"
       responses:
         '200':
-          description: 文件添加成功
+          description: 文件处理进度（SSE 流式响应）
           content:
-            application/json:
+            text/event-stream:
               schema:
-                $ref: '#/components/schemas/SimpleResponse'
+                $ref: '#/components/schemas/AddFilesProgressStream'
+              examples:
+                progress:
+                  summary: 处理进度示例
+                  value: |
+                    data: {"status": {"code": 0, "error": "processing"}, "data": {"progress": 0.0, "percentage": 0.0, "current_file": 0, "total_files": 3, "message": "Starting to process 3 files"}}
+                    
+                    data: {"status": {"code": 0, "error": "processing"}, "data": {"progress": 0.33, "percentage": 33.0, "current_file": 1, "total_files": 3, "message": "Processing file 1/3 (33.0%)"}}
+                    
+                    data: {"status": {"code": 0, "error": "processing"}, "data": {"progress": 0.67, "percentage": 67.0, "current_file": 2, "total_files": 3, "message": "Processing file 2/3 (67.0%)"}}
+                    
+                    data: {"status": {"code": 0, "error": "success"}, "data": {"progress": 1.0, "percentage": 100.0, "message": "Successfully processed 3 files", "total_files": 3}}
+                empty:
+                  summary: 空文件列表示例
+                  value: |
+                    data: {"status": {"code": 0, "error": "success"}, "data": {"progress": 1.0, "message": "No files to process", "total_files": 0}}
         '400':
           description: 请求参数错误
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SimpleResponse'
+                $ref: '#/components/schemas/Status'
         '500':
           description: 服务器内部错误
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SimpleResponse'
+                $ref: '#/components/schemas/Status'
   /v2/drop_db:
     post:
       tags:
@@ -511,3 +539,45 @@ components:
                 type: string
                 examples:
                   - 上海秋天雨水多么？
+    
+    AddFilesProgressStream:
+      type: object
+      description: "SSE 流式响应的每个数据块，格式为 'data: {json}\\n\\n'"
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        data:
+          type: object
+          properties:
+            progress:
+              type: number
+              format: float
+              description: 进度值（0.0 到 1.0）
+              examples:
+                - 0.5
+                - 0.75
+            percentage:
+              type: number
+              format: float
+              description: 进度百分比（0.0 到 100.0）
+              examples:
+                - 50.0
+                - 75.0
+            current_file:
+              type: integer
+              description: 当前正在处理的文件编号
+              examples:
+                - 2
+                - 5
+            total_files:
+              type: integer
+              description: 总文件数量
+              examples:
+                - 10
+                - 20
+            message:
+              type: string
+              description: 进度描述信息
+              examples:
+                - "Processing file 2/10 (20.0%)"
+                - "Successfully processed 10 files"

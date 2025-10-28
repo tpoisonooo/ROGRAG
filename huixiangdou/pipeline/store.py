@@ -147,7 +147,7 @@ class FeatureStore:
     async def remove_knowledge(self) -> None:
         logger.warning('Remove knowledge graph and database')
         shutil.rmtree(self.work_dir, ignore_errors=True)
-        os.rmdir(self.work_dir, ignore_errors=True)
+        os.rmdir(self.work_dir)
         self.graph_store.drop()
 
     async def build_knowledge(self, files: Iterator[FileName]) -> AsyncGenerator[float, None]:
