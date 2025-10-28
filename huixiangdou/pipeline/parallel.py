@@ -2,14 +2,14 @@
 import asyncio
 import json
 import pytoml
-import pdb
 from typing import List, Union, AsyncGenerator
 from ..primitive import Query, Pair
 from .session import Session
 from ..service import SharedRetrieverPool, Retriever, RetrieveResource, ErrorCode
 from ..service.retriever import RetrieveMethod
 from ..service.prompt import rag_prompts as PROMPTS
-
+from .store import load_reject_threshold
+from loguru import logger
 
 class PreprocNode:
 
@@ -123,8 +123,13 @@ class ParallelPipeline:
         self.pool = SharedRetrieverPool(resource=self.resource)
         self.retriever_knowledge = self.pool.get(method=RetrieveMethod.KNOWLEDGE)
         self.retriever_web = self.pool.get(method=RetrieveMethod.WEB)
-        self.threshold = self.resource.fs_config.get('reject_threshold', None)    
-        assert self.threshold is not None, "请在配置文件中设置 store.reject_threshold 参数"
+        # 从当前数据库的工作目录加载阈值
+        self.threshold = load_reject_threshold(self.resource)
+        if self.threshold is None:
+            # 如果没有找到阈值文件，使用一个默认的合理值
+            self.threshold = 0.0
+            logger.warning(f'No reject threshold found for database {self.resource.name}, using default value: {self.threshold}')
+        logger.info(f'Using reject threshold: {self.threshold} for database: {self.resource.name}')
 
     def is_initialized(self) -> bool:
         return self.retriever_knowledge.entityDB.index is not None

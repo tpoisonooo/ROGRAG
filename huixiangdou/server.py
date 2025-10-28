@@ -4,6 +4,10 @@ import pandas as pd
 from pypinyin import pinyin, Style
 import re
 from loguru import logger
+import subprocess
+import tempfile
+from datetime import datetime
+from typing import Dict, Optional
 
 from .pipeline import SerialPipeline, ParallelPipeline, FeatureStore, write_back_config_threshold
 from .primitive import Query, Pair, Token
@@ -17,12 +21,16 @@ from typing import List
 import uuid
 import jieba
 
+
 configpath = None
 workdir = None
-assistant = None
+resource = None
 analogy = None
 main_args = None
 app = FastAPI(docs_url='/')
+
+# 导出文件管理器
+exported_files: Dict[str, dict] = {}
 
 
 def get_req_uuid():
@@ -295,12 +303,35 @@ class Talk(BaseModel):
     text: str
     image: str = ''
 
-
 class Talk_seed(BaseModel):
     language: str
     enable_web_search: bool
     user: str
     history: list[Pair]
+    db_name: str = 'HuixiangDou'  # 默认数据库名称
+
+class AddFilesRequest(BaseModel):
+    file_list: List[str]
+    db_name: str = 'HuixiangDou'  # 默认数据库名称
+
+
+class DropDbRequest(BaseModel):
+    db_name: str = 'HuixiangDou'  # 默认数据库名称
+
+
+class ExportGraphRequest(BaseModel):
+    db_name: str = 'HuixiangDou'  # 默认数据库名称
+    format: str = 'csv'  # 导出格式，支持 csv 或 json
+    export_dir: str = './export'  # 导出目录
+    include_schema: bool = True  # 是否包含 schema 信息
+
+
+class ExportGraphResponse(BaseModel):
+    status: dict
+    data: dict
+    export_path: str  # 导出的文件路径
+    file_size: int  # 文件大小（字节）
+    download_token: str  # 下载令牌
 
 
 def format_refs(refs: List[str]):
@@ -347,6 +378,9 @@ async def coreference_resolution(query: str, history: List, language: str):
 async def chat(talk_seed: Talk_seed):
     global resource
     
+    # 切换数据库
+    resource.switch(talk_seed.db_name)
+    
     print('enable web search {}'.format(talk_seed.enable_web_search))
     req_id = get_req_uuid()
     pipeline = {}
@@ -364,6 +398,11 @@ async def chat(talk_seed: Talk_seed):
                   enable_web_search=talk_seed.enable_web_search)
 
     async def event_stream():
+        if main_args.pipeline_mode == 'parallel':
+            assistant = ParallelPipeline(resource=resource)
+        else:
+            assistant = SerialPipeline(resource=resource)
+
         async for sess in assistant.generate(
                 query=query,
                 history=history,
@@ -414,18 +453,18 @@ def reinit():
     resource = RetrieveResource(main_args.config_path)
 
 @app.post("/v2/add_files")
-async def add_files(file_list: List[str]):
+async def add_files(request: AddFilesRequest):
     global workdir
     global resource
     global configpath
 
-    if type(assistant) is ParallelPipeline:
-        assistant = ParallelPipeline(resource=resource)
-    else:
-        assistant = SerialPipeline(resource=resource)
+    # 切换数据库
+    if request.db_name and request.db_name != resource.name:
+        logger.info(f'Switching database from {resource.name} to {request.db_name}')
+        resource.switch(request.db_name)
 
     files = []
-    for file in file_list:
+    for file in request.file_list:
         if not os.path.exists(file):
             continue
         files.append(file)
@@ -441,20 +480,184 @@ async def add_files(file_list: List[str]):
     await store.init(files=scan_files)
     store.file_opr.summarize(scan_files)
 
-    await write_back_config_threshold(resource=resource, work_dir=workdir, config_path=configpath)
+    await write_back_config_threshold(resource=resource)
     
     reinit()
     return 'success'
 
 @app.post("/v2/drop_db")
-async def drop_db():
+async def drop_db(request: DropDbRequest):
     global workdir
     global resource
+    
+    # 切换数据库
+    if request.db_name and request.db_name != resource.name:
+        logger.info(f'Switching database from {resource.name} to {request.db_name}')
+        resource.switch(request.db_name)
+    
     store = FeatureStore(resource=resource, work_dir=workdir)
     
     await store.remove_knowledge()
     reinit()
     return 'success'
+
+
+def export_graph_database(db_name: str, format_type: str = 'csv', export_dir: str = './export') -> dict:
+    """
+    导出图数据库到指定格式
+    
+    Args:
+        db_name: 数据库名称
+        format_type: 导出格式 (csv/json)
+        export_dir: 导出目录
+    
+    Returns:
+        导出结果信息
+    """
+    try:
+        # 获取数据库配置
+        global resource
+        
+        # 构建导出命令
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        export_filename = f"{db_name}_export_{timestamp}.{format_type}"
+        export_path = os.path.join(export_dir, export_filename)
+        
+        # 确保导出目录存在
+        os.makedirs(export_dir, exist_ok=True)
+        
+        # 构建 lgraph_export 命令
+        cmd = [
+            'lgraph_export',
+            '-f', format_type,
+            '-g', db_name,
+            '-u', resource.graph_config.get('username', 'admin'),
+            '-p', resource.graph_config.get('password', '73@TuGraph'),
+            '-e', export_dir
+        ]
+        
+        logger.info(f'执行导出命令: {" ".join(cmd)}')
+        
+        # 执行导出命令
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        
+        if result.returncode == 0:
+            # 获取导出文件信息
+            if os.path.exists(export_path):
+                file_size = os.path.getsize(export_path)
+                return {
+                    'success': True,
+                    'export_path': export_path,
+                    'file_size': file_size,
+                    'message': '图谱导出成功'
+                }
+            else:
+                # 检查是否有其他导出文件
+                export_files = [f for f in os.listdir(export_dir) if f.endswith(f'.{format_type}')]
+                if export_files:
+                    # 使用最新的导出文件
+                    latest_file = sorted(export_files)[-1]
+                    file_path = os.path.join(export_dir, latest_file)
+                    file_size = os.path.getsize(file_path)
+                    return {
+                        'success': True,
+                        'export_path': file_path,
+                        'file_size': file_size,
+                        'message': '图谱导出成功'
+                    }
+                else:
+                    return {
+                        'success': False,
+                        'message': f'导出命令执行成功但未找到导出文件: {result.stdout}'
+                    }
+        else:
+            return {
+                'success': False,
+                'message': f'导出命令执行失败: {result.stderr}'
+            }
+            
+    except subprocess.TimeoutExpired:
+        return {
+            'success': False,
+            'message': '导出命令执行超时'
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'message': f'导出过程发生错误: {str(e)}'
+        }
+
+@app.post("/v2/export_graph")
+async def export_graph(request: ExportGraphRequest):
+    """
+    导出指定数据库的图谱数据
+    """
+    global resource
+    global workdir
+    global exported_files
+    
+    try:
+        # 切换数据库
+        if request.db_name and request.db_name != resource.name:
+            logger.info(f'Switching database from {resource.name} to {request.db_name}')
+            resource.switch(request.db_name)
+        
+        # 执行图谱导出
+        logger.info(f'开始导出数据库 {resource.name} 的图谱数据')
+        result = export_graph_database(
+            db_name=resource.name,
+            format_type=request.format,
+            export_dir=request.export_dir
+        )
+        
+        if result['success']:
+            # 生成下载令牌
+            download_token = get_req_uuid()
+            
+            # 记录导出文件信息
+            exported_files[download_token] = {
+                'file_path': result['export_path'],
+                'file_size': result['file_size'],
+                'db_name': resource.name,
+                'format': request.format,
+                'export_time': datetime.now().isoformat(),
+                'include_schema': request.include_schema
+            }
+            
+            logger.info(f'图谱导出成功，文件路径: {result["export_path"]}, 下载令牌: {download_token}')
+            
+            return {
+                "status": {
+                    "code": 0,
+                    "error": "success"
+                },
+                "data": {
+                    "export_path": result['export_path'],
+                    "file_size": result['file_size'],
+                    "download_url": f"/v2/download_export/{download_token}",
+                    "message": result['message'],
+                    "db_name": resource.name,
+                    "format": request.format
+                }
+            }
+        else:
+            return {
+                "status": {
+                    "code": 1,
+                    "error": result['message']
+                },
+                "data": {}
+            }
+            
+    except Exception as e:
+        logger.error(f'导出图谱时发生错误: {str(e)}')
+        return {
+            "status": {
+                "code": 1,
+                "error": f"导出失败: {str(e)}"
+            },
+            "data": {}
+        }
 
 @app.post("/v2/exemplify")
 async def examplify(talk_seed: Talk_seed):
@@ -466,6 +669,73 @@ async def examplify(talk_seed: Talk_seed):
 @app.post("/v2/download")
 async def download(token: Token):
     return 'deprecated'
+
+@app.get("/v2/download_export/{download_token}")
+async def download_export(download_token: str):
+    """
+    直接下载导出的图谱文件
+    简化设计：一个端点完成下载功能
+    """
+    global exported_files
+    
+    try:
+        # 检查下载令牌是否有效
+        if download_token not in exported_files:
+            return {
+                "status": {
+                    "code": 1,
+                    "error": "无效的下载令牌或文件已过期"
+                },
+                "data": {}
+            }
+        
+        file_info = exported_files[download_token]
+        file_path = file_info['file_path']
+        
+        # 检查文件是否存在
+        if not os.path.exists(file_path):
+            # 清理过期的文件记录
+            del exported_files[download_token]
+            return {
+                "status": {
+                    "code": 1,
+                    "error": "导出文件不存在或已被删除"
+                },
+                "data": {}
+            }
+        
+        # 获取文件信息
+        file_name = os.path.basename(file_path)
+        
+        logger.info(f'开始下载导出文件: {file_path}')
+        
+        # 使用 FileResponse 直接返回文件流
+        from fastapi.responses import FileResponse
+        
+        # 可选：添加文件元信息到响应头
+        headers = {
+            "Content-Disposition": f"attachment; filename=\"{file_name}\"",
+            "X-Download-Token": download_token,
+            "X-File-Size": str(file_info['file_size']),
+            "X-Database-Name": file_info['db_name']
+        }
+        
+        return FileResponse(
+            path=file_path,
+            filename=file_name,
+            media_type='application/octet-stream',
+            headers=headers
+        )
+        
+    except Exception as e:
+        logger.error(f'文件下载时发生错误: {str(e)}')
+        return {
+            "status": {
+                "code": 1,
+                "error": f"文件下载失败: {str(e)}"
+            },
+            "data": {}
+        }
 
 def parse_args():
     """Parse args."""

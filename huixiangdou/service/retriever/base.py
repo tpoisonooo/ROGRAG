@@ -116,6 +116,7 @@ class RetrieveResource:
             return
         
         # setup name
+        logger.info(f'Switching database from {self.name} to {name}')
         self.name = name
         os.makedirs(os.path.join(self.base_work_dir, self.name), exist_ok=True)
         

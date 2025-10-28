@@ -1,3 +1,3 @@
-from .store import FeatureStore, write_back_config_threshold
+from .store import FeatureStore, write_back_config_threshold, load_reject_threshold
 from .parallel import ParallelPipeline
 from .serial import SerialPipeline

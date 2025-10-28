@@ -155,7 +155,7 @@ class LLM:
         self.cache = ChatCache()
 
     def choose_model(self, backend: Backend, token_size: int) -> str:
-        if backend.model != None and len(backend.model) > 0:
+        if backend.model is not None and len(backend.model) > 0:
             return backend.model
 
         model = ''

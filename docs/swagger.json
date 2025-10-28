@@ -1,28 +1,31 @@
 openapi: 3.1.0
 info:
-  title: Swagger Petstore - OpenAPI 3.1
+  title: ROGRAG (Robustly Optimized GraphRAG) API
   description: |-
-    This is a sample Pet Store Server based on the OpenAPI 3.1 specification.  You can find out more about
-    Swagger at [https://swagger.io](https://swagger.io). In the third iteration of the pet store, we've switched to the design first approach!
-    You can now help us improve the API whether it's by making changes to the definition itself or to the code.
-    That way, with time, we can improve the API in general, and expose some of the new features in OAS3.
+    ROGRAG 是一个基于图检索增强生成(GraphRAG)的先进RAG框架，利用图结构知识表示和检索，
+    在SeedBench基准测试中比主流RAG方法性能提升15%。
+    
+    主要功能：
+    - 两阶段检索机制（双层和逻辑形式方法）
+    - 基于图的知识构建和检索
+    - 多种检索方法：BM25、密集检索、基于图的检索、网络搜索
+    - 支持多数据库切换
+    - 多平台前端支持（微信、飞书、网页界面）
+    
+    本次更新新增多数据库支持，允许在运行时切换不同的数据库。
 
-    Some useful links:
-    - [The Pet Store repository](https://github.com/swagger-api/swagger-petstore)
-    - [The source API definition for the Pet Store](https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml)
-
-  termsOfService: http://swagger.io/terms/
+  termsOfService: http://example.com/terms/
   contact:
-    email: apiteam@swagger.io
+    email: support@rograg.com
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  version: 1.0.0
+  version: 2.0.0
 externalDocs:
-  description: Find out more about Swagger
-  url: http://swagger.io
+  description: 了解更多关于 ROGRAG 的信息
+  url: https://github.com/tpoisonooo/ROGRAG
 servers:
-  - url: https://petstore3.swagger.io/api/v3
+  - url: http://127.0.0.1:23333
 tags:
   - name: rag
     description: RAG
@@ -33,7 +36,7 @@ paths:
       tags:
         - rag
       summary: 多阶段 RAG chat
-      description: 输入问题和历史消息，yield 处理阶段和最终的 streaming chat 结果
+      description: 输入问题和历史消息，yield 处理阶段和最终的 streaming chat 结果。支持指定数据库名称。
       operationId: rag_chat
       requestBody:
         content:
@@ -47,12 +50,149 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ChatReply'
+  /v2/add_files:
+    post:
+      tags:
+        - rag
+      summary: 添加文件到知识库
+      description: 将指定文件添加到知识库中，支持指定目标数据库。文件会被预处理并建立索引。
+      operationId: add_files
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddFilesRequest'
+      responses:
+        '200':
+          description: 文件添加成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleResponse'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleResponse'
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleResponse'
+  /v2/drop_db:
+    post:
+      tags:
+        - rag
+      summary: 清空数据库
+      description: 清空指定数据库的所有知识库内容，支持指定目标数据库。操作不可恢复。
+      operationId: drop_db
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DropDbRequest'
+      responses:
+        '200':
+          description: 数据库清空成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleResponse'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleResponse'
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleResponse'
+  /v2/export_graph:
+    post:
+      tags:
+        - rag
+      summary: 导出图谱数据
+      description: 导出指定数据库的图谱数据，支持 CSV 和 JSON 格式。导出完成后返回下载令牌。
+      operationId: export_graph
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportGraphRequest'
+      responses:
+        '200':
+          description: 图谱导出成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportGraphResponse'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  /v2/download_export/{download_token}:
+    get:
+      tags:
+        - rag
+      summary: 下载导出的图谱文件
+      description: 使用下载令牌获取导出的图谱文件。文件将以流式方式返回。简化设计，一个端点完成下载功能。
+      operationId: download_export
+      parameters:
+        - name: download_token
+          in: path
+          required: true
+          description: 导出时获得的下载令牌
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 文件下载成功
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+              headers:
+                Content-Disposition:
+                  description: 文件名
+                  schema:
+                    type: string
+                    example: 'attachment; filename="export_file.csv"'
+                X-File-Size:
+                  description: 文件大小（字节）
+                  schema:
+                    type: integer
+                    example: 1024000
+                X-Database-Name:
+                  description: 数据库名称
+                  schema:
+                    type: string
+                    example: "HuixiangDou"
+        '404':
+          description: 文件不存在或令牌无效
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
   /v2/exemplify:
     post:
       tags:
         - rag
       summary: 举一反三
-      description: 举一反三
+      description: 举一反三，支持指定数据库名称
       operationId: exemplify_question
       requestBody:
         content:
@@ -66,6 +206,18 @@ paths:
             application/json:
              schema:
               $ref: '#/components/schemas/Case'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
 
   /v2/download:
     post:
@@ -90,6 +242,111 @@ paths:
 
 components:
   schemas:
+    AddFilesRequest:
+      type: object
+      properties:
+        file_list:
+          type: array
+          items:
+            type: string
+          description: 要添加的文件路径列表
+          examples:
+            - ["/path/to/document.pdf", "/path/to/data.txt"]
+        db_name:
+          type: string
+          description: 目标数据库名称，默认为 "HuixiangDou"
+          default: "HuixiangDou"
+          examples:
+            - "HuixiangDou"
+            - "CustomDB"
+            - "ProjectA"
+    
+    DropDbRequest:
+      type: object
+      properties:
+        db_name:
+          type: string
+          description: 要清空的数据库名称，默认为 "HuixiangDou"
+          default: "HuixiangDou"
+          examples:
+            - "HuixiangDou"
+            - "TestDB"
+            - "TempDB"
+    
+    SimpleResponse:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        data:
+          type: string
+          description: 操作结果，通常为 "success"
+          examples:
+            - "success"
+    
+    ExportGraphRequest:
+      type: object
+      properties:
+        db_name:
+          type: string
+          description: 要导出的数据库名称，默认为 "HuixiangDou"
+          default: "HuixiangDou"
+          examples:
+            - "HuixiangDou"
+            - "CustomDB"
+            - "ProjectDB"
+        format:
+          type: string
+          description: 导出格式，支持 csv 或 json
+          default: "csv"
+          enum:
+            - "csv"
+            - "json"
+          examples:
+            - "csv"
+        export_dir:
+          type: string
+          description: 导出目录，默认为 "./export"
+          default: "./export"
+          examples:
+            - "./export"
+            - "/tmp/exports"
+        include_schema:
+          type: boolean
+          description: 是否包含 schema 信息
+          default: true
+          examples:
+            - true
+    
+    ExportGraphResponse:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        data:
+          type: object
+          properties:
+            export_path:
+              type: string
+              description: 导出的文件路径
+              examples:
+                - "./export/HuixiangDou_export_20241227_143022.csv"
+            file_size:
+              type: integer
+              description: 文件大小（字节）
+              examples:
+                - 1024000
+            download_token:
+              type: string
+              description: 下载令牌，用于后续文件下载
+              examples:
+                - "a1b2c3d4e5f6"
+            message:
+              type: string
+              description: 导出结果消息
+              examples:
+                - "图谱导出成功"
+    
     Token:
       type: object
       properties:
@@ -168,6 +425,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Pair'
+        db_name:
+          type: string
+          description: 目标数据库名称，默认为 "HuixiangDou"
+          default: "HuixiangDou"
+          examples:
+            - "HuixiangDou"
+            - "CustomDB"
+            - "TechDB"
 
     Status:
       type: object

@@ -65,6 +65,7 @@ pipeline = 'parallel'
 main_args = None
 resource = None
 ui_allfiles = None
+current_db_name = 'HuixiangDou'  # 当前数据库名称
 
 def on_language_changed(value: str):
     global language
@@ -92,6 +93,29 @@ def on_code_search_changed(value: str):
     return f'Code search set to {enable_code_search}'
 
 
+def on_db_name_changed(value: str):
+    """处理数据库名称变化"""
+    global current_db_name
+    global resource
+    
+    if not value or value.strip() == '':
+        return f'数据库名称不能为空'
+    
+    value = value.strip()
+    if value != current_db_name:
+        try:
+            # 切换数据库
+            resource.switch(value)
+            current_db_name = value
+            logger.info(f'Switched database to: {current_db_name}')
+            # 重新初始化文件列表显示
+            return f'已切换到数据库: {current_db_name}'
+        except Exception as e:
+            logger.error(f'Failed to switch database to {value}: {str(e)}')
+            return f'切换数据库失败: {str(e)}'
+    return f'当前数据库: {current_db_name}'
+
+
 def format_refs(refs: List[str]):
     refs_filter = list(set(refs))
     if len(refs) < 1:
@@ -111,8 +135,11 @@ def format_refs(refs: List[str]):
 def reinit():
     global main_args
     global resource
+    global current_db_name
     
     resource = RetrieveResource(main_args.config_path)
+    # 更新当前数据库名称
+    current_db_name = resource.name
 
 
 def allfiles():
@@ -127,6 +154,8 @@ async def add_files(files: List, progress=gr.Progress()):
     if not files:
         return '没有上传任何文件', allfiles()
     global resource
+    global current_db_name
+    
     store = FeatureStore(resource=resource, work_dir=main_args.work_dir)
     scan_files = store.file_opr.scan_files(files)
     if len(scan_files) < 1:
@@ -143,17 +172,19 @@ async def add_files(files: List, progress=gr.Progress()):
     progress(0.9, desc="重新初始化")
     reinit()
     progress(1.0, desc="完成")
-    return '扩展成功', allfiles() 
+    return f'扩展成功 (数据库: {current_db_name})', allfiles() 
 
 
 async def drop_db():
     global workdir
     global resource
+    global current_db_name
+    
     store = FeatureStore(resource=resource, work_dir=main_args.work_dir)
 
     await store.remove_knowledge()
     reinit()
-    return '删除成功', allfiles()
+    return f'删除成功 (数据库: {current_db_name})', allfiles()
 
 
 async def predict(text: str):
@@ -162,6 +193,7 @@ async def predict(text: str):
     global main_args
     global resource
     global pipeline
+    global current_db_name
 
     if not text:
         text = main_args.placeholder
@@ -180,9 +212,9 @@ async def predict(text: str):
 
     if not assistant.is_initialized():
         if language == 'zh_cn':
-            yield "知识库未准备好，请先上传数据。"
+            yield f"知识库未准备好，请先上传数据。(数据库: {current_db_name})"
         else:
-            yield "The knowledge base is not ready, please upload."
+            yield f"The knowledge base is not ready, please upload. (Database: {current_db_name})"
         return
 
     args = {'query': query, 'history': [], 'language': language}
@@ -255,6 +287,10 @@ if __name__ == '__main__':
             ui_code_search = gr.Radio(["yes", "no"],
                                       label="代码检索",
                                       info="默认开启")
+            ui_db_name = gr.Textbox(label="数据库名称",
+                                   placeholder="输入数据库名称",
+                                   value=current_db_name,
+                                   info="当前使用的数据库名称，可直接编辑切换")
 
         with gr.Row():
             ui_allfiles = gr.TextArea(label='当前知识库文件列表', value=allfiles(), lines=11)

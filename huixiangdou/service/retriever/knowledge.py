@@ -444,36 +444,41 @@ class KnowledgeRetriever(Retriever):
                           sources=use_text_units)
         return r
 
-    async def decompose_to_keywords(self, query: Query) -> Tuple[str, str]:
+    async def decompose_to_keywords(self, query: Query, retry=3) -> Tuple[str, str]:
         kw_prompt_temp = PROMPTS["keywords_extraction"][query.language]
         kw_prompt = kw_prompt_temp.format(query=query.text)
 
         hl_keywords = []
         ll_keywords = []
-        result = await self.llm.chat(kw_prompt)
-        try:
-            keywords_data = json.loads(result)
-            hl_keywords = keywords_data.get("high_level_keywords", [])
-            ll_keywords = keywords_data.get("low_level_keywords", [])
-            hl_keywords = ", ".join(hl_keywords)
-            ll_keywords = ", ".join(ll_keywords)
-        except json.JSONDecodeError:
-            try:
-                result = (result.replace(kw_prompt[:-1],
-                                         "").replace("user",
-                                                     "").replace("model",
-                                                                 "").strip())
-                result = "{" + result.split("{")[1].split("}")[0] + "}"
 
+        for _ in range(retry):
+            result = await self.llm.chat(kw_prompt)
+            try:
                 keywords_data = json.loads(result)
                 hl_keywords = keywords_data.get("high_level_keywords", [])
                 ll_keywords = keywords_data.get("low_level_keywords", [])
                 hl_keywords = ", ".join(hl_keywords)
                 ll_keywords = ", ".join(ll_keywords)
-            # Handle parsing error
-            except Exception as e:
-                logger.error(f"JSON parsing error: {e}, input {result}")
-                return [], []
+                return hl_keywords, ll_keywords
+            except json.JSONDecodeError:
+                continue
+
+        try:
+            result = (result.replace(kw_prompt[:-1],
+                                    "").replace("user",
+                                                "").replace("model",
+                                                            "").strip())
+            result = "{" + result.split("{")[1].split("}")[0] + "}"
+
+            keywords_data = json.loads(result)
+            hl_keywords = keywords_data.get("high_level_keywords", [])
+            ll_keywords = keywords_data.get("low_level_keywords", [])
+            hl_keywords = ", ".join(hl_keywords)
+            ll_keywords = ", ".join(ll_keywords)
+        # Handle parsing error
+        except Exception as e:
+            logger.error(f"JSON parsing error: {e}, input {result}")
+            return [], []
 
         return hl_keywords, ll_keywords
 
