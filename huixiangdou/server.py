@@ -26,7 +26,7 @@ configpath = None
 workdir = None
 resource = None
 analogy = None
-main_args = None
+global_args = None
 app = FastAPI(docs_url='/')
 
 # 导出文件管理器
@@ -398,7 +398,7 @@ async def chat(talk_seed: Talk_seed):
                   enable_web_search=talk_seed.enable_web_search)
 
     async def event_stream():
-        if main_args.pipeline_mode == 'parallel':
+        if global_args.pipeline_mode == 'parallel':
             assistant = ParallelPipeline(resource=resource)
         else:
             assistant = SerialPipeline(resource=resource)
@@ -446,11 +446,19 @@ async def chat(talk_seed: Talk_seed):
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
-def reinit():
-    global main_args
+def reinit(db_name: str):
+    global global_args
     global resource
     
-    resource = RetrieveResource(main_args.config_path)
+    resource = RetrieveResource(global_args.config_path)
+    resource.switch(db_name)
+
+@app.get("/v2/list_files")
+async def list_files(db_name: str = 'HuixiangDou'):
+    global resource
+    resource.switch(name=db_name)
+    store = FeatureStore(resource=resource)
+    return store.list_all_filename()
 
 @app.post("/v2/add_files")
 async def add_files(request: AddFilesRequest):
@@ -459,9 +467,7 @@ async def add_files(request: AddFilesRequest):
     global configpath
 
     # 切换数据库
-    if request.db_name and request.db_name != resource.name:
-        logger.info(f'Switching database from {resource.name} to {request.db_name}')
-        resource.switch(request.db_name)
+    resource.switch(request.db_name)
 
     files = []
     for file in request.file_list:
@@ -470,20 +476,21 @@ async def add_files(request: AddFilesRequest):
         files.append(file)
     
     if len(files) < 1:
-        return 'success'
+        yield 'success'
     
-    store = FeatureStore(resource=resource, work_dir=workdir)
+    store = FeatureStore(resource=resource)
     # convert pdf/excel/ppt to markdown
     scan_files = store.file_opr.scan_files(file_list=files)
     store.preprocess(files=scan_files)
-
-    await store.init(files=scan_files)
+    
+    async for progress in store.init(files=scan_files):
+        yield progress
     store.file_opr.summarize(scan_files)
 
     await write_back_config_threshold(resource=resource)
     
-    reinit()
-    return 'success'
+    reinit(db_name=request.db_name)
+    yield 'success'
 
 @app.post("/v2/drop_db")
 async def drop_db(request: DropDbRequest):
@@ -495,10 +502,13 @@ async def drop_db(request: DropDbRequest):
         logger.info(f'Switching database from {resource.name} to {request.db_name}')
         resource.switch(request.db_name)
     
-    store = FeatureStore(resource=resource, work_dir=workdir)
+    store = FeatureStore(resource=resource)
     
-    await store.remove_knowledge()
-    reinit()
+    try:
+        await store.remove_knowledge()
+        reinit(db_name=request.db_name)
+    except Exception as e:
+        return f"Error occurred while removing knowledge: {e}"
     return 'success'
 
 
@@ -666,10 +676,6 @@ async def examplify(talk_seed: Talk_seed):
         return await analogy.process(query=talk_seed.user)
     return '{}'
 
-@app.post("/v2/download")
-async def download(token: Token):
-    return 'deprecated'
-
 @app.get("/v2/download_export/{download_token}")
 async def download_export(download_token: str):
     """
@@ -758,13 +764,12 @@ def parse_args():
     return args
 
 if __name__ == '__main__':
-    global global_args
     global_args = parse_args()
     
-    configpath = main_args.config_path
-    reinit()
+    configpath = global_args.config_path
+    reinit(db_name='HuixiangDou')
     
     api_data_dir = '/home/khj/workspace/HuixiangDou/apidata/'
     analogy = ExampleAnalogy(api_data_dir=api_data_dir)
 
-    uvicorn.run(app, host='0.0.0.0', port=args.port, log_level='info')
+    uvicorn.run(app, host='0.0.0.0', port=global_args.port, log_level='info')

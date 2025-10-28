@@ -139,9 +139,15 @@ class FeatureStore:
         return self.text_splitter.create_chunks(texts=[text],
                                                 metadatas=[metadata])
         
+    def list_all_filename(self) -> List[str]:
+        """List all filenames stored in chunk database."""
+        chunkDB = ChunkSQL(file_dir=os.path.join(self.work_dir, 'db_chunk'))
+        return chunkDB.listall()
+
     async def remove_knowledge(self) -> None:
         logger.warning('Remove knowledge graph and database')
         shutil.rmtree(self.work_dir, ignore_errors=True)
+        os.rmdir(self.work_dir, ignore_errors=True)
         self.graph_store.drop()
 
     async def build_knowledge(self, files: Iterator[FileName]) -> AsyncGenerator[float, None]:
@@ -159,7 +165,6 @@ class FeatureStore:
         chunkDB = ChunkSQL(file_dir=os.path.join(self.work_dir, 'db_chunk'))
 
         progress = 0
-        names = chunkDB.listall() 
         files = list(files)
         for file in tqdm(files, 'build knowledge'):
             if not file.state:
@@ -498,7 +503,7 @@ async def main(args):
     )
     async for progress in store.init(files=files):
         logger.info('progress {:.2f}%'.format(progress * 100))
-        
+
     store.file_opr.summarize(files)
 
     after = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(

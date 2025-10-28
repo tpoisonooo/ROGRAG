@@ -109,11 +109,20 @@ class RetrieveResource:
         
         self.base_work_dir = self.fs_config.get('work_dir', 'workdir')
         self.name = self.graph_config.get('name', 'HuixiangDou')
+        self.name = self.check_db_name(self.name)
         os.makedirs(os.path.join(self.base_work_dir, self.name), exist_ok=True)
-        
+
+    def check_db_name(self, name:str) -> None:
+        name = name.strip()
+        if len(name) == 0:
+            raise ValueError("Database name cannot be empty.")
+    
+        if name.isdigit():
+            raise ValueError("Database name cannot be purely numeric.")
+        return name
+    
     def switch(self, name:str) -> None:
-        if self.name == name:
-            return
+        name = self.check_db_name(name)
         
         # setup name
         logger.info(f'Switching database from {self.name} to {name}')
@@ -121,9 +130,9 @@ class RetrieveResource:
         os.makedirs(os.path.join(self.base_work_dir, self.name), exist_ok=True)
         
         # reinit TuGraph Connection
+        self.graph_config['name'] = name
         del self.graph_store
         self.graph_store = TuGraphStore(config=self.graph_config)
-        self.graph_config['name'] = name
         
     def cur_work_dir(self) -> str:
         return os.path.join(self.base_work_dir, self.name)
