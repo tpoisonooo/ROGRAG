@@ -315,7 +315,8 @@ async def parse_chunk_to_knowledge(chunks: List[Chunk], llm: LLM,
 
                 if_loop_result: str = await llm.chat(prompt=if_loop_prompt[language],
                                                      history=history,
-                                                     max_tokens=None)
+                                                     max_tokens=None,
+                                                     enable_cache=False)
                 if_loop_result = if_loop_result.strip().strip('"').strip(
                     "'").lower()
                 if "yes" in if_loop_result:

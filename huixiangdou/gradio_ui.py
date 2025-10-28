@@ -164,6 +164,10 @@ async def add_files(files: List, progress=gr.Progress()):
     progress(0, desc="转换中")
     store.preprocess(files=scan_files)
     store.file_opr.summarize(scan_files)
+
+    progress(0.3, desc="Start indexing")
+    async for step in store.init(files=scan_files):
+        progress(0.3 + 0.3 * step, desc="Indexing")
     
     progress(0.3, desc="开始建库")
     async for step in store.init(files=scan_files):
