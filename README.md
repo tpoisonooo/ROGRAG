@@ -84,6 +84,7 @@ Compared to [HuixiangDou](https://github.com/internlm/huixiangdou), this repo im
 - [DB-GPT](https://github.com/eosphoros-ai/DB-GPT) LLM tool collection
 - [LightRAG](https://github.com/HKUDS/LightRAG) Simple and efficient graph retrieval solution
 - [SeedBench](https://github.com/open-sciencelab/SeedBench) A multi-task benchmark for evaluating LLMs in seed science
+- [kimi-cli](https://github.com/MoonshotAI/kimi-cli) AI coding assistant by kimi
 
 ## 📝 Citation
 

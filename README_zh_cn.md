@@ -86,6 +86,7 @@ ROGRAG 合并多个开源项目——HuixiangDou、KAG、LightRAG 和 DB-GPT，�
 - [DB-GPT](https://github.com/eosphoros-ai/DB-GPT)    LLM 工具集合体
 - [LightRAG](https://github.com/HKUDS/LightRAG)    简单高效的图谱检索方案
 - [SeedBench](https://github.com/open-sciencelab/SeedBench)    育种行业 LLM（垂域）评测集
+- [kimi-cli](https://github.com/MoonshotAI/kimi-cli) 基于 kimi 的 AI 编程工具
 
 ## 📝 引用
 

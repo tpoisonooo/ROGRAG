@@ -97,6 +97,9 @@ python3 -m huixiangdou.main
 We also implement Gradio inside it
 
 ```bash
+# start server first
+python3 -m huixiangdou.main
+# start gradio client
 python3 -m huixiangdou.gradio_ui
 ```
 
@@ -110,7 +113,7 @@ Also support [Swagger API](../swagger.json)
 Start server
 
 ```bash
-python3 -m huixiangdou.server --port 23334
+python3 -m huixiangdou.server
 ```
 
 Test with client
