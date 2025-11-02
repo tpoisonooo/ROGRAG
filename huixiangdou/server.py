@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 from datetime import datetime
 from typing import Dict, Optional
+import zipfile
 
 from .pipeline import SerialPipeline, ParallelPipeline, FeatureStore, write_back_config_threshold
 from .primitive import Query, Pair, Token
@@ -322,8 +323,8 @@ class DropDbRequest(BaseModel):
 class ExportGraphResponse(BaseModel):
     status: dict
     data: dict
-    export_path: str  # 导出的文件路径
-    file_size: int  # 文件大小（字节）
+    export_path: str  # 导出的zip文件路径
+    file_size: int  # zip文件大小（字节）
     download_token: str  # 下载令牌
 
 
@@ -549,7 +550,7 @@ async def drop_db(request: DropDbRequest):
 
 def export_graph_database(db_name: str) -> dict:
     """
-    导出图数据库到指定格式
+    导出图数据库到指定格式，并将多个导出文件打包成zip文件
     
     Args:
         db_name: 数据库名称
@@ -557,18 +558,16 @@ def export_graph_database(db_name: str) -> dict:
         export_dir: 导出目录
     
     Returns:
-        导出结果信息
+        导出结果信息，包含zip文件路径
     """
     try:
         # 获取数据库配置
         global resource
         
-        export_dir = f'./{db_name}'
+        export_dir = f'./export_{db_name}'
         format_type = 'csv'
         # 构建导出命令
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        export_filename = f"{db_name}_export_{timestamp}.{format_type}"
-        export_path = os.path.join(export_dir, export_filename)
         
         # 确保导出目录存在
         os.makedirs(export_dir, exist_ok=True)
@@ -577,7 +576,7 @@ def export_graph_database(db_name: str) -> dict:
         cmd = [
             'lgraph_export',
             '-f', format_type,
-            '-d', '~/workspace/lgraph-data',
+            '-d', '/data/khj/workspace/lgraph-data',
             '-g', db_name,
             '-u', resource.graph_config.get('username', 'admin'),
             '-p', resource.graph_config.get('password', '73@TuGraph'),
@@ -590,34 +589,45 @@ def export_graph_database(db_name: str) -> dict:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
         
         if result.returncode == 0:
-            # 获取导出文件信息
-            if os.path.exists(export_path):
-                file_size = os.path.getsize(export_path)
+            # 创建zip文件，包含所有导出文件
+            zip_filename = f"{db_name}_export_{timestamp}.zip"
+            zip_path = os.path.join(export_dir, zip_filename)
+            
+            export_files = [os.path.join(export_dir, filename) for filename in os.listdir(export_dir)]
+            try:
+                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    for file_path in export_files:
+                        # 在zip中使用相对路径，只包含文件名
+                        arcname = os.path.basename(file_path)
+                        zipf.write(file_path, arcname)
+                        logger.info(f'添加文件到zip: {arcname}')
+                
+                # 获取zip文件大小
+                zip_file_size = os.path.getsize(zip_path)
+                
+                logger.info(f'成功创建zip文件: {zip_path}, 包含 {len(export_files)} 个文件')
+                
                 return {
                     'success': True,
-                    'export_path': export_path,
-                    'file_size': file_size,
-                    'message': '图谱导出成功'
+                    'export_path': zip_path,
+                    'file_size': zip_file_size,
+                    'message': f'图谱导出成功，已打包成zip文件（包含{len(export_files)}个文件）',
+                    'original_files': export_files
                 }
-            else:
-                # 检查是否有其他导出文件
-                export_files = [f for f in os.listdir(export_dir) if f.endswith(f'.{format_type}')]
+                
+            except Exception as zip_error:
+                logger.error(f'创建zip文件失败: {str(zip_error)}')
+                # 如果zip创建失败，返回第一个导出文件
                 if export_files:
-                    # 使用最新的导出文件
-                    latest_file = sorted(export_files)[-1]
-                    file_path = os.path.join(export_dir, latest_file)
-                    file_size = os.path.getsize(file_path)
+                    first_file = export_files[0]
+                    file_size = os.path.getsize(first_file)
                     return {
                         'success': True,
-                        'export_path': file_path,
+                        'export_path': first_file,
                         'file_size': file_size,
-                        'message': '图谱导出成功'
+                        'message': '图谱导出成功（zip创建失败，返回原始文件）'
                     }
-                else:
-                    return {
-                        'success': False,
-                        'message': f'导出命令执行成功但未找到导出文件: {result.stdout}'
-                    }
+                    
         else:
             return {
                 'success': False,
@@ -665,7 +675,7 @@ async def export_graph(db_name: str):
                 'file_path': result['export_path'],
                 'file_size': result['file_size'],
                 'db_name': resource.name,
-                'format': 'csv',
+                'format': 'zip',  # 更新为zip格式
                 'export_time': datetime.now().isoformat(),
                 'include_schema': True
             }
@@ -683,7 +693,7 @@ async def export_graph(db_name: str):
                     "download_url": f"/v2/download_export/{download_token}",
                     "message": result['message'],
                     "db_name": resource.name,
-                    "format": 'csv'
+                    "format": 'zip'  # 更新为zip格式
                 }
             }
         else:
@@ -765,7 +775,7 @@ async def download_export(download_token: str):
         return FileResponse(
             path=file_path,
             filename=file_name,
-            media_type='application/octet-stream',
+            media_type='application/zip' if file_name.endswith('.zip') else 'application/octet-stream',
             headers=headers
         )
         

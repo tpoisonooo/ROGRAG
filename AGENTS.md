@@ -9,12 +9,13 @@ ROGRAG (Robustly Optimized GraphRAG) is a sophisticated GraphRAG-based system th
 - Incremental database construction
 - Enhanced fuzzy matching and structured reasoning
 - Graph-based knowledge retrieval with dense retrieval support
+- Multi-modal support (text, visual, and multimodal capabilities)
 
 ## Technology Stack
 
 **Core Framework:** Python 3.8+ with asyncio support
 **Key Dependencies:**
-- **ML/AI**: PyTorch (≥2.0.0), Transformers (≥4.38), Sentence Transformers
+- **ML/AI**: PyTorch (≥2.0.0), Transformers (≥4.38), Sentence Transformers, BCEmbedding
 - **Vector Search**: FAISS-GPU, Scikit-learn
 - **Graph Database**: Neo4j with TuGraph support
 - **Web Framework**: FastAPI, Uvicorn, Gradio (≥4.41)
@@ -22,7 +23,7 @@ ROGRAG (Robustly Optimized GraphRAG) is a sophisticated GraphRAG-based system th
 - **Document Processing**: PyMuPDF, python-docx, BeautifulSoup4, readability-lxml
 - **LLM Integration**: OpenAI (≥1.0.0), BCEmbedding, TikToken
 - **Caching/Queue**: Redis
-- **Utilities**: Loguru, Tenacity, NetworkX (≥3.0)
+- **Utilities**: Loguru, Tenacity, NetworkX (≥3.0), jieba
 
 ## Architecture & Code Organization
 
@@ -41,21 +42,29 @@ huixiangdou/                    # Main package
 │   ├── parallel.py           # Parallel processing pipeline
 │   ├── serial.py             # Serial processing pipeline
 │   ├── store.py              # Knowledge storage management
-│   └── session.py            # Session management
+│   ├── session.py            # Session management
+│   └── fasta.py              # FASTA sequence processing
 ├── primitive/                 # Low-level utilities
+│   ├── llm.py                # LLM provider implementations
 │   ├── embedder.py           # Embedding implementations
 │   ├── chunk.py              # Text chunking utilities
 │   ├── faiss.py              # FAISS operations
 │   ├── knowledge.py          # Knowledge graph operations
+│   ├── reranker.py           # Reranking implementations
 │   └── file_operation.py     # File handling utilities
 └── service/                   # Business logic layer
     ├── retriever/            # Retrieval implementations
+    │   ├── base.py          # Base retrieval interface
     │   ├── bm25.py          # BM25 retrieval
     │   ├── dense.py         # Dense vector retrieval
     │   ├── knowledge.py     # Graph-based retrieval
-    │   ├── logic.py         # Logical reasoning retrieval
-    │   └── web.py           # Web search integration
-    └── llm/                  # LLM provider implementations
+    │   ├── inverted.py      # Inverted index retrieval
+    │   ├── web.py           # Web search integration
+    │   └── logic/           # Logical reasoning retrieval
+    ├── config.py            # Configuration management
+    ├── graph_store.py       # Graph database operations
+    ├── nlu.py               # Natural language understanding
+    └── helper.py            # Utility functions
 ```
 
 ### Key Configuration Files
@@ -65,8 +74,13 @@ huixiangdou/                    # Main package
 - `[store]`: Embedding and reranker model paths, API settings
 - `[tugraph]`: Graph database connection settings
 - `[web_search]`: Web search engine configuration (Serper)
-- `[llm]`: LLM provider configurations (Alibaba Cloud, etc.)
+- `[llm]`: LLM provider configurations (Alibaba Cloud, SiliconCloud, Local, Kimi, OpenAI)
 - `[frontend]`: Platform-specific settings (Lark, WeChat)
+
+**Package Configuration:**
+- `setup.py`: Standard Python package setup with setuptools
+- `requirements.txt`: Main dependencies
+- `version.py`: Version management (current: 20250101)
 
 ## Build & Development Commands
 
@@ -108,6 +122,14 @@ docker run --privileged --gpus all -p 17070:7070 -p 17687:7687 -p 19090:9090 -p 
 - **unittest/**: Unit tests for individual components
 - **evaluation/**: Pipeline accuracy testing tools
 
+### Test Categories
+- **Embedding Tests**: BCE, sentence transformers, visual embeddings
+- **LLM Integration Tests**: OpenAI, Kimi, DeepSeek, InternLM2
+- **Retrieval Tests**: BM25, dense retrieval, hybrid search
+- **Database Tests**: Milvus, Neo4j, FAISS operations
+- **Pipeline Tests**: End-to-end query processing
+- **Evaluation Tests**: Precision, rejection, reranking, end-to-end
+
 ### Running Tests
 ```bash
 # Run specific test files
@@ -117,14 +139,14 @@ python tests/test_build_milvus_and_filter.py # Test vector database operations
 
 # Run unit tests
 python -m unittest discover unittest/
+
+# Run evaluation tests
+cd evaluation && python end2end/main.py     # End-to-end evaluation
 ```
 
-### Test Categories
-- **Embedding Tests**: BCE, sentence transformers, visual embeddings
-- **LLM Integration Tests**: OpenAI, Kimi, DeepSeek, InternLM2
-- **Retrieval Tests**: BM25, dense retrieval, hybrid search
-- **Database Tests**: Milvus, Neo4j, FAISS operations
-- **Pipeline Tests**: End-to-end query processing
+### Test Data
+- `tests/data.json`: Main test dataset
+- `resource/good_questions.json` & `resource/bad_questions.json`: Quality test questions
 
 ## Code Style Guidelines
 
@@ -206,3 +228,72 @@ async def generate(self, query: Union[Query, str], history: List[Pair] = [], req
 - Set up monitoring for API endpoints
 - Implement health checks for external services
 - Use environment-specific configuration files
+
+## Development Workflow
+
+### Environment Setup
+1. Clone the repository
+2. Create virtual environment with Python 3.8+
+3. Install dependencies: `pip install -r requirements.txt`
+4. Install package in development mode: `pip install -e .`
+5. Configure `config.ini` with appropriate settings
+6. Set up graph database (Neo4j/TuGraph) if using graph features
+
+### Common Development Tasks
+- **Adding new LLM providers**: Extend `primitive/llm.py`
+- **Implementing new retrievers**: Add to `service/retriever/`
+- **Adding frontend integrations**: Extend `frontend/` modules
+- **Testing new features**: Add tests to `tests/` or `unittest/`
+
+### Debugging Tips
+- Use Loguru for structured logging with different levels
+- Check `logs/` directory for detailed execution logs
+- Use test files in `tests/` for component-level debugging
+- Enable debug mode in configuration for verbose output
+
+## Key Features
+
+1. **Multi-Modal Support**: Text, visual, and multimodal capabilities
+2. **Graph-Based Knowledge**: Neo4j/TuGraph integration for structured knowledge
+3. **Multiple LLM Support**: Alibaba Cloud, SiliconCloud, OpenAI, Kimi, local vLLM
+4. **Platform Integrations**: Lark/Feishu and WeChat support
+5. **Scalable Architecture**: Parallel and serial processing pipelines
+6. **Comprehensive Testing**: Unit tests, integration tests, and evaluation frameworks
+7. **Production Ready**: Docker deployment, API server, and web UI
+8. **Incremental Construction**: Support for incremental knowledge base building
+
+## Performance Benchmarks
+
+ROGRAG achieves superior performance compared to mainstream RAG methods:
+
+| Method          | QA-1 (Accuracy) | QA-2 (F1) | QA-3 (Rouge) | QA-4 (Rouge) |
+|-----------------|-----------------|-----------|--------------|--------------|
+| vanilla (w/o RAG) | 0.57            | 0.71      | 0.16         | 0.35         |
+| LangChain        | 0.68            | 0.68      | 0.15         | 0.04         |
+| BM25             | 0.65            | 0.69      | 0.23         | 0.03         |
+| RQ-RAG           | 0.59            | 0.62      | 0.17         | 0.33         |
+| ROGRAG (Ours)    | **0.75**        | **0.79**  | **0.36**     | **0.38**     |
+
+## Troubleshooting
+
+### Common Issues
+1. **GPU Memory**: Ensure sufficient GPU memory for models
+2. **Neo4j Connection**: Verify database credentials and connectivity
+3. **API Rate Limits**: Configure appropriate RPM/TPM in config.ini
+4. **Model Paths**: Check embedding/reranker model paths exist
+5. **Redis Connection**: Ensure Redis server is running for caching
+
+### Log Analysis
+- Check `logs/` directory for execution logs
+- Use Loguru filters for specific component debugging
+- Enable verbose logging in development mode
+- Monitor API response times and error rates
+
+## Contributing
+
+When contributing to the project:
+1. Follow the established code style guidelines
+2. Add appropriate tests for new features
+3. Update documentation as needed
+4. Ensure all tests pass before submitting changes
+5. Follow the project's branching and commit conventions
