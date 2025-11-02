@@ -319,13 +319,6 @@ class DropDbRequest(BaseModel):
     db_name: str = 'HuixiangDou'  # 默认数据库名称
 
 
-class ExportGraphRequest(BaseModel):
-    db_name: str = 'HuixiangDou'  # 默认数据库名称
-    format: str = 'csv'  # 导出格式，支持 csv 或 json
-    export_dir: str = './export'  # 导出目录
-    include_schema: bool = True  # 是否包含 schema 信息
-
-
 class ExportGraphResponse(BaseModel):
     status: dict
     data: dict
@@ -570,7 +563,7 @@ def export_graph_database(db_name: str) -> dict:
         # 获取数据库配置
         global resource
         
-        export_dir = './export'
+        export_dir = f'./{db_name}'
         format_type = 'csv'
         # 构建导出命令
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -584,6 +577,7 @@ def export_graph_database(db_name: str) -> dict:
         cmd = [
             'lgraph_export',
             '-f', format_type,
+            '-d', '~/workspace/lgraph-data',
             '-g', db_name,
             '-u', resource.graph_config.get('username', 'admin'),
             '-p', resource.graph_config.get('password', '73@TuGraph'),
@@ -642,7 +636,7 @@ def export_graph_database(db_name: str) -> dict:
         }
 
 @app.post("/v2/export_graph")
-async def export_graph(request: ExportGraphRequest):
+async def export_graph(db_name: str):
     """
     导出指定数据库的图谱数据
     """
@@ -652,16 +646,14 @@ async def export_graph(request: ExportGraphRequest):
     
     try:
         # 切换数据库
-        if request.db_name and request.db_name != resource.name:
-            logger.info(f'Switching database from {resource.name} to {request.db_name}')
-            resource.switch(request.db_name)
+        if db_name and db_name != resource.name:
+            logger.info(f'Switching database from {resource.name} to {db_name}')
+            resource.switch(db_name)
         
         # 执行图谱导出
         logger.info(f'开始导出数据库 {resource.name} 的图谱数据')
         result = export_graph_database(
             db_name=resource.name,
-            format_type=request.format,
-            export_dir=request.export_dir
         )
         
         if result['success']:
@@ -673,9 +665,9 @@ async def export_graph(request: ExportGraphRequest):
                 'file_path': result['export_path'],
                 'file_size': result['file_size'],
                 'db_name': resource.name,
-                'format': request.format,
+                'format': 'csv',
                 'export_time': datetime.now().isoformat(),
-                'include_schema': request.include_schema
+                'include_schema': True
             }
             
             logger.info(f'图谱导出成功，文件路径: {result["export_path"]}, 下载令牌: {download_token}')
@@ -691,7 +683,7 @@ async def export_graph(request: ExportGraphRequest):
                     "download_url": f"/v2/download_export/{download_token}",
                     "message": result['message'],
                     "db_name": resource.name,
-                    "format": request.format
+                    "format": 'csv'
                 }
             }
         else:
