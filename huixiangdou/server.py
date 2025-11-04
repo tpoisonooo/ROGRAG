@@ -576,7 +576,7 @@ def export_graph_database(db_name: str) -> dict:
         cmd = [
             'lgraph_export',
             '-f', format_type,
-            '-d', '/data/khj/workspace/lgraph-data',
+            '-d', global_args.lgraph_data_path,
             '-g', db_name,
             '-u', resource.graph_config.get('username', 'admin'),
             '-p', resource.graph_config.get('password', '73@TuGraph'),
@@ -804,6 +804,12 @@ def parse_args():
         default='parallel',
         help=
         'Select pipeline type for difference scenario, default value is `parallel`'
+    )
+    parser.add_argument(
+        '--lgraph-data-path',
+        type=str,
+        default='lgraph-data',
+        help='Tugraph data path, check it in lgraph.json. For example "/data/khj/workspace/lgraph-data", default value is "lgraph-data".'
     )
     parser.add_argument('--port', type=int, default=23333, help='bind port')
     args = parser.parse_args()

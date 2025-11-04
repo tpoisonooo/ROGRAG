@@ -30,16 +30,16 @@ ROGRAG (Robustly Optimized GraphRAG) is a sophisticated GraphRAG-based system th
 ### Directory Structure
 ```
 huixiangdou/                    # Main package
-├── main.py                     # CLI entry point
-├── server.py                   # HTTP API server
+├── main.py                     # CLI entry point with interactive mode
+├── server.py                   # FastAPI HTTP server with streaming support
 ├── gradio_ui.py               # Gradio web interface
-├── client.py                  # Client library
+├── client.py                  # Client library for API testing
 ├── frontend/                  # Platform integrations
 │   ├── lark.py               # Lark/Feishu integration
 │   ├── wechat.py             # WeChat integration
 │   └── lark_group.py         # Lark group chat support
 ├── pipeline/                  # Core processing pipelines
-│   ├── parallel.py           # Parallel processing pipeline
+│   ├── parallel.py           # Parallel processing pipeline (main implementation)
 │   ├── serial.py             # Serial processing pipeline
 │   ├── store.py              # Knowledge storage management
 │   ├── session.py            # Session management
@@ -48,7 +48,7 @@ huixiangdou/                    # Main package
 │   ├── llm.py                # LLM provider implementations
 │   ├── embedder.py           # Embedding implementations
 │   ├── chunk.py              # Text chunking utilities
-│   ├── faiss.py              # FAISS operations
+│   ├── faiss.py              # FAISS operations (17K+ lines)
 │   ├── knowledge.py          # Knowledge graph operations
 │   ├── reranker.py           # Reranking implementations
 │   └── file_operation.py     # File handling utilities
@@ -57,10 +57,10 @@ huixiangdou/                    # Main package
     │   ├── base.py          # Base retrieval interface
     │   ├── bm25.py          # BM25 retrieval
     │   ├── dense.py         # Dense vector retrieval
-    │   ├── knowledge.py     # Graph-based retrieval
+    │   ├── knowledge.py     # Graph-based retrieval (22K+ lines)
     │   ├── inverted.py      # Inverted index retrieval
     │   ├── web.py           # Web search integration
-    │   └── logic/           # Logical reasoning retrieval
+    │   └── logic/           # Logical reasoning retrieval with node execution
     ├── config.py            # Configuration management
     ├── graph_store.py       # Graph database operations
     ├── nlu.py               # Natural language understanding
@@ -79,6 +79,10 @@ huixiangdou/                    # Main package
 
 **Package Configuration:**
 - `setup.py`: Standard Python package setup with setuptools
+  - Package name: `huixiangdou`
+  - Entry point: `huixiangdou=huixiangdou.main:run`
+  - Supports Python 3.8-3.11
+  - Includes package data (main.py, config files, test questions)
 - `requirements.txt`: Main dependencies
 - `version.py`: Version management (current: 20250101)
 
@@ -118,17 +122,20 @@ docker run --privileged --gpus all -p 17070:7070 -p 17687:7687 -p 19090:9090 -p 
 ## Testing Strategy
 
 ### Test Structure
-- **tests/**: Code snippet verification and integration tests
+- **tests/**: Code snippet verification and integration tests (40+ test files)
+  - Embedding tests: BCE, sentence transformers, visual embeddings
+  - LLM integration tests: OpenAI, Kimi, DeepSeek, InternLM2
+  - Retrieval tests: BM25, dense retrieval, hybrid search
+  - Database tests: Milvus, Neo4j, FAISS operations
+  - Pipeline tests: End-to-end query processing
 - **unittest/**: Unit tests for individual components
+  - Organized by module (primitive, retriever, service, sql)
+  - Component-level testing
 - **evaluation/**: Pipeline accuracy testing tools
-
-### Test Categories
-- **Embedding Tests**: BCE, sentence transformers, visual embeddings
-- **LLM Integration Tests**: OpenAI, Kimi, DeepSeek, InternLM2
-- **Retrieval Tests**: BM25, dense retrieval, hybrid search
-- **Database Tests**: Milvus, Neo4j, FAISS operations
-- **Pipeline Tests**: End-to-end query processing
-- **Evaluation Tests**: Precision, rejection, reranking, end-to-end
+  - **end2end/**: End-to-end evaluation
+  - **kag_precision/**: Knowledge graph precision testing
+  - **rejection/**: Rejection capability testing
+  - **rerank/**: Reranking performance testing
 
 ### Running Tests
 ```bash
@@ -147,6 +154,12 @@ cd evaluation && python end2end/main.py     # End-to-end evaluation
 ### Test Data
 - `tests/data.json`: Main test dataset
 - `resource/good_questions.json` & `resource/bad_questions.json`: Quality test questions
+
+### Key Test Files
+- **test_bce.py**: BCEmbedding integration testing
+- **test_kimi.py**: Kimi LLM API testing
+- **test_build_milvus_and_filter.py**: Vector database operations
+- **test_qwen_react.py**: Qwen model reaction testing
 
 ## Code Style Guidelines
 
@@ -267,12 +280,26 @@ async def generate(self, query: Union[Query, str], history: List[Pair] = [], req
 ROGRAG achieves superior performance compared to mainstream RAG methods:
 
 | Method          | QA-1 (Accuracy) | QA-2 (F1) | QA-3 (Rouge) | QA-4 (Rouge) |
-|-----------------|-----------------|-----------|--------------|--------------|
+|----------------|-----------------|-----------|--------------|--------------|
 | vanilla (w/o RAG) | 0.57            | 0.71      | 0.16         | 0.35         |
 | LangChain        | 0.68            | 0.68      | 0.15         | 0.04         |
 | BM25             | 0.65            | 0.69      | 0.23         | 0.03         |
 | RQ-RAG           | 0.59            | 0.62      | 0.17         | 0.33         |
 | ROGRAG (Ours)    | **0.75**        | **0.79**  | **0.36**     | **0.38**     |
+
+## Code Quality & Linting
+
+### PyLint Configuration
+- Configuration file: `.pylintrc`
+- Fail threshold: 10.0
+- Ignores: CVS, configs directories
+- Jobs: 1 (single process)
+
+### Development Standards
+- Type hints required for all functions
+- Async/await for I/O operations
+- Structured logging with Loguru
+- Comprehensive error handling
 
 ## Troubleshooting
 
@@ -297,3 +324,14 @@ When contributing to the project:
 3. Update documentation as needed
 4. Ensure all tests pass before submitting changes
 5. Follow the project's branching and commit conventions
+
+## Project Evolution
+
+This project represents a significant evolution from HuixiangDou v1 to v2, with:
+- Enhanced retrieval mechanisms
+- Improved graph-based knowledge processing
+- Better performance benchmarks
+- More comprehensive testing framework
+- Production-ready deployment options
+
+The codebase demonstrates enterprise-grade software engineering practices with modular architecture, comprehensive testing, multiple deployment options, and extensive configuration management.

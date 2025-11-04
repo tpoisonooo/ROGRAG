@@ -273,40 +273,63 @@ async def export_graph_data():
 - 下载令牌: `{download_token}`\n
 - 导出路径: {data.get('export_path', 'Unknown')}\n\n
 **下一步：**\n
-点击下面的下载按钮获取导出文件，或使用命令行：\n
-```bash\n
-curl -O http://localhost:23333/v2/download_export/{download_token}\n
-```
+在下方输入框中已自动填入下载令牌，点击下载按钮即可获取文件。
                 """
-                return message
+                # 返回消息和自动填充的下载令牌
+                return message, download_token
             else:
                 error_msg = result.get('status', {}).get('error', '导出失败')
-                return f"**导出失败:** {error_msg}"
+                return f"**导出失败:** {error_msg}", ""
                 
     except Exception as e:
         logger.error(f"导出图谱失败: {e}")
-        return f"**导出失败:** {str(e)}"
+        return f"**导出失败:** {str(e)}", ""
 
 
 async def download_export_file(download_token: str):
-    """下载导出文件"""
+    """下载导出文件 - 直接返回下载链接，让浏览器下载到本地"""
     if not download_token:
-        return "请提供下载令牌"
+        return "请提供下载令牌", gr.update(visible=False), gr.update(visible=False)
     
     try:
-        save_path = f"./export_{current_db_name}_{download_token[:6]}.zip"
+        # 构建直接下载URL
+        download_url = f"{server_base_url}/v2/download_export/{download_token}"
         
-        async with HuixiangDouAPIClient(server_base_url) as client:
-            success = await client.download_export(download_token, save_path)
-            
-            if success:
-                return f"**下载成功！**\n\n文件已保存到: `{os.path.abspath(save_path)}`"
-            else:
-                return "**下载失败**，请检查下载令牌是否正确"
+        # 创建HTML下载链接
+        html_content = f"""
+        <div style="border: 2px dashed #4CAF50; padding: 15px; margin: 10px 0; border-radius: 8px; background-color: #f8fff8;">
+            <h4 style="color: #4CAF50; margin-top: 0;">📥 下载准备就绪！</h4>
+            <p style="margin-bottom: 10px;">点击下方按钮开始下载文件到您的电脑：</p>
+            <a href="{download_url}" 
+               download 
+               style="display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                ⬇️ 点击下载文件
+            </a>
+            <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                <strong>下载说明：</strong><br>
+                • 文件将直接下载到您的浏览器默认下载目录<br>
+                • 下载令牌：{download_token}<br>
+                • 如果下载失败，请检查令牌是否正确
+            </p>
+        </div>
+        """
+        
+        info_text = f"""
+**下载链接已生成**
+
+- 下载URL: `{download_url}`
+- 下载令牌: `{download_token}`
+- 状态: 准备就绪
+
+文件将直接下载到您的电脑，不会经过服务器保存。
+"""
+        
+        return info_text, gr.update(value=html_content, visible=True), gr.update(value=info_text, visible=True)
                 
     except Exception as e:
         logger.error(f"下载失败: {e}")
-        return f"**下载失败:** {str(e)}"
+        error_msg = f"**下载失败:** {str(e)}"
+        return error_msg, gr.update(visible=False), gr.update(visible=False)
 
 
 def create_ui():
@@ -402,6 +425,10 @@ def create_ui():
                 ui_download_button = gr.Button('⬇️ 下载导出文件', variant="secondary")
                 ui_download_status = gr.Markdown("")
                 
+                # 下载链接显示区域（初始隐藏）
+                download_link_html = gr.HTML(visible=False)
+                download_info = gr.Markdown(visible=False)
+                
             with gr.Column(scale=2):
                 # 聊天界面
                 gr.Markdown("### 💬 智能问答")
@@ -479,13 +506,20 @@ def create_ui():
         ui_export_button.click(
             fn=export_graph_data,
             inputs=[],
-            outputs=ui_export_status
+            outputs=[ui_export_status, download_token]
+        )
+        
+        # 当下载令牌输入框内容改变时，隐藏之前的下载链接
+        download_token.change(
+            fn=lambda x: (gr.update(visible=False), gr.update(visible=False)) if x else (gr.update(), gr.update()),
+            inputs=[download_token],
+            outputs=[download_link_html, download_info]
         )
         
         ui_download_button.click(
             fn=download_export_file,
             inputs=[download_token],
-            outputs=ui_download_status
+            outputs=[ui_download_status, download_link_html, download_info]
         )
         
         async def chat_wrapper(message, history):
