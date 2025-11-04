@@ -120,7 +120,7 @@ async def get_files_list(db_name: str = None) -> str:
             if files:
                 return '\n'.join(files)
             else:
-                return '知识库为空' if language == 'zh_cn' else 'Knowledge base is empty'
+                return ''
     except Exception as e:
         logger.error(f"获取文件列表失败: {e}")
         return f'获取文件列表失败: {str(e)}'
@@ -210,40 +210,35 @@ async def predict(text: str, history: List):
     if not text:
         text = main_args.placeholder
     
+    file_list = await get_files_list()
+    if not file_list:
+        yield '知识库为空' if language == 'zh_cn' else 'Knowledge base is empty'
+        return
+
     logger.info(f"用户问题: {text} (数据库: {current_db_name})")
     
-    try:
-        async with HuixiangDouAPIClient(server_base_url) as client:
-            full_response = ""
-            refs_text = ""
+    async with HuixiangDouAPIClient(server_base_url) as client:
+        full_response = ""
+        
+        async for response_text in client.chat(
+            text=text,
+            language=language,
+            enable_web_search=enable_web_search,
+            db_name=current_db_name,
+            history=history
+        ):
+            full_response = response_text
             
-            async for response_text in client.chat(
-                text=text,
-                language=language,
-                enable_web_search=enable_web_search,
-                db_name=current_db_name,
-                history=history
-            ):
-                full_response = response_text
-                
-                # 检查是否有参考资料（在完整响应中）
-                if '**参考资料：**' in response_text or '**References:**' in response_text:
-                    # 参考资料已经包含在响应中
-                    yield full_response
-                else:
-                    # 只显示主要回复内容
-                    yield full_response
-            
-            logger.info(f"完整回复: {len(full_response)} 字符")
-            
-    except Exception as e:
-        logger.error(f"聊天失败: {e}")
-        error_msg = f"抱歉，聊天服务暂时不可用: {str(e)}"
-        if language == 'zh_cn':
-            error_msg = f"抱歉，聊天服务暂时不可用: {str(e)}"
-        else:
-            error_msg = f"Sorry, chat service is temporarily unavailable: {str(e)}"
-        yield error_msg
+            # 检查是否有参考资料（在完整响应中）
+            if '**参考资料：**' in response_text or '**References:**' in response_text:
+                # 参考资料已经包含在响应中
+                yield full_response
+            else:
+                # 只显示主要回复内容
+                yield full_response
+        
+        logger.info(f"完整回复: {len(full_response)} 字符")
+        
 
 
 async def refresh_files_list():
@@ -324,12 +319,11 @@ async def download_export_file(download_token: str):
 文件将直接下载到您的电脑，不会经过服务器保存。
 """
         
-        return info_text, gr.update(value=html_content, visible=True), gr.update(value=info_text, visible=True)
+        return gr.update(value=html_content, visible=True), gr.update(value=info_text, visible=True)
                 
     except Exception as e:
         logger.error(f"下载失败: {e}")
-        error_msg = f"**下载失败:** {str(e)}"
-        return error_msg, gr.update(visible=False), gr.update(visible=False)
+        return gr.update(visible=False), gr.update(visible=False)
 
 
 def create_ui():
@@ -423,7 +417,6 @@ def create_ui():
                     info="用于下载导出的图谱文件"
                 )
                 ui_download_button = gr.Button('⬇️ 下载导出文件', variant="secondary")
-                ui_download_status = gr.Markdown("")
                 
                 # 下载链接显示区域（初始隐藏）
                 download_link_html = gr.HTML(visible=False)
@@ -519,7 +512,7 @@ def create_ui():
         ui_download_button.click(
             fn=download_export_file,
             inputs=[download_token],
-            outputs=[ui_download_status, download_link_html, download_info]
+            outputs=[download_link_html, download_info]
         )
         
         async def chat_wrapper(message, history):

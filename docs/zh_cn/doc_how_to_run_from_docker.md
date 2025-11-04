@@ -81,9 +81,9 @@ python3 -m huixiangdou.main
 
 ```bash
 # 先启动服务端
-python3 -m huixiangdou.main
+python3 -m huixiangdou.server --lgraph-data-path /path/to/lgraph-data
 # 再启动 gradio client
-python3 -m huixiangdou.gradio_ui
+python3 -m huixiangdou.gradio_ui --port 8888
 ```
 
 然后打开浏览器 8888 端口，可以流式响应

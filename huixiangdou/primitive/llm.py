@@ -282,7 +282,7 @@ class LLM:
 
         think_tag = "</think>"
         index = content.find(think_tag)
-        if index:
+        if index > 0:
             content = content[index+len(think_tag):]
         return content
 

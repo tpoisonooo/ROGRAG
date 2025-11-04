@@ -98,12 +98,12 @@ We also implement Gradio inside it
 
 ```bash
 # start server first
-python3 -m huixiangdou.main
-# start gradio client
-python3 -m huixiangdou.gradio_ui
+python3 -m huixiangdou.server --lgraph-data-path /path/to/lgraph-data
+# then start gradio UI
+python3 -m huixiangdou.gradio_ui --port 8888
 ```
 
-Open port 7860 in web browser:
+Open port 8888 in web browser:
 
 <img src="https://github.com/user-attachments/assets/b7b7cb90-4a85-4ffc-9de0-52670dd9159e" width=800>
 

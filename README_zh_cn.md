@@ -39,6 +39,9 @@ ROGRAG 合并多个开源项目——HuixiangDou、KAG、LightRAG 和 DB-GPT，�
 
 如果对你有用，麻烦 star 一下⭐
 
+## 💡 更新
+- [2025/11] 支持多数据库，重构 Gradio UI 和 server
+
 ## 📖 文档
 
 - [1. docker运行（命令行、Swagger API、Gradio 方式）](docs/zh_cn/doc_how_to_run_from_docker.md)

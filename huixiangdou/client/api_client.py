@@ -89,35 +89,31 @@ class HuixiangDouAPIClient:
         
         url = f"{self.base_url}/v2/chat"
         
-        try:
-            async with self.session.post(url, json=request_data) as response:
-                if response.status != 200:
-                    error_text = await response.text()
-                    raise aiohttp.ClientResponseError(
-                        request_info=response.request_info,
-                        history=response.history,
-                        status=response.status,
-                        message=error_text
-                    )
-                
-                full_response = ""
-                async for line in response.content:
-                    line = line.decode('utf-8').strip()
-                    if line.startswith('data:'):
-                        try:
-                            data = json.loads(line[5:])  # 移除 "data:" 前缀
-                            if 'data' in data and 'delta' in data['data']:
-                                delta = data['data']['delta']
-                                if delta:
-                                    full_response += delta
-                                    yield full_response
-                        except json.JSONDecodeError:
-                            logger.warning(f"无法解析JSON: {line}")
-                            continue
-                            
-        except Exception as e:
-            logger.error(f"聊天请求失败: {e}")
-            yield f"抱歉，聊天服务暂时不可用: {str(e)}"
+        async with self.session.post(url, json=request_data) as response:
+            if response.status != 200:
+                error_text = await response.text()
+                raise aiohttp.ClientResponseError(
+                    request_info=response.request_info,
+                    history=response.history,
+                    status=response.status,
+                    message=error_text
+                )
+            
+            full_response = ""
+            async for line in response.content:
+                line = line.decode('utf-8').strip()
+                if line.startswith('data:'):
+                    try:
+                        data = json.loads(line[5:])  # 移除 "data:" 前缀
+                        if 'data' in data and 'delta' in data['data']:
+                            delta = data['data']['delta']
+                            if delta:
+                                full_response += delta
+                                yield full_response
+                    except json.JSONDecodeError:
+                        logger.warning(f"无法解析JSON: {line}")
+                        continue
+                        
     
     async def add_files(self, 
                        file_list: List[str], 

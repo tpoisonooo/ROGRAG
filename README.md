@@ -45,6 +45,9 @@ Deployed on an online research platform, ROGRAG is ready for integration. [Here]
 
 If it is useful to you, please star it ⭐
 
+## 💡 Updates
+- [2025/11] Support multi-database, refactor gradio UI and server
+
 ## 📖 Documentation
 - [1. Run from Docker (CMD / Swagger Server API / Gradio)](docs/en/doc_how_to_run_from_docker.md)
 - [2. Run from Source](docs/en/doc_how_to_run.md)
