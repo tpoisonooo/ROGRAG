@@ -77,9 +77,12 @@ python3 -m huixiangdou.main
 +------------------+---------+---------------------------------+---------------+
 ```
 
-### Gradio UI 接入
+### Gradio client 接入
 
 ```bash
+# 先启动服务端
+python3 -m huixiangdou.server --lgraph-data-path /path/to/lgraph-data
+# 再启动 gradio client
 python3 -m huixiangdou.gradio_ui --port 8888
 ```
 
@@ -93,7 +96,7 @@ python3 -m huixiangdou.gradio_ui --port 8888
 启动 server
 
 ```bash
-python3 -m huixiangdou.server --port 8888
+python3 -m huixiangdou.server
 ```
 
 浏览器打开 8888 号端口查看 SwaggerUI。执行 client 测试

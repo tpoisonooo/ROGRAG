@@ -48,8 +48,8 @@ if __name__ == '__main__':
         'Overcoming Group Chat Scenarios with LLM-based Technical Assistance',  # noqa E501
         long_description=readme(),
         long_description_content_type='text/markdown',
-        author='OpenMMLab',
-        author_email='openmmlab@gmail.com',
+        author='tpoisonooo',
+        author_email='tpoisonooo@gmail.com',
         packages=find_packages(exclude=()),
         package_data={
             'huixiangdou': huixiangdou_package_data,

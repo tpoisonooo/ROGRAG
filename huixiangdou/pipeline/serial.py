@@ -1,7 +1,6 @@
 """Pipeline."""
 import asyncio
 import json
-import pdb
 import pytoml
 from typing import List, Union, AsyncGenerator
 
@@ -12,6 +11,7 @@ from .session import Session
 from ..service import SharedRetrieverPool, Retriever, RetrieveResource, ErrorCode
 from ..service.retriever import RetrieveMethod
 from ..service.prompt import rag_prompts as PROMPTS
+from .store import load_reject_threshold
 
 class PreprocNode:
 
@@ -165,25 +165,20 @@ class PPLCheck:
 class SerialPipeline:
 
     def __init__(self,
-                 work_dir: str = 'workdir',
-                 config_path: str = 'config.ini'):
-        self.resource = RetrieveResource(config_path)
+                 resouce: RetrieveResource):
+        self.resource = resouce
         self.pool = SharedRetrieverPool(resource=self.resource)
-        self.retriever_reason = self.pool.get(work_dir=work_dir,
-                                              method=RetrieveMethod.REASON)
-        self.retriever_knowledge = self.pool.get(
-            work_dir=work_dir, method=RetrieveMethod.KNOWLEDGE)
-        self.retriever_web = self.pool.get(work_dir=work_dir,
-                                           method=RetrieveMethod.WEB)
-        # self.retriever_bm25 = self.pool.get(work_dir=work_dir, method=RetrieveMethod.BM25)
-        # self.retriever_inverted = self.pool.get(work_dir=work_dir, method=RetrieveMethod.INVERTED)
+        self.retriever_reason = self.pool.get(method=RetrieveMethod.REASON)
+        self.retriever_knowledge = self.pool.get(method=RetrieveMethod.KNOWLEDGE)
+        self.retriever_web = self.pool.get(method=RetrieveMethod.WEB)
 
-        self.config_path = config_path
-        self.work_dir = work_dir
-        
-        # utf-8
-        with open(config_path,'r', encoding='utf-8') as f:
-            self.threshold = pytoml.load(f)['store']['reject_threshold']
+        # 从当前数据库的工作目录加载阈值
+        self.threshold = load_reject_threshold(self.resource)
+        if self.threshold is None:
+            # 如果没有找到阈值文件，使用一个默认的合理值
+            self.threshold = 0.0
+            logger.warning(f'No reject threshold found for database {self.resource.name}, using default value: {self.threshold}')
+        logger.info(f'Using reject threshold: {self.threshold} for database: {self.resource.name}')
 
     def is_initialized(self) -> bool:
         return self.retriever_knowledge.entityDB.index is not None

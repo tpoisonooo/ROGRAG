@@ -1,31 +1,43 @@
 openapi: 3.1.0
 info:
-  title: Swagger Petstore - OpenAPI 3.1
+  title: ROGRAG (Robustly Optimized GraphRAG) API
   description: |-
-    This is a sample Pet Store Server based on the OpenAPI 3.1 specification.  You can find out more about
-    Swagger at [https://swagger.io](https://swagger.io). In the third iteration of the pet store, we've switched to the design first approach!
-    You can now help us improve the API whether it's by making changes to the definition itself or to the code.
-    That way, with time, we can improve the API in general, and expose some of the new features in OAS3.
+    ROGRAG 是一个基于图检索增强生成(GraphRAG)的先进RAG框架，利用图结构知识表示和检索，
+    在SeedBench基准测试中比主流RAG方法性能提升15%。
+    
+    主要功能：
+    - 两阶段检索机制（双层和逻辑形式方法）
+    - 基于图的知识构建和检索
+    - 多种检索方法：BM25、密集检索、基于图的检索、网络搜索
+    - 支持多数据库切换
+    - 多平台前端支持（微信、飞书、网页界面）
+    - 图谱数据导出功能
+    
+    本次更新：
+    - 新增多数据库支持，允许在运行时切换不同的数据库
+    - /v2/add_files 接口升级为流式响应，实时返回文件处理进度
+    - 新增图谱导出功能，支持CSV格式导出
+    - 新增文件列表和数据库列表接口
 
-    Some useful links:
-    - [The Pet Store repository](https://github.com/swagger-api/swagger-petstore)
-    - [The source API definition for the Pet Store](https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml)
-
-  termsOfService: http://swagger.io/terms/
+  termsOfService: http://example.com/terms/
   contact:
-    email: apiteam@swagger.io
+    email: support@rograg.com
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  version: 1.0.0
+  version: 2.2.0
 externalDocs:
-  description: Find out more about Swagger
-  url: http://swagger.io
+  description: 了解更多关于 ROGRAG 的信息
+  url: https://github.com/tpoisonooo/ROGRAG
 servers:
-  - url: https://petstore3.swagger.io/api/v3
+  - url: http://127.0.0.1:23333
 tags:
   - name: rag
-    description: RAG
+    description: RAG 核心功能
+  - name: database
+    description: 数据库管理
+  - name: export
+    description: 数据导出
 
 paths:
   /v2/chat:
@@ -33,142 +45,339 @@ paths:
       tags:
         - rag
       summary: 多阶段 RAG chat
-      description: 输入问题和历史消息，yield 处理阶段和最终的 streaming chat 结果
+      description: 输入问题和历史消息，yield 处理阶段和最终的 streaming chat 结果。支持指定数据库名称。
       operationId: rag_chat
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Query'
+              $ref: '#/components/schemas/TalkRequest'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/ChatStreamResponse'
+  
+  /v2/list_file:
+    get:
+      tags:
+        - database
+      summary: 列出数据库文件
+      description: 列出指定数据库中的所有文件，支持数据库切换
+      operationId: list_files
+      parameters:
+        - name: db_name
+          in: query
+          description: 数据库名称，默认为 "HuixiangDou"
+          schema:
+            type: string
+            default: "HuixiangDou"
+      responses:
+        '200':
+          description: 文件列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                example: ["file1.pdf", "file2.txt", "file3.md"]
+  
+  /v2/add_files:
+    post:
+      tags:
+        - database
+      summary: 添加文件到知识库（流式）
+      description: 将指定文件添加到知识库中，支持指定目标数据库。文件会被预处理并建立索引。此接口使用 Server-Sent Events (SSE) 流式返回处理进度。
+      operationId: add_files
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddFilesRequest'
+            examples:
+              example1:
+                summary: 添加单个文件
+                value:
+                  file_list: ["/path/to/document.pdf"]
+                  db_name: "HuixiangDou"
+              example2:
+                summary: 添加多个文件到自定义数据库
+                value:
+                  file_list: ["/path/to/doc1.pdf", "/path/to/doc2.txt", "/path/to/doc3.md"]
+                  db_name: "ProjectDB"
+      responses:
+        '200':
+          description: 文件处理进度（SSE 流式响应）
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/AddFilesProgressStream'
+              examples:
+                progress:
+                  summary: 处理进度示例
+                  value: |
+                    data: {"status": {"code": 0, "error": "processing"}, "data": {"progress": 0.0, "percentage": 0.0, "current_file": 0, "total_files": 3, "message": "Starting to process 3 files"}}
+                    
+                    data: {"status": {"code": 0, "error": "processing"}, "data": {"progress": 0.33, "percentage": 33.0, "current_file": 1, "total_files": 3, "message": "Processing file 1/3 (33.0%)"}}
+                    
+                    data: {"status": {"code": 0, "error": "processing"}, "data": {"progress": 0.67, "percentage": 67.0, "current_file": 2, "total_files": 3, "message": "Processing file 2/3 (67.0%)"}}
+                    
+                    data: {"status": {"code": 0, "error": "success"}, "data": {"progress": 1.0, "percentage": 100.0, "message": "Successfully processed 3 files", "total_files": 3}}
+                empty:
+                  summary: 空文件列表示例
+                  value: |
+                    data: {"status": {"code": 0, "error": "success"}, "data": {"progress": 1.0, "message": "No files to process", "total_files": 0}}
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  
+  /v2/list_db:
+    post:
+      tags:
+        - database
+      summary: 列出所有数据库
+      description: 获取系统中存在的所有数据库名称列表
+      operationId: list_databases
+      responses:
+        '200':
+          description: 数据库名称列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                example: ["HuixiangDou", "TestDB", "ProjectDB"]
+  
+  /v2/drop_db:
+    post:
+      tags:
+        - database
+      summary: 清空数据库
+      description: 清空指定数据库的所有知识库内容，支持指定目标数据库。操作不可恢复。
+      operationId: drop_db
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DropDbRequest'
+      responses:
+        '200':
+          description: 数据库清空成功
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "success"
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  
+  /v2/export_graph:
+    post:
+      tags:
+        - export
+      summary: 导出图谱数据
+      description: 导出指定数据库的图谱数据，支持 CSV 格式。导出完成后返回下载令牌。
+      operationId: export_graph
+      parameters:
+        - name: db_name
+          in: query
+          description: 要导出的数据库名称，默认为 "HuixiangDou"
+          schema:
+            type: string
+            default: "HuixiangDou"
+      responses:
+        '200':
+          description: 图谱导出成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportGraphResponse'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  
+  /v2/download_export/{download_token}:
+    get:
+      tags:
+        - export
+      summary: 下载导出的图谱文件
+      description: 使用下载令牌获取导出的图谱文件。文件将以流式方式返回。简化设计，一个端点完成下载功能。
+      operationId: download_export
+      parameters:
+        - name: download_token
+          in: path
+          required: true
+          description: 导出时获得的下载令牌
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 文件下载成功
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+              headers:
+                Content-Disposition:
+                  description: 文件名
+                  schema:
+                    type: string
+                    example: 'attachment; filename="export_file.zip"'
+                X-File-Size:
+                  description: 文件大小（字节）
+                  schema:
+                    type: integer
+                    example: 1024000
+                X-Database-Name:
+                  description: 数据库名称
+                  schema:
+                    type: string
+                    example: "HuixiangDou"
+                X-Download-Token:
+                  description: 下载令牌
+                  schema:
+                    type: string
+                    example: "a1b2c3d4e5f6"
+        '404':
+          description: 文件不存在或令牌无效
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  
+  /v2/exemplify:
+    post:
+      tags:
+        - rag
+      summary: 举一反三
+      description: 基于输入问题生成相关的示例问题，支持水稻品种和基因数据的智能匹配
+      operationId: exemplify_question
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TalkRequest'
       responses:
         '200':
           description: Successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChatReply'
-  /v2/exemplify:
-    post:
-      tags:
-        - rag
-      summary: 举一反三
-      description: 举一反三
-      operationId: exemplify_question
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Query'
-      responses:
-        '200':
-          description: Successful operation
+                $ref: '#/components/schemas/ExemplifyResponse'
+        '400':
+          description: 请求参数错误
           content:
             application/json:
-             schema:
-              $ref: '#/components/schemas/Case'
-
-  /v2/download:
-    post:
-      tags:
-        - rag
-      summary: 下载基因文件
-      description: 基于阿里云 OSS 下载，服务端给临时 URL  https://help.aliyun.com/zh/oss/user-guide/authorize-third-party-users-to-download-objects?spm=a2c4g.11186623.0.0.233926e4E9geop
-      operationId: download
-      requestBody:
-        content:
-          application/json:
-             schema:
-              $ref: '#/components/schemas/Token'
-
-      responses:
-        '200':
-          description: Successful operation
+              schema:
+                $ref: '#/components/schemas/Status'
+        '500':
+          description: 服务器内部错误
           content:
             application/json:
-             schema:
-              $ref: '#/components/schemas/DownloadURL'
+              schema:
+                $ref: '#/components/schemas/Status'
 
 components:
   schemas:
-    Token:
-      type: object
-      properties:
-        token:
-          type: string
-          description: Reference 里的 token
-    
-    DownloadURL:
-      type: object
-      properties:
-        status:
-          $ref: '#/components/schemas/Status'
-
-        data:
-          type: object
-          properties:
-            url:
-              type: string
-              description: 阿里云 URL
-
-    Reference:
-      type: object
-      description: 聊天期间返回的参考文档
-      properties:
-        chunk:
-          type: string
-          examples: 
-            - 今天是 2024 年 8 月 22 号，今日上海气温 35 摄氏度晴天
-        source_or_url:
-          type: string
-          examples:
-            - "/mnt/data/path/filename"
-            - "http://bing.com"
-        show_type:
-          description: 参考文档的展示类型。若支持下载，则用 download_token 调用下载接口
-          type: string
-          enum:
-            - web
-            - local
-            - fasta # 可下载的基因文件
-        download_token:
-          type: string
-
-    Pair:
-      type: object
-      properties:
-        user:
-          type: string
-          examples: 
-            - 今天天气怎样
-        assistant:
-          type: string
-          examples: 
-            - 上海晴天
-        references:
-          type: array
-          $ref: '#/components/schemas/Reference'
-
-    Query:
+    TalkRequest:
       type: object
       properties:
         language:
           type: string
+          description: 语言设置
           examples:
-            - zh_CN
-            - en
+            - "zh_CN"
+            - "en"
         enable_web_search:
           type: boolean
+          description: 是否启用网络搜索
           examples:
             - false
+            - true
         user:
           type: string
-          examples: 
-            - 后天天气如何
+          description: 用户输入的问题
+          examples:
+            - "什么是机器学习？"
+            - "What is machine learning?"
         history:
           type: array
           items:
             $ref: '#/components/schemas/Pair'
-
+          description: 历史对话记录
+        db_name:
+          type: string
+          description: 目标数据库名称，默认为 "HuixiangDou"
+          default: "HuixiangDou"
+          examples:
+            - "HuixiangDou"
+            - "CustomDB"
+            - "ProjectDB"
+    
+    AddFilesRequest:
+      type: object
+      properties:
+        file_list:
+          type: array
+          items:
+            type: string
+          description: 要添加的文件路径列表
+          examples:
+            - ["/path/to/document.pdf", "/path/to/data.txt"]
+        db_name:
+          type: string
+          description: 目标数据库名称，默认为 "HuixiangDou"
+          default: "HuixiangDou"
+          examples:
+            - "HuixiangDou"
+            - "CustomDB"
+            - "ProjectA"
+    
+    DropDbRequest:
+      type: object
+      properties:
+        db_name:
+          type: string
+          description: 要清空的数据库名称，默认为 "HuixiangDou"
+          default: "HuixiangDou"
+          examples:
+            - "HuixiangDou"
+            - "TestDB"
+            - "TempDB"
+    
     Status:
       type: object
       properties:
@@ -181,68 +390,207 @@ components:
             - 0
         error:
           type: string
-          description: 服务端提供报错内容，全英文
+          description: 服务端提供报错内容
           examples:
-            - parameter error
-
-    ChatReply:
+            - "parameter error"
+            - "success"
+    
+    Pair:
       type: object
+      properties:
+        user:
+          type: string
+          description: 用户输入
+          examples: 
+            - "今天天气怎样"
+        assistant:
+          type: string
+          description: 助手回复
+          examples: 
+            - "上海晴天"
+        references:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reference'
+          description: 参考文档列表
+    
+    Reference:
+      type: object
+      description: 聊天期间返回的参考文档
+      properties:
+        chunk:
+          type: string
+          description: 文档内容片段
+          examples: 
+            - "今天是 2024 年 8 月 22 号，今日上海气温 35 摄氏度晴天"
+        source_or_url:
+          type: string
+          description: 文档来源路径或URL
+          examples:
+            - "/mnt/data/path/filename"
+            - "http://bing.com"
+        show_type:
+          description: 参考文档的展示类型
+          type: string
+          enum:
+            - web
+            - local
+        download_token:
+          type: string
+          description: 下载令牌（如果有）
+    
+    ChatStreamResponse:
+      type: object
+      description: "SSE流式响应的每个数据块，格式为 'data: {json}\\n\\n'"
       properties:
         status:
           $ref: '#/components/schemas/Status'
-
         data:
           type: object
           properties:
             _id:
               type: string
-              description: 每次请求都给 unique ID 用来调试
+              description: 每次请求的唯一ID，用于调试
               examples:
-                - 每次请求都给 unique ID 用来调试
-
+                - "a1b2c3d4e5f6"
             stage:
               type: string
-              description: chat 期间的阶段
+              description: 处理阶段
               enum:
-                - 0_parse
-                - 1_search
-                - 2_rerank
-                - 3_generate
-            
+                - "0_parse"
+                - "1_search"
+                - "2_rerank"
+                - "3_generate"
             references:
               type: array
               items:
                 $ref: '#/components/schemas/Reference'
-              description: 检索结果，只有 `2_rerank` 期间才有。如果为空就是不用搜索结果直接 LLM 答复
-
+              description: 检索结果引用
             delta:
               type: string
-              description: streaming chat 的流式部分结果，markdown 格式。`3_generate` 期间才有，需要自己拼接显示
+              description: 流式回复的增量内容
               examples:
-                - 上海
-                - 今天
-                - 晴
-                - 天
+                - "上海"
+                - "今天"
+                - "晴天"
     
-    Case:
+    AddFilesProgressStream:
+      type: object
+      description: "SSE流式响应的每个数据块，格式为 'data: {json}\\n\\n'"
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        data:
+          type: object
+          properties:
+            progress:
+              type: number
+              format: float
+              description: 进度值（0.0 到 1.0）
+              examples:
+                - 0.5
+                - 0.75
+            percentage:
+              type: number
+              format: float
+              description: 进度百分比（0.0 到 100.0）
+              examples:
+                - 50.0
+                - 75.0
+            current_file:
+              type: integer
+              description: 当前正在处理的文件编号
+              examples:
+                - 2
+                - 5
+            total_files:
+              type: integer
+              description: 总文件数量
+              examples:
+                - 10
+                - 20
+            message:
+              type: string
+              description: 进度描述信息
+              examples:
+                - "Processing file 2/10 (20.0%)"
+                - "Successfully processed 10 files"
+    
+    ExportGraphResponse:
       type: object
       properties:
         status:
           $ref: '#/components/schemas/Status'
-
+        data:
+          type: object
+          properties:
+            export_path:
+              type: string
+              description: 导出的zip文件路径
+              examples:
+                - "./export/HuixiangDou_export_20241227_143022.zip"
+            file_size:
+              type: integer
+              description: 文件大小（字节）
+              examples:
+                - 1024000
+            download_url:
+              type: string
+              description: 下载URL路径
+              examples:
+                - "/v2/download_export/a1b2c3d4e5f6"
+            message:
+              type: string
+              description: 导出结果消息
+              examples:
+                - "图谱导出成功，已打包成zip文件"
+            db_name:
+              type: string
+              description: 数据库名称
+              examples:
+                - "HuixiangDou"
+            format:
+              type: string
+              description: 导出格式
+              examples:
+                - "zip"
+    
+    ExemplifyResponse:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
         data:
           type: object
           properties:
             _id:
               type: string
-              description: 每次请求都给 unique ID 用来调试
+              description: 每次请求的唯一ID，用于调试
               examples:
-                - 每次请求都给 unique ID 用来调试
-
+                - "a1b2c3d4e5f6"
             cases:
               type: array
-              description: 举一反三结果，内容为空就是没有。
+              description: 生成的示例问题列表
               items:
                 type: string
-                examples:
-                  - 上海秋天雨水多么？
+              examples:
+                - ["上海秋天雨水多么？", "上海最佳旅游季节是什么时候？"]
+    
+    Token:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Reference 里的 token
+    
+    DownloadURL:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        data:
+          type: object
+          properties:
+            url:
+              type: string
+              description: 阿里云 URL

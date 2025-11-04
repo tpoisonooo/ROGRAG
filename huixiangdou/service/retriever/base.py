@@ -90,18 +90,56 @@ class RetrieveResource:
 
     def __init__(self, config_path: str, rerank_topn: int = 10):
         with open(config_path, encoding='utf8') as f:
-            fs_config = pytoml.load(f)['store']
+            config = pytoml.load(f)
+            self.fs_config = config['store']
+            self.graph_config = config['tugraph']
+            if 'name' not in self.graph_config:
+                logger.warning("Not found name in TuGraph Config")
+                self.graph_config['name'] = 'HuixiangDou'
 
         # load text2vec and rerank model
         logger.info('loading text2vec and rerank models')
-        self.embedder = Embedder(model_config=fs_config)
-        self.reranker = Reranker(model_config=fs_config, topn=rerank_topn)
+        self.embedder = Embedder(model_config=self.fs_config)
+        self.reranker = Reranker(model_config=self.fs_config, topn=rerank_topn)
         self.llm = LLM(config_path=config_path)
-        self.graph_store = TuGraphStore(config_path=config_path)
+        
+        self.graph_store = TuGraphStore(config=self.graph_config)
         # self.memory_graph = self.graph_store.get_full_graph()
         self.config_path = config_path
+        
+        self.base_work_dir = self.fs_config.get('work_dir', 'workdir')
+        self.name = self.graph_config.get('name', 'HuixiangDou')
+        self.name = self.check_db_name(self.name)
+        os.makedirs(os.path.join(self.base_work_dir, self.name), exist_ok=True)
 
-
+    def check_db_name(self, name:str) -> None:
+        name = name.strip()
+        if '.' in name or '/' in name or '\\' in name:
+            raise ValueError("Database name cannot contain special characters like '.', '/', or '\\'.")
+        
+        if len(name) == 0:
+            raise ValueError("Database name cannot be empty.")
+    
+        if name.isdigit():
+            raise ValueError("Database name cannot be purely numeric.")
+        return name
+    
+    def switch(self, name:str) -> None:
+        name = self.check_db_name(name)
+        
+        # setup name
+        logger.info(f'Switching database from {self.name} to {name}')
+        self.name = name
+        os.makedirs(os.path.join(self.base_work_dir, self.name), exist_ok=True)
+        
+        # reinit TuGraph Connection
+        self.graph_config['name'] = name
+        del self.graph_store
+        self.graph_store = TuGraphStore(config=self.graph_config)
+        
+    def cur_work_dir(self) -> str:
+        return os.path.join(self.base_work_dir, self.name)
+        
 class Retriever(ABC):
     """retriever base class."""
 

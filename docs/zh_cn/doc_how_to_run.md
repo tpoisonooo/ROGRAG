@@ -103,10 +103,11 @@ python3 -m huixiangdou.main
 ### Gradio UI 接入
 
 ```bash
-python3 -m huixiangdou.gradio_ui
+python3 -m huixiangdou.server --lgraph-data-path /path/to/lgraph-data
+python3 -m huixiangdou.gradio_ui --port 8888
 ```
 
-然后打开浏览器 7860 端口，可以流式响应
+然后打开浏览器 8888 端口，可以流式响应
 
 <img src="https://github.com/user-attachments/assets/b7b7cb90-4a85-4ffc-9de0-52670dd9159e" width=800>
 

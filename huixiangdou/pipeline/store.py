@@ -45,16 +45,15 @@ class FeatureStore:
     def __init__(self,
                  resource: RetrieveResource,
                  language: str = 'zh',
-                 chunk_size=900,
-                 work_dir: str = 'workdir') -> None:
+                 chunk_size=900) -> None:
         """Init with model device type and config."""
         self.language = language
         logger.debug('loading text2vec model..')
         self.embedder = resource.embedder
         self.llm = resource.llm
         self.graph_store = resource.graph_store
+        self.work_dir = resource.cur_work_dir()
         self.chunk_size = chunk_size
-        self.work_dir = work_dir
         self.file_opr = FileOperation()
 
         logger.info('init dense retrieval database with chunk_size {}'.format(
@@ -140,9 +139,15 @@ class FeatureStore:
         return self.text_splitter.create_chunks(texts=[text],
                                                 metadatas=[metadata])
         
+    def list_all_filename(self) -> List[str]:
+        """List all filenames stored in chunk database."""
+        chunkDB = ChunkSQL(file_dir=os.path.join(self.work_dir, 'db_chunk'))
+        return chunkDB.listall()
+
     async def remove_knowledge(self) -> None:
         logger.warning('Remove knowledge graph and database')
         shutil.rmtree(self.work_dir, ignore_errors=True)
+        os.rmdir(self.work_dir)
         self.graph_store.drop()
 
     async def build_knowledge(self, files: Iterator[FileName]) -> AsyncGenerator[float, None]:
@@ -384,16 +389,58 @@ def parse_args():
         '--fasta_file',
         default=None,
         help='Path of .fasta file, which is a dumped json list.')
+    parser.add_argument(
+        '--database_name',
+        type=str,
+        default='HuixiangDou',
+        help='Database name. Default is HuixiangDou.')
     args = parser.parse_args()
     return args
 
 
-async def write_back_config_threshold(resource: RetrieveResource,
-                                      work_dir: str, config_path: str):
-    """Update reject threshold based on positive and negative examples."""
+def load_reject_threshold(resource: RetrieveResource) -> float:
+    """从当前数据库的工作目录加载拒绝阈值。
+    
+    Returns:
+        float: 阈值值，如果文件不存在则返回 None
+    """
+    work_dir = resource.cur_work_dir()
+    threshold_file = os.path.join(work_dir, 'threshold.json')
+    
+    if not os.path.exists(threshold_file):
+        logger.warning(f'Threshold file not found: {threshold_file}')
+        return None
+        
+    try:
+        with open(threshold_file, 'r', encoding='utf-8') as f:
+            threshold_config = json.load(f)
+        threshold = threshold_config.get('reject_threshold')
+        if threshold is not None:
+            logger.info(f'Loaded reject threshold from {threshold_file}: {threshold}')
+            return float(threshold)
+        else:
+            logger.warning(f'No reject_threshold found in {threshold_file}')
+            return None
+    except Exception as e:
+        logger.error(f'Error loading threshold from {threshold_file}: {str(e)}')
+        return None
+
+
+async def write_back_config_threshold(resource: RetrieveResource):
+    """Update reject threshold based on positive and negative examples.
+    
+    将阈值保存到当前数据库的工作目录中，而不是全局配置文件中，
+    确保每个数据库都有自己的阈值配置。
+    """
     from sklearn.metrics import precision_recall_curve
     import numpy as np
 
+    # 获取当前数据库的工作目录
+    work_dir = resource.cur_work_dir()
+    
+    # 构建阈值文件路径（保存在当前数据库的工作目录中）
+    threshold_file = os.path.join(work_dir, 'threshold.json')
+    
     with open(os.path.join('resource', 'good_questions.json'), encoding='utf-8') as f:
         good_questions = json.load(f)
     with open(os.path.join('resource', 'bad_questions.json'), encoding='utf-8') as f:
@@ -406,7 +453,7 @@ async def write_back_config_threshold(resource: RetrieveResource,
 
     # retrieve score
     pool = SharedRetrieverPool(resource=resource)
-    retriever = pool.get(work_dir=work_dir)
+    retriever = pool.get()
 
     for question in questions:
         score = await retriever.similarity_score(query=question)
@@ -421,31 +468,42 @@ async def write_back_config_threshold(resource: RetrieveResource,
     index_max = np.argmax(sum_precision_recall)
     optimal_threshold = max(thresholds[index_max], 0.0)
 
-    with open(config_path, encoding='utf-8') as f:
-        config = pytoml.load(f)
-    config['store']['reject_threshold'] = float(optimal_threshold)
-    with open(config_path, 'w', encoding='utf-8') as f:
-        pytoml.dump(config, f)
+    # 保存阈值到当前数据库的工作目录
+    threshold_config = {
+        'reject_threshold': float(optimal_threshold),
+        'database_name': resource.name,
+        'calculated_at': time.strftime('%Y-%m-%d %H:%M:%S'),
+        'good_questions_count': len(good_questions),
+        'bad_questions_count': len(bad_questions)
+    }
+    
+    # 确保工作目录存在
+    os.makedirs(work_dir, exist_ok=True)
+    
+    with open(threshold_file, 'w', encoding='utf-8') as f:
+        json.dump(threshold_config, f, ensure_ascii=False, indent=2)
+        
     logger.info(
-        f'The optimal threshold is: {optimal_threshold}, saved it to {config_path}'  # noqa E501
+        f'The optimal threshold is: {optimal_threshold}, saved it to {threshold_file}'  # noqa E501
     )
+    
+    return optimal_threshold
 
 
-if __name__ == '__main__':
-    args = parse_args()
+async def main(args):
     # build embedding/reranker models
     resource = RetrieveResource(config_path=args.config_path)
-    store = FeatureStore(resource=resource, work_dir=args.work_dir)
+    resource.switch(name=args.database_name)
+    store = FeatureStore(resource=resource)
 
     # convert pdf/excel/ppt to markdown
     files = store.file_opr.scan_dir(repo_dir=args.repo_dir)
     store.preprocess(files=files)
-
-    loop = always_get_an_event_loop()
-
     before = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(
     )
-    loop.run_until_complete(store.init(files=files))
+    async for progress in store.init(files=files):
+        logger.info('progress {:.2f}%'.format(progress * 100))
+
     store.file_opr.summarize(files)
 
     after = resource.llm.sum_input_token_size, resource.llm.sum_output_token_size, time.time(
@@ -453,5 +511,10 @@ if __name__ == '__main__':
     logger.info('input token {}, output token {}, timecost {}'.format(after[0]-before[0], after[1]-before[1], after[2]-before[2]))
     del store
 
-    # calculate config threshold, write it back
-    loop.run_until_complete(write_back_config_threshold(resource=resource, work_dir=args.work_dir, config_path=args.config_path))
+    # calculate config threshold, write it back to current database workdir
+    await write_back_config_threshold(resource=resource)
+
+if __name__ == '__main__':
+    args = parse_args()
+    loop = always_get_an_event_loop()
+    loop.run_until_complete(main(args))

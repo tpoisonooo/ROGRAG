@@ -16,12 +16,12 @@ import pdb
 
 class KnowledgeRetriever(Retriever):
 
-    def __init__(self, resource: RetrieveResource, work_dir: str) -> None:
+    def __init__(self, resource: RetrieveResource) -> None:
         super().__init__()
         """Init with model device type and config."""
         self.embedder = resource.embedder
         self.llm = resource.llm
-        self.work_dir = work_dir
+        work_dir = resource.cur_work_dir()
         self.entityDB = Faiss.load_local(
             os.path.join(work_dir, 'db_kag_entity_mix'))
         self.relationDB = Faiss.load_local(
@@ -444,36 +444,41 @@ class KnowledgeRetriever(Retriever):
                           sources=use_text_units)
         return r
 
-    async def decompose_to_keywords(self, query: Query) -> Tuple[str, str]:
+    async def decompose_to_keywords(self, query: Query, retry=3) -> Tuple[str, str]:
         kw_prompt_temp = PROMPTS["keywords_extraction"][query.language]
         kw_prompt = kw_prompt_temp.format(query=query.text)
 
         hl_keywords = []
         ll_keywords = []
-        result = await self.llm.chat(kw_prompt)
-        try:
-            keywords_data = json.loads(result)
-            hl_keywords = keywords_data.get("high_level_keywords", [])
-            ll_keywords = keywords_data.get("low_level_keywords", [])
-            hl_keywords = ", ".join(hl_keywords)
-            ll_keywords = ", ".join(ll_keywords)
-        except json.JSONDecodeError:
-            try:
-                result = (result.replace(kw_prompt[:-1],
-                                         "").replace("user",
-                                                     "").replace("model",
-                                                                 "").strip())
-                result = "{" + result.split("{")[1].split("}")[0] + "}"
 
+        for _ in range(retry):
+            result = await self.llm.chat(kw_prompt)
+            try:
                 keywords_data = json.loads(result)
                 hl_keywords = keywords_data.get("high_level_keywords", [])
                 ll_keywords = keywords_data.get("low_level_keywords", [])
                 hl_keywords = ", ".join(hl_keywords)
                 ll_keywords = ", ".join(ll_keywords)
-            # Handle parsing error
-            except json.JSONDecodeError as e:
-                logger.error(f"JSON parsing error: {e}, input {result}")
-                return [], []
+                return hl_keywords, ll_keywords
+            except json.JSONDecodeError:
+                continue
+
+        try:
+            result = (result.replace(kw_prompt[:-1],
+                                    "").replace("user",
+                                                "").replace("model",
+                                                            "").strip())
+            result = "{" + result.split("{")[1].split("}")[0] + "}"
+
+            keywords_data = json.loads(result)
+            hl_keywords = keywords_data.get("high_level_keywords", [])
+            ll_keywords = keywords_data.get("low_level_keywords", [])
+            hl_keywords = ", ".join(hl_keywords)
+            ll_keywords = ", ".join(ll_keywords)
+        # Handle parsing error
+        except Exception as e:
+            logger.error(f"JSON parsing error: {e}, input {result}")
+            return [], []
 
         return hl_keywords, ll_keywords
 

@@ -75,6 +75,9 @@ python3 -m huixiangdou.main
 
 ### Gradio UI Integration
 ```bash
+# start server first
+python3 -m huixiangdou.server --lgraph-data-path /path/to/lgraph-data
+# then start gradio UI
 python3 -m huixiangdou.gradio_ui --port 8888
 ```
 Then open the browser on port 8888 for a streaming response.

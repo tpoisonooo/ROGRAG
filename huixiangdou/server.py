@@ -4,10 +4,15 @@ import pandas as pd
 from pypinyin import pinyin, Style
 import re
 from loguru import logger
+import subprocess
+import tempfile
+from datetime import datetime
+from typing import Dict, Optional
+import zipfile
 
 from .pipeline import SerialPipeline, ParallelPipeline, FeatureStore, write_back_config_threshold
 from .primitive import Query, Pair, Token
-from .service import server_prompts
+from .service import server_prompts, RetrieveResource
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -17,11 +22,16 @@ from typing import List
 import uuid
 import jieba
 
+
 configpath = None
 workdir = None
-assistant = None
+resource = None
 analogy = None
+global_args = None
 app = FastAPI(docs_url='/')
+
+# 导出文件管理器
+exported_files: Dict[str, dict] = {}
 
 
 def get_req_uuid():
@@ -62,10 +72,10 @@ class TextSimilarity:
 class ExampleAnalogy:
 
     def __init__(self,
-                 resource,
                  api_data_dir: str,
                  threshold: float = 0.3,
                  language: str = 'zh_cn'):
+        global resource
         if not os.path.exists(api_data_dir):
             logger.info('api_data_dir not exist, quit')
             return
@@ -294,12 +304,28 @@ class Talk(BaseModel):
     text: str
     image: str = ''
 
-
 class Talk_seed(BaseModel):
     language: str
     enable_web_search: bool
     user: str
     history: list[Pair]
+    db_name: str = 'HuixiangDou'  # 默认数据库名称
+
+class AddFilesRequest(BaseModel):
+    file_list: List[str]
+    db_name: str = 'HuixiangDou'  # 默认数据库名称
+
+
+class DropDbRequest(BaseModel):
+    db_name: str = 'HuixiangDou'  # 默认数据库名称
+
+
+class ExportGraphResponse(BaseModel):
+    status: dict
+    data: dict
+    export_path: str  # 导出的zip文件路径
+    file_size: int  # zip文件大小（字节）
+    download_token: str  # 下载令牌
 
 
 def format_refs(refs: List[str]):
@@ -325,7 +351,7 @@ def extract_history(talk_seed):
 async def coreference_resolution(query: str, history: List, language: str):
     if not history:
         return query
-    global assistant
+    global resource
     pronouns = [
         'it', 'he', 'she', 'their', 'they', 'him', 'her', 'this', 'that', '它',
         '他', '她', '这', '那'
@@ -335,7 +361,7 @@ async def coreference_resolution(query: str, history: List, language: str):
             template = server_prompts['corefence_resolution'][language]
             json_str = json.dumps(history[-1], ensure_ascii=False)
             prompt = template.format(query=query, history=json_str)
-            response = await assistant.resource.llm.chat(prompt=prompt)
+            response = await resource.llm.chat(prompt=prompt)
             if 'NO' in response:
                 return query
             return response
@@ -343,8 +369,12 @@ async def coreference_resolution(query: str, history: List, language: str):
 
 
 @app.post("/v2/chat")
-async def chat(talk_seed: Talk_seed):
-    global assistant
+async def stream_chat(talk_seed: Talk_seed):
+    global resource
+    
+    # 切换数据库
+    resource.switch(talk_seed.db_name)
+    
     print('enable web search {}'.format(talk_seed.enable_web_search))
     req_id = get_req_uuid()
     pipeline = {}
@@ -362,6 +392,11 @@ async def chat(talk_seed: Talk_seed):
                   enable_web_search=talk_seed.enable_web_search)
 
     async def event_stream():
+        if global_args.pipeline == 'parallel':
+            assistant = ParallelPipeline(resource=resource)
+        else:
+            assistant = SerialPipeline(resource=resource)
+
         async for sess in assistant.generate(
                 query=query,
                 history=history,
@@ -395,7 +430,7 @@ async def chat(talk_seed: Talk_seed):
             data = {
                 "_id": req_id,
                 "stage": sess.stage,
-                "references": references[0:assistant.resource.reranker.topn],
+                "references": references[0:resource.reranker.topn],
                 "delta": sess.delta,
             }
 
@@ -405,58 +440,280 @@ async def chat(talk_seed: Talk_seed):
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
-def reinit_assistant():
-    global assistant
-    global workdir
-    global configpath
-
-    if type(assistant) is ParallelPipeline:
-        assistant = ParallelPipeline(work_dir=workdir,
-                                     config_path=configpath)
-    else:
-        assistant = SerialPipeline(work_dir=workdir,
-                                    config_path=configpath)
+def reinit(db_name: str):
+    global global_args
+    global resource
     
+    resource = RetrieveResource(global_args.config_path)
+    resource.switch(db_name)
+
+@app.get("/v2/list_file")
+async def list_files(db_name: str = 'HuixiangDou'):
+    global resource
+    resource.switch(name=db_name)
+    store = FeatureStore(resource=resource)
+    return store.list_all_filename()
 
 @app.post("/v2/add_files")
-async def add_files(file_list: List[str]):
+async def add_files(request: AddFilesRequest):
     global workdir
-    global assistant
+    global resource
     global configpath
-    
+
+    # 切换数据库
+    resource.switch(request.db_name)
+
     files = []
-    for file in file_list:
+    for file in request.file_list:
         if not os.path.exists(file):
             continue
         files.append(file)
     
     if len(files) < 1:
-        return 'success'
+        async def empty_stream():
+            yield f"data:{json.dumps({'status': {'code': 0, 'error': 'success'}, 'data': {'progress': 1.0, 'message': 'No files to process'}}, ensure_ascii=False)}\n\n"
+        return StreamingResponse(empty_stream(), media_type="text/event-stream")
     
-    resource = assistant.resource
-    store = FeatureStore(resource=resource, work_dir=workdir)
-    # convert pdf/excel/ppt to markdown
-    scan_files = store.file_opr.scan_files(file_list=files)
-    store.preprocess(files=scan_files)
-
-    await store.init(files=scan_files)
-    store.file_opr.summarize(scan_files)
-
-    await write_back_config_threshold(resource=resource, work_dir=workdir, config_path=configpath)
+    async def progress_stream():
+        store = FeatureStore(resource=resource)
+        
+        try:
+            # convert pdf/excel/ppt to markdown
+            scan_files = store.file_opr.scan_files(file_list=files)
+            store.preprocess(files=scan_files)
+            
+            total_files = len(scan_files)
+            current_file = 0
+            
+            # 发送开始消息
+            yield f"data:{json.dumps({'status': {'code': 0, 'error': 'processing'}, 'data': {'progress': 0.0, 'message': f'Starting to process {total_files} files', 'total_files': total_files}}, ensure_ascii=False)}\n\n"
+            
+            # 处理文件并流式发送进度
+            async for progress in store.init(files=scan_files):
+                current_file = int(progress * total_files)
+                percentage = progress * 100
+                
+                progress_data = {
+                    'status': {'code': 0, 'error': 'processing'},
+                    'data': {
+                        'progress': progress,
+                        'percentage': percentage,
+                        'current_file': current_file,
+                        'total_files': total_files,
+                        'message': f'Processing file {current_file}/{total_files} ({percentage:.1f}%)'
+                    }
+                }
+                yield f"data:{json.dumps(progress_data, ensure_ascii=False)}\n\n"
+            
+            # 完成后处理
+            store.file_opr.summarize(scan_files)
+            await write_back_config_threshold(resource=resource)
+            reinit(db_name=request.db_name)
+            
+            # 发送完成消息
+            yield f"data:{json.dumps({'status': {'code': 0, 'error': 'success'}, 'data': {'progress': 1.0, 'message': f'Successfully processed {total_files} files', 'total_files': total_files}}, ensure_ascii=False)}\n\n"
+            
+        except Exception as e:
+            logger.error(f'Error processing files: {str(e)}')
+            error_data = {
+                'status': {'code': 1, 'error': f'Error: {str(e)}'},
+                'data': {'progress': 0.0, 'message': f'Error occurred: {str(e)}'}
+            }
+            yield f"data:{json.dumps(error_data, ensure_ascii=False)}\n\n"
     
-    reinit_assistant()
-    return 'success'
+    return StreamingResponse(progress_stream(), media_type="text/event-stream")
+
+@app.post("/v2/list_db")
+async def list_db():
+    global resource
+    return os.listdir(resource.base_work_dir)
 
 @app.post("/v2/drop_db")
-async def drop_db():
+async def drop_db(request: DropDbRequest):
     global workdir
-    global assistant
-    resource = assistant.resource
-    store = FeatureStore(resource=resource, work_dir=workdir)
+    global resource
     
-    await store.remove_knowledge()
-    reinit_assistant()
+    # 切换数据库
+    if request.db_name and request.db_name != resource.name:
+        logger.info(f'Switching database from {resource.name} to {request.db_name}')
+        resource.switch(request.db_name)
+    
+    store = FeatureStore(resource=resource)
+    
+    try:
+        await store.remove_knowledge()
+        reinit(db_name=request.db_name)
+    except Exception as e:
+        return f"Error occurred while removing knowledge: {e}"
     return 'success'
+
+
+def export_graph_database(db_name: str) -> dict:
+    """
+    导出图数据库到指定格式，并将多个导出文件打包成zip文件
+    
+    Args:
+        db_name: 数据库名称
+        format_type: 导出格式 (csv/json)
+        export_dir: 导出目录
+    
+    Returns:
+        导出结果信息，包含zip文件路径
+    """
+    try:
+        # 获取数据库配置
+        global resource
+        
+        export_dir = f'./export_{db_name}'
+        format_type = 'csv'
+        # 构建导出命令
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # 确保导出目录存在
+        os.makedirs(export_dir, exist_ok=True)
+        
+        # 构建 lgraph_export 命令
+        cmd = [
+            'lgraph_export',
+            '-f', format_type,
+            '-d', global_args.lgraph_data_path,
+            '-g', db_name,
+            '-u', resource.graph_config.get('username', 'admin'),
+            '-p', resource.graph_config.get('password', '73@TuGraph'),
+            '-e', export_dir
+        ]
+        
+        logger.info(f'执行导出命令: {" ".join(cmd)}')
+        
+        # 执行导出命令
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        
+        if result.returncode == 0:
+            # 创建zip文件，包含所有导出文件
+            zip_filename = f"{db_name}_export_{timestamp}.zip"
+            zip_path = os.path.join(export_dir, zip_filename)
+            
+            export_files = [os.path.join(export_dir, filename) for filename in os.listdir(export_dir)]
+            try:
+                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    for file_path in export_files:
+                        # 在zip中使用相对路径，只包含文件名
+                        arcname = os.path.basename(file_path)
+                        zipf.write(file_path, arcname)
+                        logger.info(f'添加文件到zip: {arcname}')
+                
+                # 获取zip文件大小
+                zip_file_size = os.path.getsize(zip_path)
+                
+                logger.info(f'成功创建zip文件: {zip_path}, 包含 {len(export_files)} 个文件')
+                
+                return {
+                    'success': True,
+                    'export_path': zip_path,
+                    'file_size': zip_file_size,
+                    'message': f'图谱导出成功，已打包成zip文件（包含{len(export_files)}个文件）',
+                    'original_files': export_files
+                }
+                
+            except Exception as zip_error:
+                logger.error(f'创建zip文件失败: {str(zip_error)}')
+                # 如果zip创建失败，返回第一个导出文件
+                if export_files:
+                    first_file = export_files[0]
+                    file_size = os.path.getsize(first_file)
+                    return {
+                        'success': True,
+                        'export_path': first_file,
+                        'file_size': file_size,
+                        'message': '图谱导出成功（zip创建失败，返回原始文件）'
+                    }
+                    
+        else:
+            return {
+                'success': False,
+                'message': f'导出命令执行失败: {result.stderr}'
+            }
+            
+    except subprocess.TimeoutExpired:
+        return {
+            'success': False,
+            'message': '导出命令执行超时'
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'message': f'导出过程发生错误: {str(e)}'
+        }
+
+@app.post("/v2/export_graph")
+async def export_graph(db_name: str):
+    """
+    导出指定数据库的图谱数据
+    """
+    global resource
+    global workdir
+    global exported_files
+    
+    try:
+        # 切换数据库
+        if db_name and db_name != resource.name:
+            logger.info(f'Switching database from {resource.name} to {db_name}')
+            resource.switch(db_name)
+        
+        # 执行图谱导出
+        logger.info(f'开始导出数据库 {resource.name} 的图谱数据')
+        result = export_graph_database(
+            db_name=resource.name,
+        )
+        
+        if result['success']:
+            # 生成下载令牌
+            download_token = get_req_uuid()
+            
+            # 记录导出文件信息
+            exported_files[download_token] = {
+                'file_path': result['export_path'],
+                'file_size': result['file_size'],
+                'db_name': resource.name,
+                'format': 'zip',  # 更新为zip格式
+                'export_time': datetime.now().isoformat(),
+                'include_schema': True
+            }
+            
+            logger.info(f'图谱导出成功，文件路径: {result["export_path"]}, 下载令牌: {download_token}')
+            
+            return {
+                "status": {
+                    "code": 0,
+                    "error": "success"
+                },
+                "data": {
+                    "export_path": result['export_path'],
+                    "file_size": result['file_size'],
+                    "download_url": f"/v2/download_export/{download_token}",
+                    "message": result['message'],
+                    "db_name": resource.name,
+                    "format": 'zip'  # 更新为zip格式
+                }
+            }
+        else:
+            return {
+                "status": {
+                    "code": 1,
+                    "error": result['message']
+                },
+                "data": {}
+            }
+            
+    except Exception as e:
+        logger.error(f'导出图谱时发生错误: {str(e)}')
+        return {
+            "status": {
+                "code": 1,
+                "error": f"导出失败: {str(e)}"
+            },
+            "data": {}
+        }
 
 @app.post("/v2/exemplify")
 async def examplify(talk_seed: Talk_seed):
@@ -465,18 +722,77 @@ async def examplify(talk_seed: Talk_seed):
         return await analogy.process(query=talk_seed.user)
     return '{}'
 
-@app.post("/v2/download")
-async def download(token: Token):
-    return 'deprecated'
+@app.get("/v2/download_export/{download_token}")
+async def download_export(download_token: str):
+    """
+    直接下载导出的图谱文件
+    简化设计：一个端点完成下载功能
+    """
+    global exported_files
+    
+    try:
+        # 检查下载令牌是否有效
+        if download_token not in exported_files:
+            return {
+                "status": {
+                    "code": 1,
+                    "error": "无效的下载令牌或文件已过期"
+                },
+                "data": {}
+            }
+        
+        file_info = exported_files[download_token]
+        file_path = file_info['file_path']
+        
+        # 检查文件是否存在
+        if not os.path.exists(file_path):
+            # 清理过期的文件记录
+            del exported_files[download_token]
+            return {
+                "status": {
+                    "code": 1,
+                    "error": "导出文件不存在或已被删除"
+                },
+                "data": {}
+            }
+        
+        # 获取文件信息
+        file_name = os.path.basename(file_path)
+        
+        logger.info(f'开始下载导出文件: {file_path}')
+        
+        # 使用 FileResponse 直接返回文件流
+        from fastapi.responses import FileResponse
+        
+        # 可选：添加文件元信息到响应头
+        headers = {
+            "Content-Disposition": f"attachment; filename=\"{file_name}\"",
+            "X-Download-Token": download_token,
+            "X-File-Size": str(file_info['file_size']),
+            "X-Database-Name": file_info['db_name']
+        }
+        
+        return FileResponse(
+            path=file_path,
+            filename=file_name,
+            media_type='application/zip' if file_name.endswith('.zip') else 'application/octet-stream',
+            headers=headers
+        )
+        
+    except Exception as e:
+        logger.error(f'文件下载时发生错误: {str(e)}')
+        return {
+            "status": {
+                "code": 1,
+                "error": f"文件下载失败: {str(e)}"
+            },
+            "data": {}
+        }
 
 def parse_args():
     """Parse args."""
     parser = argparse.ArgumentParser(
         description='SerialPipeline or Parallel Pipeline.')
-    parser.add_argument('--work_dir',
-                        type=str,
-                        default='workdir',
-                        help='Working directory.')
     parser.add_argument('--config_path',
                         default='config.ini',
                         type=str,
@@ -489,24 +805,23 @@ def parse_args():
         help=
         'Select pipeline type for difference scenario, default value is `parallel`'
     )
+    parser.add_argument(
+        '--lgraph-data-path',
+        type=str,
+        default='lgraph-data',
+        help='Tugraph data path, check it in lgraph.json. For example "/data/khj/workspace/lgraph-data", default value is "lgraph-data".'
+    )
     parser.add_argument('--port', type=int, default=23333, help='bind port')
     args = parser.parse_args()
     return args
 
 if __name__ == '__main__':
-    args = parse_args()
-    # setup chat service
-    if 'parallel' in args.pipeline:
-        assistant = ParallelPipeline(work_dir=args.work_dir,
-                                     config_path=args.config_path)
-    elif 'serial' in args.pipeline:
-        assistant = SerialPipeline(work_dir=args.work_dir,
-                                   config_path=args.config_path)
-    workdir = args.work_dir
-    configpath = args.config_path
+    global_args = parse_args()
+    
+    configpath = global_args.config_path
+    reinit(db_name='HuixiangDou')
     
     api_data_dir = '/home/khj/workspace/HuixiangDou/apidata/'
-    analogy = ExampleAnalogy(resource=assistant.resource,
-                             api_data_dir=api_data_dir)
+    analogy = ExampleAnalogy(api_data_dir=api_data_dir)
 
-    uvicorn.run(app, host='0.0.0.0', port=args.port, log_level='info')
+    uvicorn.run(app, host='0.0.0.0', port=global_args.port, log_level='info')

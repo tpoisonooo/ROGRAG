@@ -78,7 +78,8 @@ backend2url = {
     'zhipuai': 'https://open.bigmodel.cn/api/paas/v4/',
     'puyu': 'https://puyu.openxlab.org.cn/puyu/api/v1/',
     'siliconcloud': 'https://api.siliconflow.cn/v1',
-    'local': 'http://localhost:8000/v1'
+    'aliyun': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    'local': 'http://198.11.18.24:3000/v1'
 }
 
 backend2model = {
@@ -87,7 +88,8 @@ backend2model = {
     "deepseek": "deepseek-chat",
     "zhipuai": "glm-4",
     "puyu": "internlm2-latest",
-    "siliconcloud": "Qwen/Qwen2.5-14B-Instruct"
+    "siliconcloud": "Qwen/Qwen2.5-14B-Instruct",
+    "aliyun": "qwen3-30b-a3b-instruct-2507"
 }
 
 
@@ -153,7 +155,7 @@ class LLM:
         self.cache = ChatCache()
 
     def choose_model(self, backend: Backend, token_size: int) -> str:
-        if backend.model != None and len(backend.model) > 0:
+        if backend.model is not None and len(backend.model) > 0:
             return backend.model
 
         model = ''
@@ -194,7 +196,7 @@ class LLM:
                    system_prompt=None,
                    history=[],
                    allow_truncate=False,
-                   max_tokens=1024,
+                   max_tokens=8192,
                    timeout=600,
                    enable_cache:bool=True) -> str:
         
@@ -246,7 +248,8 @@ class LLM:
             "model": model,
             "messages": messages,
             "temperature": 0.7,
-            "top_p": 0.7
+            "top_p": 0.7,
+            "extra_body": {"enable_thinking": False}
         }
         if max_tokens:
             kwargs['max_tokens'] = max_tokens
@@ -276,6 +279,11 @@ class LLM:
 
         await instance.tpm.wait(token_count=content_token_size)
         await instance.rpm.wait()
+
+        think_tag = "</think>"
+        index = content.find(think_tag)
+        if index > 0:
+            content = content[index+len(think_tag):]
         return content
 
     @retry(
