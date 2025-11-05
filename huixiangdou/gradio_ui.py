@@ -4,7 +4,7 @@ import json
 import os
 import time
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 import gradio as gr
 from loguru import logger
 
@@ -205,7 +205,7 @@ async def drop_db():
         return error_msg, files_list
 
 
-async def predict(text: str, history: List):
+async def predict(text: str, history: List[Dict[str, str]]):
     """预测/聊天功能"""
     if not text:
         text = main_args.placeholder
@@ -227,6 +227,7 @@ async def predict(text: str, history: List):
             db_name=current_db_name,
             history=history
         ):
+            # print(f'=>{response_text}')
             full_response = response_text
             
             # 检查是否有参考资料（在完整响应中）
@@ -426,11 +427,12 @@ def create_ui():
                 # 聊天界面
                 gr.Markdown("### 💬 智能问答")
                 
-                chatbot = gr.Chatbot(
+                ui_chatbot = gr.Chatbot(
                     label="对话记录",
                     height=400,
                     show_copy_button=True,
-                    bubble_full_width=False
+                    bubble_full_width=False,
+                    type="messages",
                 )
                 
                 with gr.Row():
@@ -515,41 +517,38 @@ def create_ui():
             outputs=[download_link_html, download_info]
         )
         
-        async def chat_wrapper(message, history):
+        async def chat_wrapper(message, bot_history):
             """聊天功能的包装器"""
             if not message:
-                yield "", history
+                yield "", bot_history
+
+            print(f'bot_history {bot_history}')
             
             # 转换历史记录格式
             chat_history = []
-            if history:
-                for i in range(0, len(history), 2):
-                    if i+1 < len(history):
+            if bot_history:
+                for i in range(0, len(bot_history), 2):
+                    if i+1 < len(bot_history):
                         chat_history.append({
-                            "user": history[i][1] if isinstance(history[i], tuple) else str(history[i]),
-                            "assistant": history[i+1][1] if isinstance(history[i+1], tuple) else str(history[i+1]),
-                            "references": []
+                            "user": bot_history[i]['content'],
+                            "assistant": bot_history[i+1]['content'],
                         })
             
             # 流式生成回复
             full_response = ""
             async for response_text in predict(message, chat_history):
                 full_response = response_text
-                yield "", history + [[message, full_response]]
+                yield "", bot_history + [dict(role="assistant", content=response_text)]
+            bot_history.append(dict(role="user", content=message))
+            bot_history.append(dict(role="assistant", content=full_response))
+            yield "", bot_history
         
         run_button.click(
             fn=chat_wrapper,
-            inputs=[input_question, chatbot],
-            outputs=[input_question, chatbot]
+            inputs=[input_question, ui_chatbot],
+            outputs=[input_question, ui_chatbot]
         )
         
-        # 回车发送消息
-        input_question.submit(
-            fn=chat_wrapper,
-            inputs=[input_question, chatbot],
-            outputs=[input_question, chatbot]
-        )
-    
     return demo
 
 

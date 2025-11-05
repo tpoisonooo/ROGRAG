@@ -99,7 +99,12 @@ class HuixiangDouAPIClient:
                     message=error_text
                 )
             
-            full_response = ""
+            sentence = ''
+            file_part = ''
+            think_part = '\n【思考过程】\n'
+            stage = 'think'
+            resp_part = '\n【回复内容】\n'
+
             async for line in response.content:
                 line = line.decode('utf-8').strip()
                 if line.startswith('data:'):
@@ -108,8 +113,19 @@ class HuixiangDouAPIClient:
                         if 'data' in data and 'delta' in data['data']:
                             delta = data['data']['delta']
                             if delta:
-                                full_response += delta
-                                yield full_response
+                                if stage == 'think':
+                                    think_part += delta
+                                    if '</think>' in think_part:
+                                        stage = 'resp'
+                                else:
+                                    resp_part += delta
+
+                            if stage == 'think':
+                                sentence = file_part + think_part
+                            else:
+                                sentence = file_part + think_part + resp_part
+                            yield sentence
+
                     except json.JSONDecodeError:
                         logger.warning(f"无法解析JSON: {line}")
                         continue
