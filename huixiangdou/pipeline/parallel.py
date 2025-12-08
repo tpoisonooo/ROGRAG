@@ -198,7 +198,7 @@ class ParallelPipeline:
         # parallel run text2vec, websearch and codesearch
         tasks = [self.retriever_knowledge.explore(query=sess.query)]
         if query.enable_web_search:
-          tasks.append(self.retriever_web.explore(query=sess.query))
+            tasks.append(self.retriever_web.explore(query=sess.query))
 
         re_reply = await self.retriever_re.explore(query=sess.query)
         sess.keep_first_n = len(re_reply.sources)

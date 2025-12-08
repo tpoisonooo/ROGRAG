@@ -38,6 +38,7 @@ class WebRetriever(Retriever):
         self.client = Client(config=webconfig)
 
     async def explore(self, query: Query, history: List[Pair]=[]):
+
         r = RetrieveReply()
         if query.text is None:
             logger.error(f"{__file__} input text is None")
@@ -46,12 +47,12 @@ class WebRetriever(Retriever):
         messages = []
         for p in history:
             messages += [GetWebSearchRequestHistory(content=p.user, role="user"), GetWebSearchRequestHistory(content=p.assistant, role="assistant")]
-        request = GetWebSearchRequest(query=query.text, history=messages, content_type="summary")
+        request = GetWebSearchRequest(query=query.text, history=messages)
 
         try:
             response = self.client.get_web_search("default", "ops-web-search-001", request)
             for search_chunk in response.body.result.search_result:
-                r.add_source(Chunk(content_or_path=search_chunk['content']))
+                r.add_source(Chunk(content_or_path=search_chunk.content, metadata={"source": search_chunk.link}))
         except Exception as e:
             logger.error(f'{__file__} {str(e)}')
         return r
