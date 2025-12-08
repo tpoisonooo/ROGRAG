@@ -3,7 +3,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # 基础 URL
-BASE_URL = "http://10.15.1.122:23334"
+BASE_URL = "http://10.15.1.122:18888"
 
 # 测试 /v2/chat 接口
 def test_chat_zh():

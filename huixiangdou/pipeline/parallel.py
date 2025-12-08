@@ -4,12 +4,11 @@ import json
 import pytoml
 import pdb
 from typing import List, Union, AsyncGenerator
-from ..primitive import Query, Pair
+from ..primitive import Query, Pair, chinese_inside
 from .session import Session
 from ..service import SharedRetrieverPool, Retriever, RetrieveResource, ErrorCode
 from ..service.retriever import RetrieveMethod
 from ..service.prompt import rag_prompts as PROMPTS
-
 
 class PreprocNode:
 
@@ -143,6 +142,11 @@ class ParallelPipeline:
         if type(query) is str:
             query = Query(text=query)
 
+        # deduce language
+        if chinese_inside(query.text):
+            # 如果 query 里出现中文字符，直接判为中文，忽视 ui_language 选择
+            language = 'zh_cn'
+
         # build input session
         sess = Session(query=query,
                        history=history,
@@ -194,7 +198,7 @@ class ParallelPipeline:
         # parallel run text2vec, websearch and codesearch
         tasks = [self.retriever_knowledge.explore(query=sess.query)]
         if query.enable_web_search:
-            tasks.append(self.retriever_web.explore(query=sess.query))
+          tasks.append(self.retriever_web.explore(query=sess.query))
 
         re_reply = await self.retriever_re.explore(query=sess.query)
         sess.keep_first_n = len(re_reply.sources)

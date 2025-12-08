@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from ...primitive import Embedder, Reranker, Query, LLM, Chunk, Edge, Vertex, Edge, Vertex
+from ...primitive import Embedder, Reranker, Query, LLM, Chunk, Edge, Vertex, Edge, Vertex, Pair
 from loguru import logger
 from typing import List, Union, Tuple
 from ..graph_store import TuGraphStore
@@ -106,7 +106,7 @@ class Retriever(ABC):
     """retriever base class."""
 
     @abstractmethod
-    async def explore(self, query: Union[Query, str]) -> RetrieveReply:
+    async def explore(self, query: Union[Query, str], history: List[Pair]=[]) -> RetrieveReply:
         pass
 
     @staticmethod

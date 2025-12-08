@@ -1,7 +1,8 @@
-from ...primitive import Query, Faiss, Chunk
+from ...primitive import Query, Faiss, Chunk, Pair
 from .base import Retriever, RetrieveResource, RetrieveReply
 from loguru import logger
 import os
+from typing import List
 
 class QARetriever(Retriever):
 
@@ -13,7 +14,7 @@ class QARetriever(Retriever):
         self.soybean_dir = os.path.join(work_dir, 'soybean')
         self.varieties = [name.split('.')[0].strip() for name in os.listdir(self.soybean_dir)]
 
-    async def explore(self, query: Query) -> RetrieveReply:
+    async def explore(self, query: Query, _: List[Pair]=[]) -> RetrieveReply:
         """Retrieve chunks by named entity."""
 
         chunk_score_pairs = self.faiss.similarity_search(embedder=self.resource.embedder, query=query, threshold=0.8)

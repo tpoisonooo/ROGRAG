@@ -7,10 +7,14 @@ from bs4 import BeautifulSoup as BS
 from loguru import logger
 from readability import Document
 
-from ...primitive import Chunk, Query
+from ...primitive import Chunk, Query, Pair
 from ..helper import check_str_useful
 from ..prompt import rag_prompts as PROMPT
 from .base import Retriever, RetrieveResource, RetrieveReply
+from typing import List
+from alibabacloud_tea_openapi.models import Config
+from alibabacloud_searchplat20240529.client import Client
+from alibabacloud_searchplat20240529.models import GetWebSearchRequest,GetWebSearchRequestHistory
 
 
 class WebRetriever(Retriever):
@@ -22,6 +26,7 @@ class WebRetriever(Retriever):
 
     def __init__(self, resource: RetrieveResource, **kwargs) -> None:
         """Initializes the WebSearch object with initialized resource."""
+
         super().__init__()
         self.search_config = None
         self.max_url_count = 3
@@ -29,73 +34,24 @@ class WebRetriever(Retriever):
         with open(resource.config_path, encoding='utf8') as f:
             config = pytoml.load(f)
             self.search_config = types.SimpleNamespace(**config['web_search'])
+            webconfig = Config(bearer_token=self.search_config.aliyun_api_key, endpoint="default-b9kf.platform-cn-shanghai.opensearch.aliyuncs.com", protocol="http")
+        self.client = Client(config=webconfig)
 
-    async def analyze_url(self, target_link: str, brief: str = ''):
-        if not target_link.startswith('http'):
-            return None
-
-        logger.info(f'extract: {target_link}')
-        async with aiohttp.ClientSession() as session:
-            # 发送POST请求
-            async with session.get(target_link) as response:
-                # 确保请求成功
-                response.raise_for_status()
-                # 返回响应的文本内容
-                content = response.text()
-                doc = Document(content)
-                content_html = doc.summary()
-                title = doc.short_title()
-                soup = BS(content_html, 'html.parser')
-
-                content = '{} {}'.format(title, soup.text)
-                content = content.replace('\n\n', '\n')
-                content = content.replace('\n\n', '\n')
-                content = content.replace('  ', ' ')
-
-                if not check_str_useful(content=content):
-                    return None
-
-                return [target_link, content]
-
-    async def explore(self, query: Query):
-        """Executes a google search based on the provided query.
-
-        Parses the response and extracts the relevant URLs based on the
-        priority defined in the configuration file. Performs a GET request on
-        these URLs and extracts the title and content of the page. The content
-        is cleaned and added to the articles list. Returns a list of articles.
-        """
+    async def explore(self, query: Query, history: List[Pair]=[]):
         r = RetrieveReply()
         if query.text is None:
             logger.error(f"{__file__} input text is None")
             return r
 
-        prompt = PROMPT['web_keywords'][query.language].format(
-            input_text=query.text)
-        web_keywords = await self.llm.chat(prompt)
+        messages = []
+        for p in history:
+            messages += [GetWebSearchRequestHistory(content=p.user, role="user"), GetWebSearchRequestHistory(content=p.assistant, role="assistant")]
+        request = GetWebSearchRequest(query=query.text, history=messages, content_type="summary")
 
-        async with aiohttp.ClientSession() as session:
-            # 发送POST请求
-            url = 'https://google.serper.dev/search'
-            hl = 'zh-cn' if 'zh' in query.language else 'en'
-            payload = json.dumps({'q': f'{web_keywords}', 'hl': hl})
-            headers = {
-                'X-API-KEY': self.search_config.serper_x_api_key,
-                'Content-Type': 'application/json'
-            }
-            async with session.post(url, data=payload,
-                                    headers=headers) as response:
-                # 确保请求成功
-                response.raise_for_status()
-                # 返回响应的文本内容
-                json_obj = await response.json()
-                logger.debug(json_obj)
-
-                for organic in json_obj['organic']:
-                    print(organic)
-                    content = '{},{}'.format(organic['title'],
-                                             organic['snippet'])
-                    c = Chunk(content_or_path=content,
-                              metadata={"source": organic['link']})
-                    r.add_source(c)
-                return r
+        try:
+            response = self.client.get_web_search("default", "ops-web-search-001", request)
+            for search_chunk in response.body.result.search_result:
+                r.add_source(Chunk(content_or_path=search_chunk['content']))
+        except Exception as e:
+            logger.error(f'{__file__} {str(e)}')
+        return r

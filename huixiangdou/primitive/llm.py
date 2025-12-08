@@ -28,6 +28,7 @@ backend2url = {
     'zhipuai': 'https://open.bigmodel.cn/api/paas/v4/',
     'puyu': 'https://puyu.openxlab.org.cn/puyu/api/v1/',
     'siliconcloud': 'https://api.siliconflow.cn/v1',
+    'aliyun': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     'local': 'http://localhost:8000/v1'
 }
 
@@ -37,9 +38,9 @@ backend2model = {
     "deepseek": "deepseek-chat",
     "zhipuai": "glm-4",
     "puyu": "internlm2-latest",
-    "siliconcloud": "Qwen/Qwen2.5-14B-Instruct"
+    "siliconcloud": "Qwen/Qwen2.5-14B-Instruct", 
+    "aliyun": "qwen3-30b-a3b-instruct-2507",
 }
-
 
 def limit_async_func_call(max_size: int, waitting_time: float = 0.1):
     """Add restriction of maximum async calling times for a async func"""

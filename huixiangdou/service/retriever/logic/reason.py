@@ -1,9 +1,9 @@
-from ....primitive import Faiss, Query, Chunk, MemoryGraph, Direction, always_get_an_event_loop
+from ....primitive import Faiss, Query, Chunk, MemoryGraph, Direction, always_get_an_event_loop, Pair
 from ...graph_store import GraphStore
 from loguru import logger
 from typing import List, Union, Any, Tuple
 from ..base import Retriever, RetrieveResource, RetrieveReply, OpSession, LogicNode
-from .node_param import GetNode, CompareNode, SumNode, CountNode, GetSPONode
+from .node_param import GetNode, CompareNode, SumNode, CountNode, GetSPONode, SortNode
 from .node_exec import MathExecutor, GetExecutor, GraphExecutor
 from ...prompt import reason_prompts as PROMPTS
 from ...nlu import split_string_by_multi_markers, truncate_list_by_token_size
@@ -145,7 +145,7 @@ class ReasonRetriever(Retriever):
                     logger.warning(f"unknown node: {node}")
         return op_sess
 
-    async def explore(self, query: Query) -> RetrieveReply:
+    async def explore(self, query: Query, _: List[Pair]=[]) -> RetrieveReply:
         prompt = PROMPTS['format_input'][query.language].format(
             input_text=query.text)
         response = await self.resource.llm.chat(prompt)

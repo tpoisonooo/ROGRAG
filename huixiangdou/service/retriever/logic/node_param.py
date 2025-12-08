@@ -384,7 +384,12 @@ class CountNode(LogicNode):
     def parse_node(input_str, output_name):
         args = {'alias_name': output_name, 'set': input_str}
         return CountNode("count", args)
-
+    
+class SortNode(LogicNode):
+    def __init__(self, operator, args):
+        super(SortNode, self).__init__(operator, args)
+        self.alias_name = args.get("alias_name", None)
+        self.set = args.get("set", None)
 
 # sum(alias)->sum_alias
 class SumNode(LogicNode):

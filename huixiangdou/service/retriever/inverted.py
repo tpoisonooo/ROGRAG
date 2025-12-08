@@ -1,6 +1,7 @@
-from ...primitive import Query
+from ...primitive import Query, Pair
 from ..sql import Entity2ChunkSQL, ChunkSQL
 from .base import Retriever, RetrieveResource, RetrieveReply
+from typing import List
 
 import os
 
@@ -15,7 +16,7 @@ class InvertedRetriever(Retriever):
         self.chunkDB = ChunkSQL(file_dir=os.path.join(work_dir, 'db_chunk'))
         self.topk = 10
 
-    async def explore(self, query: Query) -> RetrieveReply:
+    async def explore(self, query: Query, _: List[Pair]=[]) -> RetrieveReply:
         """Retrieve chunks by named entity."""
         # reverted index retrieval
 

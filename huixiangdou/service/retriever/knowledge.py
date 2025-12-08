@@ -1,4 +1,4 @@
-from ...primitive import Faiss, Query, Chunk, MemoryGraph, Direction
+from ...primitive import Faiss, Query, Chunk, MemoryGraph, Direction, Pair
 from ..graph_store import GraphStore
 from loguru import logger
 from typing import List, Union, Any, Tuple
@@ -472,7 +472,7 @@ class KnowledgeRetriever(Retriever):
 
         return hl_keywords, ll_keywords
 
-    async def explore(self, query: Query) -> RetrieveReply:
+    async def explore(self, query: Query, _: List[Pair]=[]) -> RetrieveReply:
         hl_keywords, ll_keywords = await self.decompose_to_keywords(query=query
                                                                     )
         ll_keywords = '{}, {}'.format(hl_keywords, ll_keywords)

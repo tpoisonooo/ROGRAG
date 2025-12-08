@@ -5,9 +5,11 @@ import os
 from bs4 import BeautifulSoup as BS
 from loguru import logger
 
-from ...primitive import Chunk, Query, encode_string
+from ...primitive import Chunk, Query, encode_string, Pair
 from .base import Retriever, RetrieveResource, RetrieveReply
 from .agis import g_agis
+from typing import List
+
 
 class RegularRetriever(Retriever):
 
@@ -22,7 +24,7 @@ class RegularRetriever(Retriever):
             return content[0:int(query.max_token_for_text_unit * 1.5)]
         return content
 
-    async def explore(self, query: Query):
+    async def explore(self, query: Query, _: List[Pair]=[]):
         """Executes a regular match."""
         r = RetrieveReply()
         if not query.text:

@@ -1,6 +1,6 @@
-from ...primitive import Query, BM25Okapi
+from ...primitive import Query, BM25Okapi, Pair
 from .base import Retriever, RetrieveResource, RetrieveReply
-
+from typing import List
 import os
 
 
@@ -18,7 +18,7 @@ class BM25Retriever(Retriever):
         else:
             self.inited = False
 
-    async def explore(self, query: Query) -> RetrieveReply:
+    async def explore(self, query: Query, _: List[Pair]=[]) -> RetrieveReply:
         """Retrieve chunks by named entity."""
         # reverted index retrieval
         r = RetrieveReply()
