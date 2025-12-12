@@ -3,7 +3,7 @@ from ..service.sql import Entity2ChunkSQL
 from typing import List
 import os
 
-
+@DeprecationWarning
 class Fasta:
 
     def __init__(self, work_dir: str, embedder: Embedder):

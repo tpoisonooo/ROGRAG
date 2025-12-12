@@ -88,7 +88,7 @@ class Reference(BaseModel):
 class Pair(BaseModel):
     user: str
     assistant: str
-#    references: List[Reference]
+    references: List[Reference]
 
 
 class Token(BaseModel):

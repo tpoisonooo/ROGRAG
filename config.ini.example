@@ -34,7 +34,9 @@ name = "HuixiangDou2"
 # For serper, check https://serper.dev/api-key to get a free API key
 engine = "serper"
 serper_x_api_key = "SERPER_API_TOKEN"
+aliyun_api_key = "ALIYUN_WEBSEARCH_KEY"
 save_dir = "logs/web_search_result"
+
 
 [llm]
 

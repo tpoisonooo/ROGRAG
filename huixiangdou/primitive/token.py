@@ -25,6 +25,12 @@ def decode_tokens(tokens: list[int], model_name: str = "gpt-4o"):
 ZH_CN_CHAR_PATTERN = None
 EN_CHAR_PATTERN = None
 
+def chinese_inside(text: str) -> bool:
+    global ZH_CN_CHAR_PATTERN
+    if ZH_CN_CHAR_PATTERN is None:
+        ZH_CN_CHAR_PATTERN = re.compile(r'[\u4e00-\u9fff]')
+    chinese_count = len(ZH_CN_CHAR_PATTERN.findall(text))
+    return True if chinese_count > 0 else False
 
 def judge_language(text):
     # 计算中文字符的数量
