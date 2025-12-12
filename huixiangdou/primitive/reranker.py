@@ -171,7 +171,4 @@ class Reranker:
 
         # During reranking, we just take image path as text
         indexes = self._sort(texts=texts, query=query)
-        if len(indexes) > 10:
-            import pdb
-            pdb.set_trace()
         return [chunks[i] for i in indexes]

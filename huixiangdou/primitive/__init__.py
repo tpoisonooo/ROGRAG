@@ -17,6 +17,6 @@ from .limitter import RPM, TPM
 from .bm250kapi import BM25Okapi
 from .knowledge import MemoryGraph, Direction, Edge, MemoryGraph, Graph, Vertex
 from .llm import LLM, Backend
-from .token import encode_string, decode_tokens, judge_language
+from .token import encode_string, decode_tokens, judge_language, chinese_inside
 from .utils import always_get_an_event_loop
 from .db import DB

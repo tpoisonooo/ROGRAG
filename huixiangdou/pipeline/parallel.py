@@ -3,7 +3,7 @@ import asyncio
 import json
 import pytoml
 from typing import List, Union, AsyncGenerator
-from ..primitive import Query, Pair
+from ..primitive import Query, Pair, chinese_inside
 from .session import Session
 from ..service import SharedRetrieverPool, Retriever, RetrieveResource, ErrorCode
 from ..service.retriever import RetrieveMethod
@@ -141,6 +141,11 @@ class ParallelPipeline:
                        language: str = 'zh_cn'):
         if type(query) is str:
             query = Query(text=query)
+
+        # deduce language
+        if chinese_inside(query.text):
+            # 如果 query 里出现中文字符，直接判为中文，忽视 ui_language 选择
+            language = 'zh_cn'
 
         # build input session
         sess = Session(query=query,

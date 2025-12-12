@@ -73,8 +73,6 @@ class Vertex(Elem):
         super().__init__(name)
         self._vid = vid
         if len(vid) > 64:
-            import pdb
-            pdb.set_trace()
             pass
 
         for k, v in props.items():
@@ -123,8 +121,6 @@ class Edge(Elem):
     def __init__(self, sid: str, tid: str, name: str, **props):
         """Initialize Edge."""
         if name is None or len(name) < 1:
-            import pdb
-            pdb.set_trace()
             assert name, "Edge name is required"
 
         super().__init__(name)
@@ -285,8 +281,7 @@ class MemoryGraph(Graph):
 
     def upsert_node(self, name: str, data: dict):
         if name is None:
-            import pdb
-            pdb.set_trace()
+            pass
         v = Vertex(vid=name, name=name, **data)
         return self.upsert_vertex(v)
 
